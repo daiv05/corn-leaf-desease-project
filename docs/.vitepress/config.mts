@@ -51,6 +51,8 @@ export default defineConfig({
     publicDir: "../public",
   },
 
+  head: [["meta", { name: "robots", content: "noindex, nofollow" }]],
+
   markdown: {
     math: true,
   },
