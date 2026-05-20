@@ -16,7 +16,7 @@ const esDatasetSidebar = [
         link: "/es/datasets/cropdg-unified-multidomain",
       },
       {
-        text: "Maize, Beans & Tomatoes (África)",
+        text: "Maize, Beans and Tomatoes image dataset for Africa",
         link: "/es/datasets/maize-beans-tomatoes-africa",
       },
     ],

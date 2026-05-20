@@ -73,7 +73,7 @@ Cada dominio (PV, CCMT, PD) se mantiene separado para habilitar entrenamiento fe
 
 ## Formato
 
-Imágenes en formato .JPG
+Imágenes en formato .JPG, .jpeg, .png
 
 ## Origen
 

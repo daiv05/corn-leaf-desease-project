@@ -89,7 +89,7 @@ Se tiene una mayor cantidad de hojas sanas y con tizón foliar del norte.
 
 ## Citación
 
-No se provee información sobre la citación del dataset. En Kaggle solo mencionan que es una recopilación de imágenes de diferentes fuentes públicas, probablemente de PlantVillage.
+No se provee información sobre la citación del dataset. En Kaggle solo mencionan que es una recopilación de imágenes de diferentes fuentes públicas, las que están en condiciones controladas probablemente sean de PlantVillage o PlantDoc.
 
 ## Licencia
 
