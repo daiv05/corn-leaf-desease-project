@@ -45,6 +45,10 @@ Para este proyecto no se tomarán en cuenta las clases "Otros" y "Síntoma de en
 - La mayoría de las imágenes se tomaron en condiciones de campo, PERO, la mayoría tienen presente una tarjeta verde (que desconocemos su función) que puede significar un sesgo para el modelo. Podría valorarse recortar las imágenes para eliminar esta tarjeta.
 - Las imágenes tienen una resolución muy alta (3600 x 2700 px, aprox +1.6 MB por imagen), lo que puede requerir un preprocesamiento para reducir su tamaño antes de ser utilizadas.
 
+::: warning Roya común — clase crítica de campo real
+Este dataset aporta solo **300 imágenes de campo real de Roya común**. Sumando las ~99 del dataset de África, el **total de campo real para esta clase en todo el proyecto es ~399 imágenes**, frente a ~5 775 de NCLB y ~5 437 de GLS. Roya común es la candidata prioritaria a data augmentation sobre imágenes de campo antes del entrenamiento.
+:::
+
 <ImageCarousel :images="[
 	{ src: '/maize-in-field-dataset/117_CIMG3853_1-121-2.JPG', alt: 'Mancha gris de la hoja, a luz clara y con dedos presentes en la parte inferior izquierda' },
 	{ src: '/maize-in-field-dataset/128_CIMG3864_1-7-2.JPG', alt: 'Mancha gris de la hoja, fondo negro con tarjeta verde y manos presentes' },

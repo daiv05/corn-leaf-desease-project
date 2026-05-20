@@ -5,6 +5,9 @@ hero:
   name: "DoctorMaiz"
   text: "Enfermedades Foliares en Maíz"
   tagline: "Sistema de clasificación de enfermedades para pequeños productores de maíz en El Salvador, con inferencia completamente offline en dispositivos Android de gama media/baja."
+  image:
+    src: /logo.svg
+    alt: DoctorMaiz
   actions:
     - theme: brand
       text: Ver Datasets
@@ -52,12 +55,16 @@ En zonas rurales el acceso a asistencia técnica es limitado. Los diagnósticos 
 
 ### Clases Objetivo
 
-| Clase | Patógeno | Síntoma visual |
-|---|---|---|
-| **Roya común** | *Puccinia sorghi* | Pústulas anaranjadas dispersas en ambas caras de la hoja |
-| **Tizón foliar del norte (NCLB)** | *Exserohilum turcicum* | Lesiones alargadas grisáceas o marrones con bordes difusos |
-| **Mancha gris de la hoja (GLS)** | *Cercospora zeae-maydis* | Lesiones rectangulares grises o marrones delimitadas por nervaduras |
-| **Hoja sana** | — | Sin síntomas foliares de enfermedad |
+| Clase | Nombre en inglés | Patógeno | Síntoma visual | Orig. únicos | Campo real |
+|---|---|---|---|---|---|
+| **Roya común** | Common Rust | *Puccinia sorghi* | Pústulas anaranjadas dispersas en ambas caras de la hoja | ~1 591 | ~399 ⚠️ |
+| **Tizón foliar del norte (NCLB)** | Northern Corn Leaf Blight | *Exserohilum turcicum* | Lesiones alargadas grisáceas o marrones con bordes difusos | ~6 760 | ~5 775 |
+| **Mancha gris de la hoja (GLS)** | Gray Leaf Spot | *Cercospora zeae-maydis* | Lesiones rectangulares grises o marrones delimitadas por nervaduras | ~5 950 | ~5 437 |
+| **Hoja sana** | Healthy | — | Sin síntomas foliares de enfermedad | ~4 828 | ~3 666 |
+
+::: warning Desbalance crítico en Roya común
+La clase **Roya común** dispone de solo **~399 imágenes de campo real** en todos los datasets evaluados (300 en Maize in Field + ~99 en el dataset de África), frente a ~5 775 de NCLB y ~5 437 de GLS. El objetivo es alcanzar **≥ 2 000 imágenes de campo real por clase** antes de la adaptación de dominio; Roya común es la única que no lo cumple y requiere data augmentation prioritaria sobre sus originales de campo.
+:::
 
 ### Metodología
 

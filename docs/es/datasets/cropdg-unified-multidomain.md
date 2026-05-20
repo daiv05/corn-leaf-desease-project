@@ -51,6 +51,10 @@ Cada dominio (PV, CCMT, PD) se mantiene separado para habilitar entrenamiento fe
 - **Motivacion del autor**: reduce inconsistencias entre datasets (condiciones de captura, iluminacion, fondos, nombres de clases y sesgos de dominio).
 - **Uso recomendado por el autor**: entrenamiento en PV + CCMT y prueba en PD (dominio no visto).
 
+::: warning Este dataset no aporta ninguna imagen de campo real de Roya común
+Ni CCMT ni PlantDoc incluyen imágenes de **Roya común (Common Rust) para maíz**. Toda la cobertura de campo de este dataset se concentra en NCLB (~5 029 CCMT + 192 PD) y GLS (~4 285 CCMT + 68 PD). Además, **PlantDoc no tiene clase Healthy para maíz**, por lo que el dominio de prueba no visto (PD) solo cubre dos de las cuatro clases objetivo del proyecto.
+:::
+
 ## Tamaño y distribución
 
 - Numero total de imagenes: 13275

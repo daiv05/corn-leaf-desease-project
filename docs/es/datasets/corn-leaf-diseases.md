@@ -39,6 +39,10 @@ Cada carpeta posee 17 subcarpetas, cada una con una técnica de data augmentatio
 
 - Las imágenes tienen una resolución bastante correcta para el entrenamiento (256 x 256 px, aprox +20kb por imagen).
 
+::: warning GLS tiene menos de la mitad de imágenes augmentadas que las otras clases
+Aunque el factor de augmentation es el mismo ×17 para todas las clases, **GLS parte de solo 410 originales** (frente a 953 de Common Rust y 929 de Healthy). Esto produce solo **6 970 imágenes augmentadas de GLS**, menos de la mitad que Common Rust (16 201) o Healthy (15 793). Si se prioriza equilibrio entre clases, se recomienda aplicar técnicas de augmentation adicionales específicas para GLS en el paso de preparación de datos.
+:::
+
 <ImageCarousel :images="[
     { src: '/corn-leaf-desease/102_contrast_adjusted.png', alt: 'Imagen con ajuste de contraste (Gray_leaf_spot)' },
 	{ src: '/corn-leaf-desease/102_cropped.png', alt: 'Imagen recortada (Gray_leaf_spot)' },

@@ -37,7 +37,11 @@ Cada versión se organiza en carpetas separadas para cada clase, con imágenes e
 ## Aspectos importantes
 
 - Tal como se detalló en la sección anterior, existen muchas imágenes con fondo totalmente negro, fondo gris en condiciones controladas, sin fondo y otras en entornos reales de campo.
-- El tamaño de cada imagen varía, desde 1024x768 hasta 3016x4032 px (20kb - 200kb - 5mb) 
+- El tamaño de cada imagen varía, desde 1024x768 hasta 3016x4032 px (20kb - 200kb - 5mb)
+
+::: warning Common Rust y Gray Leaf Spot no crecieron entre versiones
+Las imágenes de **Common Rust (1 192) y Gray Leaf Spot (513) son idénticas en v1.0 y v1.1**; el crecimiento entre versiones afectó únicamente a Healthy y Northern Leaf Blight (que pasaron de ~1 162/985 a ~5 326/5 279). Esto significa que la cobertura de laboratorio de Roya y GLS está **fija en ~1 192 y ~513 originales** y no puede ampliarse con este dataset.
+:::
 
 <ImageCarousel :images="[
 	{ src: '/maize-diseases/img (10).png', alt: 'Fondo negro' },
