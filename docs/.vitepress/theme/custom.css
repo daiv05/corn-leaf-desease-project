@@ -1,0 +1,25 @@
+/* Paleta del proyecto: verde (#698f26, #25531e, #275920) + amarillo (#f0c126) */
+
+:root {
+  --vp-c-brand-1: #698f26;
+  --vp-c-brand-2: #25531e;
+  --vp-c-brand-3: #4a7020;
+  --vp-c-brand-soft: rgba(105, 143, 38, 0.14);
+
+  --vp-button-brand-bg: #698f26;
+  --vp-button-brand-hover-bg: #25531e;
+  --vp-button-brand-active-bg: #275920;
+  --vp-button-brand-border: transparent;
+  --vp-button-brand-text: #fff;
+}
+
+/* Evitar que VitePress aplique su máscara de gradiente al contenedor de imagen del hero */
+.VPHero .image-bg {
+  display: none;
+}
+
+.VPHero .image-container {
+  background: none !important;
+  border-radius: 0 !important;
+  filter: none !important;
+}

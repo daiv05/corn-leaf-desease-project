@@ -1,9 +1,12 @@
 import DefaultTheme from "vitepress/theme";
 import ImageCarousel from "../components/ImageCarousel.vue";
+import HomeLayout from "./HomeLayout.vue";
+import "./custom.css";
 
 export default {
   ...DefaultTheme,
-  enhanceApp({ app }) {
+  Layout: HomeLayout,
+  enhanceApp({ app }: { app: import("vue").App }) {
     app.component("ImageCarousel", ImageCarousel);
   },
 };
