@@ -66,7 +66,7 @@ Se consolidaron **5 fuentes de datos públicas** para construir el corpus de ent
 
 | Clase | Lab original | Campo real | Total |
 |---|---|---|---|
-| Roya común | ~1 192 | ~399 | **~1 591** ⚠️ |
+| Roya común | ~1 192 | ~399 | **~1 591** |
 | NCLB | ~1 177 | ~5 775 | **~6 760** |
 | GLS | ~581 | ~5 437 | **~5 950** |
 | Sano | ~2 203 | ~3 666 | **~4 828** |
@@ -131,25 +131,6 @@ La documentación estará disponible en `http://localhost:5173`.
 
 ---
 
-## Stack Tecnológico
-
-| Capa | Tecnología | Versión |
-|---|---|---|
-| Documentación | VitePress | 2.0.0-alpha.17 |
-| Framework UI | Vue 3 | (incluido en VitePress) |
-| Build tool | Vite | ^8.0.0 |
-| Lenguaje | TypeScript | ^5.6.3 |
-| Matemáticas | markdown-it-mathjax3 | ^4.3.2 |
-| Minificación | oxc-minify (Rust) | ^0.132.0 |
-
-### Componentes personalizados
-
-- **`HeroLogo.vue`** — Logo con efecto glassmorphism y gradiente verde/amarillo
-- **`ImageCarousel.vue`** — Carrusel con zoom 1×–3×, descarga y panel de miniaturas
-- **`HomeLayout.vue`** — Layout de página de inicio con branding del proyecto
-
----
-
 ## Estructura del Proyecto
 
 ```
@@ -183,11 +164,7 @@ corn-leaf-desease-project/
 
 ## Estado del Proyecto
 
-- [x] Documentación de 5 datasets consolidados
-- [x] Página de inicio con branding profesional
-- [x] Componentes Vue interactivos (carrusel, hero logo)
-- [x] Sistema de temas con glassmorphism (claro/oscuro)
-- [x] Soporte de ecuaciones LaTeX vía MathJax
+- [x] Documentación de datasets consolidados
 - [ ] Análisis exploratorio de datos (EDA)
 - [ ] Pipeline de preparación de datos
 - [ ] Entrenamiento y evaluación del modelo
