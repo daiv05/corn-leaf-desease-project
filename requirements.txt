@@ -1,0 +1,3 @@
+fiftyone==1.16.0
+fiftyone_brain==0.21.6
+fiftyone_db==1.4.1
