@@ -79,6 +79,8 @@ maize-in-field-dataset/
 
 ## Common Rust (CR) | Puccinia sorghi
 
+Todas las imágenes presentes fueron tomadas en entornos reales. Se movieron a /clean/common_rust/real para el dataset limpio.
+
 ## Gray Leaf Spot (GLS) | Cercospora zeae-maydis
 
 ## Northern Corn Leaf Blight (NCLB) | Exserohilum turcicum
