@@ -77,6 +77,10 @@ maize-in-field-dataset/
 
 `scripts/sort_maize_by_disease.py` — lee `Database.csv`, determina la carpeta destino de cada imagen y la mueve. Soporta `--dry-run` para verificar sin ejecutar cambios.
 
-## Creación de versión limpia
+## Common Rust (CR) | Puccinia sorghi
 
-A
+## Gray Leaf Spot (GLS) | Cercospora zeae-maydis
+
+## Northern Corn Leaf Blight (NCLB) | Exserohilum turcicum
+
+## Healthy | Sana
