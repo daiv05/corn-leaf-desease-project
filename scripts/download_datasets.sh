@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-RAW_DIR="/mnt/volume-nbg1-1/data/corn-leaf-diseases/raw"
+RAW_DIR="/mnt/datasets/data/corn-leaf-diseases/raw"
 LOG_PREFIX="[download]"
 
 # Known datasets. Add new entries as needed.
