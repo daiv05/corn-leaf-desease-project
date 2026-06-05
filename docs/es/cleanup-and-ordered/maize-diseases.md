@@ -1,4 +1,4 @@
-# Limpieza y ordenado: maize-diseases
+# maize-diseases
 
 ## Common Rust (CR) | Puccinia sorghi
 

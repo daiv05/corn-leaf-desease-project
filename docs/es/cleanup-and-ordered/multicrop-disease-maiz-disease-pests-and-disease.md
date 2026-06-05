@@ -1,4 +1,4 @@
-# Limpieza y ordenado: multicrop-disease-maiz-disease-pests-and-disease
+# multicrop-disease-maiz-disease-pests-and-disease
 
 ## Common Rust (CR) | Puccinia sorghi
 

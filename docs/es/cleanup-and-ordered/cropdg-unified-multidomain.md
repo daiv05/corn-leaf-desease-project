@@ -1,4 +1,4 @@
-# Limpieza y ordenado: cropdg-unified-multidomain
+# cropdg-unified-multidomain
 
 ## Common Rust (CR) | Puccinia sorghi
 

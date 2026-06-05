@@ -80,7 +80,7 @@ Super_Image_Dataset_of_Maize_Beans_and_Tomatoes_v2/
 - Existen clases que no están presentes en otros datasets de este proyecto.
 - Los tamaños de las imágenes varían, desde 256x256 píxeles hasta 4000x4000 píxeles.
 
-::: warning Maize Rust Disease — aporte marginal a Roya común
+::: warning Maize Rust Disease - aporte marginal a Roya común
 **"Maize Rust Disease" tiene solo 99 imágenes**, siendo la clase más pequeña de maíz en este dataset y la única fuente africana de Roya de campo real para el proyecto. Representa aproximadamente el **25% del total de imágenes de campo real de Roya común** (~399 en todo el proyecto). No es suficiente por sí sola para equilibrar esta clase; debe combinarse con data augmentation sobre estas y las ~300 del dataset de Sudáfrica.
 :::
 
