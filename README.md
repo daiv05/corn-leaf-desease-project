@@ -1,8 +1,8 @@
-# DoctorMaiz — Detección de Enfermedades Foliares en Cultivos de Maíz
+# DoctorMaiz - Detección de Enfermedades Foliares en Cultivos de Maíz
 
 > **Clasificación mediante Deep Learning en Dispositivos Móviles (Edge AI Offline)**
 
-Proyecto académico de la **Universidad de El Salvador** — Facultad de Ingeniería y Arquitectura  
+Proyecto académico de la **Universidad de El Salvador** - Facultad de Ingeniería y Arquitectura  
 Especialización en Machine Learning · Ciclo I 2026 · Grupo 02  
 Docente: Ing. Bladimir Díaz Campos
 
@@ -21,7 +21,7 @@ DoctorMaiz es un sistema de clasificación de enfermedades foliares en cultivos 
 
 ### Solución
 
-Una aplicación móvil que, dada una fotografía de hoja de maíz, identifica la enfermedad presente y orienta al agricultor sobre el tratamiento adecuado — sin necesidad de conexión a internet.
+Una aplicación móvil que, dada una fotografía de hoja de maíz, identifica la enfermedad presente y orienta al agricultor sobre el tratamiento adecuado - sin necesidad de conexión a internet.
 
 ---
 
@@ -32,7 +32,7 @@ Una aplicación móvil que, dada una fotografía de hoja de maíz, identifica la
 | Roya común *(Common Rust)* | *Puccinia sorghi* | Pústulas anaranjadas en ambas caras | ~1 591 | ~399 ⚠️ |
 | Tizón foliar del norte *(NCLB)* | *Exserohilum turcicum* | Lesiones alargadas grisáceas | ~6 760 | ~5 775 |
 | Mancha gris *(GLS)* | *Cercospora zeae-maydis* | Lesiones rectangulares grises | ~5 950 | ~5 437 |
-| Hoja sana *(Healthy)* | — | Sin síntomas visibles | ~4 828 | ~3 666 |
+| Hoja sana *(Healthy)* | - | Sin síntomas visibles | ~4 828 | ~3 666 |
 
 > **Nota crítica**: Roya común cuenta con apenas ~399 imágenes de campo real, 14× menos que NCLB. Esta clase requiere data augmentation prioritaria.
 
@@ -85,12 +85,12 @@ Se aplicará un ratio equivalente (×17) a las 399 imágenes de campo de Roya co
 
 El proyecto sigue el marco **CRISP-DM iterativo**:
 
-1. **Comprensión del negocio** — Definición del problema agrícola y restricciones de despliegue
-2. **Comprensión de datos** — Consolidación y auditoría de 5 fuentes públicas
-3. **Preparación** — Limpieza, estandarización (224×224 px), deduplicación, augmentation
-4. **Modelado** — Fine-tuning de MobileNetV3 (baseline V2 y EfficientNet-B0)
-5. **Evaluación** — Macro F1 ≥ 0.85 en conjunto independiente de imágenes de campo real
-6. **Despliegue** — PWA offline con TFLite Int8 + sincronización opcional
+1. **Comprensión del negocio** - Definición del problema agrícola y restricciones de despliegue
+2. **Comprensión de datos** - Consolidación y auditoría de 5 fuentes públicas
+3. **Preparación** - Limpieza, estandarización (224×224 px), deduplicación, augmentation
+4. **Modelado** - Fine-tuning de MobileNetV3 (baseline V2 y EfficientNet-B0)
+5. **Evaluación** - Macro F1 ≥ 0.85 en conjunto independiente de imágenes de campo real
+6. **Despliegue** - PWA offline con TFLite Int8 + sincronización opcional
 
 ---
 

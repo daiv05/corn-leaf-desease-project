@@ -1,4 +1,4 @@
-# Limpieza y ordenado: maize-beans-tomatoes-africa
+# maize-beans-tomatoes-africa
 
 ## Common Rust (CR) | Puccinia sorghi
 

@@ -1,4 +1,4 @@
-# Limpieza y ordenado: maize-in-field-dataset
+# maize-in-field-dataset
 
 ## Reorganización por enfermedad
 
@@ -28,9 +28,9 @@ Cada fila puede tener **una o más etiquetas activas** (valor `1`).
 Antes de reorganizar se verificaron los siguientes puntos:
 
 - **Correspondencia CSV ↔ disco**: las 2355 entradas del CSV coinciden exactamente con los 2355 archivos en `leaf_images/`. Sin entradas faltantes ni archivos huérfanos.
-- **Duplicados en CSV**: ninguno — cada nombre de archivo aparece exactamente una vez.
-- **Colisiones de destino**: ninguna — no existen dos imágenes con el mismo nombre que vayan a la misma carpeta destino.
-- **Nombres con espacios**: 254 imágenes contienen espacios en su nombre (ej. `2012_03_IMG_6386_maize_diverse JM-C-Ac.JPG`). No representan un problema — se manejan correctamente con `pathlib.Path`.
+- **Duplicados en CSV**: ninguno - cada nombre de archivo aparece exactamente una vez.
+- **Colisiones de destino**: ninguna - no existen dos imágenes con el mismo nombre que vayan a la misma carpeta destino.
+- **Nombres con espacios**: 254 imágenes contienen espacios en su nombre (ej. `2012_03_IMG_6386_maize_diverse JM-C-Ac.JPG`). No representan un problema - se manejan correctamente con `pathlib.Path`.
 
 ### Criterio de organización
 
@@ -75,7 +75,7 @@ maize-in-field-dataset/
 
 ### Script utilizado
 
-`scripts/sort_maize_by_disease.py` — lee `Database.csv`, determina la carpeta destino de cada imagen y la mueve. Soporta `--dry-run` para verificar sin ejecutar cambios.
+`scripts/sort_maize_by_disease.py` - lee `Database.csv`, determina la carpeta destino de cada imagen y la mueve. Soporta `--dry-run` para verificar sin ejecutar cambios.
 
 ## Common Rust (CR) | Puccinia sorghi
 

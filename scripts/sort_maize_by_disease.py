@@ -133,7 +133,7 @@ def main() -> None:
     print(f"Fuente:  {SRC_DIR}")
     print(f"Destino: {DST_ROOT}/<enfermedad>/")
     if args.dry_run:
-        print("MODO DRY-RUN — no se moverá nada\n")
+        print("MODO DRY-RUN - no se moverá nada\n")
     else:
         print()
 

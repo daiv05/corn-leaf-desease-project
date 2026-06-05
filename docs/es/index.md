@@ -34,9 +34,9 @@ features:
 
 | | |
 |---|---|
-| **Institución** | Universidad de El Salvador — Facultad de Ingeniería y Arquitectura |
-| **Programa** | Escuela de Ingeniería de Sistemas Informáticos — Curso de Especialización en Machine Learning |
-| **Ciclo** | I 2026 — Grupo 02 |
+| **Institución** | Universidad de El Salvador - Facultad de Ingeniería y Arquitectura |
+| **Programa** | Escuela de Ingeniería de Sistemas Informáticos - Curso de Especialización en Machine Learning |
+| **Ciclo** | I 2026 - Grupo 02 |
 | **Docente** | Ing. Bladimir Díaz Campos |
 
 ### Equipo
@@ -49,7 +49,7 @@ features:
 
 ### Contexto y Problema
 
-La agricultura representa el 5.6% del PIB de El Salvador y es el sustento de más de 2 millones de personas rurales. El 82.1% de los productores son pequeños agricultores, muchos operando a nivel de subsistencia. El maíz —principal cultivo— es vulnerable a enfermedades foliares que, sin detección temprana, pueden destruir hasta el 70% de la cosecha.
+La agricultura representa el 5.6% del PIB de El Salvador y es el sustento de más de 2 millones de personas rurales. El 82.1% de los productores son pequeños agricultores, muchos operando a nivel de subsistencia. El maíz -principal cultivo- es vulnerable a enfermedades foliares que, sin detección temprana, pueden destruir hasta el 70% de la cosecha.
 
 En zonas rurales el acceso a asistencia técnica es limitado. Los diagnósticos dependen de la experiencia empírica del agricultor, lo que genera detecciones tardías y pérdidas económicas significativas. En 2023 la cosecha cayó un tercio respecto a 2021.
 
@@ -60,7 +60,7 @@ En zonas rurales el acceso a asistencia técnica es limitado. Los diagnósticos 
 | **Roya común** | Common Rust | *Puccinia sorghi* | Pústulas anaranjadas dispersas en ambas caras de la hoja | ~1 591 | ~399 ⚠️ |
 | **Tizón foliar del norte (NCLB)** | Northern Corn Leaf Blight | *Exserohilum turcicum* | Lesiones alargadas grisáceas o marrones con bordes difusos | ~6 760 | ~5 775 |
 | **Mancha gris de la hoja (GLS)** | Gray Leaf Spot | *Cercospora zeae-maydis* | Lesiones rectangulares grises o marrones delimitadas por nervaduras | ~5 950 | ~5 437 |
-| **Hoja sana** | Healthy | — | Sin síntomas foliares de enfermedad | ~4 828 | ~3 666 |
+| **Hoja sana** | Healthy | - | Sin síntomas foliares de enfermedad | ~4 828 | ~3 666 |
 
 ::: warning Desbalance crítico en Roya común
 La clase **Roya común** dispone de solo **~399 imágenes de campo real** en todos los datasets evaluados (300 en Maize in Field + ~99 en el dataset de África), frente a ~5 775 de NCLB y ~5 437 de GLS. El objetivo es alcanzar **≥ 2 000 imágenes de campo real por clase** antes de la adaptación de dominio; Roya común es la única que no lo cumple y requiere data augmentation prioritaria sobre sus originales de campo.
@@ -70,12 +70,12 @@ La clase **Roya común** dispone de solo **~399 imágenes de campo real** en tod
 
 El proyecto sigue **CRISP-DM** en fases iterativas:
 
-1. **Comprensión del negocio** — análisis del impacto en el sector agrícola salvadoreño
-2. **Comprensión de los datos** — consolidación multi-fuente de datasets públicos; ver [Recopilación de datasets](/es/datasets/)
-3. **Preparación de los datos** — limpieza, estandarización a 224 × 224 px y data augmentation
-4. **Modelado** — fine-tuning de MobileNetV3 preentrenado en ImageNet; comparación con MobileNetV2 y EfficientNet-B0
-5. **Evaluación** — Macro F1 ≥ 0.85 sobre conjunto de prueba independiente compuesto por imágenes de campo
-6. **Despliegue** — PWA con inferencia TFLite offline + módulo opcional de sincronización
+1. **Comprensión del negocio** - análisis del impacto en el sector agrícola salvadoreño
+2. **Comprensión de los datos** - consolidación multi-fuente de datasets públicos; ver [Recopilación de datasets](/es/datasets/)
+3. **Preparación de los datos** - limpieza, estandarización a 224 × 224 px y data augmentation
+4. **Modelado** - fine-tuning de MobileNetV3 preentrenado en ImageNet; comparación con MobileNetV2 y EfficientNet-B0
+5. **Evaluación** - Macro F1 ≥ 0.85 sobre conjunto de prueba independiente compuesto por imágenes de campo
+6. **Despliegue** - PWA con inferencia TFLite offline + módulo opcional de sincronización
 
 ### Arquitectura del Sistema
 
@@ -84,7 +84,7 @@ Captura / Galería
       ↓
 Preprocesamiento (224×224, normalización)
       ↓
-Inferencia CNN — TensorFlow Lite (Int8)
+Inferencia CNN - TensorFlow Lite (Int8)
       ↓
 Clase predicha + nivel de confianza
       ↓ (cuando hay conexión)
