@@ -19,8 +19,8 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).parents[2] / ".env")
 
-CLEAN_DIR = Path(__file__).parents[2] / "data" / "clean"
-DATASET_ROOT = os.getenv("DATASET_ROOT", "")
+DATASET_ROOT = Path(os.getenv("DATASET_ROOT", ""))
+CLEAN_DIR = DATASET_ROOT / "clean"
 ANALYSIS_DIR = Path(__file__).parent / "results"
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp"}
@@ -33,6 +33,8 @@ PHASH_THRESHOLD = 0
 # ── helpers ───────────────────────────────────────────────────────────────────
 
 def get_disease_dirs() -> list[Path]:
+    if not CLEAN_DIR.exists():
+        raise SystemExit(f"No se encontró la carpeta clean en {DATASET_ROOT}. Verifica DATASET_ROOT en .env")
     return sorted([d for d in CLEAN_DIR.iterdir() if d.is_dir()])
 
 
@@ -45,6 +47,8 @@ def count_images(disease_dir: Path) -> int:
 
 def choose_disease() -> Path:
     dirs = get_disease_dirs()
+    if not dirs:
+        raise SystemExit(f"No se encontraron carpetas en {CLEAN_DIR}.")
     print("\nEnfermedades disponibles:\n")
     for i, d in enumerate(dirs, 1):
         total = count_images(d)
