@@ -90,6 +90,8 @@ export default defineConfig({
     math: true,
   },
 
+  lastUpdated: true,
+
   locales: {
     es: {
       label: "Español",
