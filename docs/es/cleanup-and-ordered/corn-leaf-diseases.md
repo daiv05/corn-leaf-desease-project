@@ -1,4 +1,4 @@
-# Limpieza y ordenado: corn-leaf-diseases
+# corn-leaf-diseases
 
 ## Common Rust (CR) | Puccinia sorghi
 

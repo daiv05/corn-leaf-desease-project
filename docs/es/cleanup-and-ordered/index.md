@@ -40,7 +40,7 @@ Se exploran los siguientes datasets, y se definen identificadores para cada uno,
 
 4. `Hoja sana` | `Healthy` | `-` |
 
-## Flujo de trabajo implementadp
+## Flujo de trabajo implementado
 
 1. Clasificar por entorno en `/data/clean`:
     1. `lab`: fotos en entornos controlados (fondo negro/blanco/gris, estudio).

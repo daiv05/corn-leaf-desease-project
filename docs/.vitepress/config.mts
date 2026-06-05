@@ -49,7 +49,7 @@ const esDatasetSidebar = [
         link: "/es/cleanup-and-ordered/maize-beans-tomatoes-africa"
       },
       {
-        text: "Multicrop disease (maiz pests and disease)",
+        text: "Multicrop disease maiz pests and disease",
         link: "/es/cleanup-and-ordered/multicrop-disease-maiz-disease-pests-and-disease"
       }
     ],
