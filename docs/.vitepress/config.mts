@@ -129,6 +129,26 @@ export default defineConfig({
           "/es/": esDatasetSidebar,
           "/es/datasets/": esDatasetSidebar,
         },
+        search: {
+          provider: "local",
+          options: {
+            translations: {
+              button: {
+                buttonText: "Buscar",
+                buttonAriaLabel: "Buscar",
+              },
+              modal: {
+                noResultsText: "No se encontraron resultados",
+                resetButtonTitle: "Limpiar búsqueda",
+                footer: {
+                  selectText: "Seleccionar",
+                  navigateText: "Navegar",
+                  closeText: "Cerrar",
+                },
+              },
+            },
+          },
+        },
         outlineTitle: "En esta página",
         docFooter: { prev: "Anterior", next: "Siguiente" },
         darkModeSwitchLabel: "Apariencia",
@@ -136,6 +156,14 @@ export default defineConfig({
         returnToTopLabel: "Volver arriba",
         langMenuLabel: "Idioma",
         logo: "/logo.svg",
+        lastUpdated: {
+          text: "Última actualización",
+          formatOptions: {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          },
+        },
       },
     },
     // en: {
