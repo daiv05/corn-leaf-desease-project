@@ -9,6 +9,6 @@ No se incluye en la versión final del dataset, pero se mantiene en esta etapa d
 ## Gray Leaf Spot (GLS) | Cercospora zeae-maydis
 
 ## Northern Corn Leaf Blight (NCLB) | Exserohilum turcicum
-
+Se reunieron un total de 4223 imagenes en un entorno de campo abierto. El lugar donde fueron rescatadas es en maize-beans-and-tomatoes-image-dataset-for-africa/Super_Image_Dataset_of_Maize_Beans_and_Tomatoes/Super_Image_Dataset_of_Maize_Beans_and_Tomatoes/train_data
 ## Healthy | Sana
 
