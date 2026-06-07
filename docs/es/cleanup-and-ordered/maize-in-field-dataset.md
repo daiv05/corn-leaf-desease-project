@@ -84,5 +84,6 @@ Todas las imágenes presentes fueron tomadas en entornos reales. Se movieron a /
 ## Gray Leaf Spot (GLS) | Cercospora zeae-maydis
 
 ## Northern Corn Leaf Blight (NCLB) | Exserohilum turcicum
+Se recopilaron alrededor de 140 imágenes con esta enfermedad. Todas fueron tomadas en entornos reales y se movieron a /clean/northern_corn_leaf_blight/real para el dataset limpio. No se encontraron imágenes duplicadas.
 
 ## Healthy | Sana

@@ -1,0 +1,64 @@
+"""
+Copia las imagenes desde:
+  data/raw/maize-diseases/v1.1/Gray Leaf Spot
+hacia:
+  data/clean/gray_leaf_spot/real
+sin cambiar el nombre de archivo.
+"""
+
+import os
+import shutil
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+SOURCE_DIR = os.path.join(
+    BASE_DIR,
+    "data", "raw", "maize-in-field-dataset", "GLS"
+)
+DEST_DIR = os.path.join(
+    BASE_DIR,
+    "data", "clean", "gray_leaf_spot", "real", "temporal"
+)
+
+
+def copy_images(source_dir: str, dest_dir: str) -> None:
+    source_dir = os.path.abspath(source_dir)
+    dest_dir = os.path.abspath(dest_dir)
+
+    if not os.path.isdir(source_dir):
+        print(f"Directorio no encontrado: {source_dir}")
+        return
+
+    os.makedirs(dest_dir, exist_ok=True)
+
+    entries = [
+        f for f in os.listdir(source_dir)
+        if os.path.isfile(os.path.join(source_dir, f))
+    ]
+
+    if not entries:
+        print("No se encontraron archivos en el directorio fuente.")
+        return
+
+    copied = 0
+    skipped = 0
+
+    for filename in entries:
+        src = os.path.join(source_dir, filename)
+        dst = os.path.join(dest_dir, filename)
+
+        if os.path.exists(dst):
+            skipped += 1
+            continue
+
+        shutil.copy2(src, dst)
+        copied += 1
+
+    print(f"Copiadas: {copied} imagenes")
+    print(f"Destino: {dest_dir}")
+    if skipped:
+        print(f"Omitidas (ya existian en destino): {skipped}")
+
+
+if __name__ == "__main__":
+    copy_images(SOURCE_DIR, DEST_DIR)
