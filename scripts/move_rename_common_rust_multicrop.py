@@ -1,8 +1,8 @@
 """
 Renombra y mueve las imágenes desde:
-  data/clean/common-rust/lab/multicrop/
+  data/clean/common_rust/lab/multicrop/
 hacia:
-  data/clean/common-rust/lab/
+  data/clean/common_rust/lab/
 con el patrón:
   common_rust_multi_desease_lab_<número_aleatorio_único>.<ext>
 """
@@ -13,11 +13,11 @@ import shutil
 
 SOURCE_DIR = os.path.join(
     os.path.dirname(__file__),
-    "..", "data", "clean", "common-rust", "lab", "multicrop"
+    "..", "data", "clean", "common_rust", "lab", "multicrop"
 )
 DEST_DIR = os.path.join(
     os.path.dirname(__file__),
-    "..", "data", "clean", "common-rust", "lab"
+    "..", "data", "clean", "common_rust", "lab"
 )
 
 PREFIX = "common_rust_multi_desease_lab_"
