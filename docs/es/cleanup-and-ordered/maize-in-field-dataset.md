@@ -82,7 +82,9 @@ maize-in-field-dataset/
 Todas las imágenes presentes fueron tomadas en entornos reales. Se movieron a /clean/common_rust/real para el dataset limpio.
 
 ## Gray Leaf Spot (GLS) | Cercospora zeae-maydis
+Las imagenes con esta enfermedad fueron tomadas 607 en entornos reales. Se movieron a /clean/gray_leaf_spot/real para el dataset limpio. De 629 imágenes, se encontraron 22 duplicados que fueron eliminados.
 
 ## Northern Corn Leaf Blight (NCLB) | Exserohilum turcicum
+Se recopilaron alrededor de 140 imágenes con esta enfermedad. Todas fueron tomadas en entornos reales y se movieron a /clean/northern_corn_leaf_blight/real para el dataset limpio. No se encontraron imágenes duplicadas.
 
 ## Healthy | Sana
