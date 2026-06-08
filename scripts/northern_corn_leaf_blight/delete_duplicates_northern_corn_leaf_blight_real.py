@@ -13,9 +13,11 @@ try:
 except Exception:
     xxhash = None
 
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
 SOURCE_DIR = os.path.join(
-    os.path.dirname(__file__),
-    "..", "data", "clean", "northern_corn_leaf_blight", "real"
+    BASE_DIR,
+    "data", "clean", "northern_corn_leaf_blight", "real", "temporal"
 )
 
 CHUNK_SIZE = 1024 * 1024  # 1 MB

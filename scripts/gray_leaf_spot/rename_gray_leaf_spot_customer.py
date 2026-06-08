@@ -1,17 +1,19 @@
 """
 Renombra las imagenes en:
-    data/clean/northern_corn_leaf_blight/real
+    data/clean/gray_leaf_spot/real
 al patron:
-    northern_corn_leaf_blight_<origen>_<tipo>_<correlativo>.<ext>
+    gray_leaf_spot_<origen>_<tipo>_<correlativo>.<ext>
 con correlativo iniciando en 1.
 """
 
 import os
 import random
 
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
 SOURCE_DIR = os.path.join(
-    os.path.dirname(__file__),
-    "..", "data", "clean", "northern_corn_leaf_blight", "real", "temporal"
+    BASE_DIR,
+    "data", "clean", "gray_leaf_spot", "real", "temporal"
 )
 
 START_INDEX = 1
@@ -106,6 +108,6 @@ if __name__ == "__main__":
     source_abbr = ask_source_abbr()
     image_type = ask_image_type()
     order_mode = ask_order_mode()
-    prefix = f"northern_corn_leaf_blight_{source_abbr}_{image_type}_"
+    prefix = f"gray_leaf_spot_{source_abbr}_{image_type}_"
 
     rename_images(SOURCE_DIR, prefix, order_mode)
