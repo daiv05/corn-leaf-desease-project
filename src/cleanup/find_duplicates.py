@@ -105,6 +105,41 @@ def collect_images(disease_dir: Path) -> dict[str, Path]:
     }
 
 
+def deduplicate_groups(raw: dict[str, list[str]]) -> dict[str, list[str]]:
+    """
+    imagededup reporta cada par de forma simétrica: si A duplica B,
+    también reporta B duplica A.  Esto colapsa esos grupos en uno solo
+    eligiendo como 'original' el representante con menor ruta (reproducible)
+    y listando el resto como duplicados a eliminar.
+
+    Garantía: cada imagen aparece en exactamente un grupo — como original
+    o como duplicado — nunca en ambos.
+    """
+    visited: set[str] = set()
+    result: dict[str, list[str]] = {}
+
+    for node, neighbors in raw.items():
+        if node in visited or not neighbors:
+            continue
+        # BFS para reunir todos los miembros del componente conectado
+        component: set[str] = set()
+        queue = [node]
+        while queue:
+            current = queue.pop()
+            if current in component:
+                continue
+            component.add(current)
+            for nb in raw.get(current, []):
+                if nb not in component:
+                    queue.append(nb)
+
+        visited |= component
+        members = sorted(component)   # orden determinista
+        result[members[0]] = members[1:]
+
+    return result
+
+
 def find_duplicates(disease_dir: Path) -> tuple[dict[str, list[str]], dict[str, Path]]:
     """
     Usa PHash con rutas absolutas directamente — sin directorio temporal.
@@ -129,7 +164,7 @@ def find_duplicates(disease_dir: Path) -> tuple[dict[str, list[str]], dict[str, 
         scores=False,
     )
 
-    duplicates: dict[str, list[str]] = {k: v for k, v in raw.items() if v}
+    duplicates = deduplicate_groups({k: v for k, v in raw.items() if v})
     return duplicates, image_map
 
 
@@ -160,11 +195,12 @@ def _encode_all(hasher, image_map: dict[str, Path]) -> dict[str, str]:
 def report(duplicates: dict[str, list[str]]) -> None:
     total_dupes = sum(len(v) for v in duplicates.values())
     print(f"\nGrupos con duplicados: {len(duplicates)}")
-    print(f"Archivos duplicados a eliminar: {total_dupes}\n")
+    print(f"Imágenes que se conservan (una por grupo): {len(duplicates)}")
+    print(f"Imágenes que se eliminarán: {total_dupes}\n")
     for original, dupes in duplicates.items():
-        print(f"  {Path(original).name}  ({Path(original).parent.name})")
+        print(f"  conservar: {Path(original).name}  ({Path(original).parent.name})")
         for d in dupes:
-            print(f"    └─ {Path(d).name}  ({Path(d).parent.name})")
+            print(f"    └─ eliminar: {Path(d).name}  ({Path(d).parent.name})")
 
 
 def save_csv(
@@ -208,21 +244,30 @@ def delete_duplicates_from_csv(disease_dir: Path) -> None:
         return
 
     print(f"CSV encontrado: {csv_file.name}")
-    dupe_paths: list[Path] = []
+    raw: dict[str, list[str]] = {}
 
     with open(csv_file, newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
             paths = json.loads(row["duplicate_paths"])
-            dupe_paths.extend(Path(p) for p in paths if p)
+            if paths:
+                raw[row["original_path"]] = paths
 
-    if not dupe_paths:
+    if not raw:
         print("El CSV no contiene duplicados registrados.")
         return
 
-    print(f"\nDuplicados en CSV: {len(dupe_paths)} archivos")
-    for p in dupe_paths:
-        print(f"  {p.name}  ({p.parent.name})")
+    # Re-colapsa los pares simétricos que imagededup reporta por duplicado
+    duplicates = deduplicate_groups(raw)
+    dupe_paths = [Path(p) for dupes in duplicates.values() for p in dupes]
+
+    print(f"\nGrupos en CSV: {len(duplicates)}")
+    print(f"Imágenes que se conservan: {len(duplicates)}")
+    print(f"Imágenes que se eliminarán: {len(dupe_paths)}")
+    for original, dupes in duplicates.items():
+        print(f"  conservar: {Path(original).name}  ({Path(original).parent.name})")
+        for d in dupes:
+            print(f"    └─ eliminar: {Path(d).name}  ({Path(d).parent.name})")
 
     delete_paths(dupe_paths)
 
