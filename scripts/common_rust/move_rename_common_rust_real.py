@@ -1,10 +1,10 @@
 """
 Renombra y mueve las imágenes desde:
-  data/clean/common-rust/real/CR/
+  data/clean/common_rust/real/CR/
 hacia:
-  data/clean/common-rust/real/
+  data/clean/common_rust/real/
 con el patrón:
-  common_rust_maize_field_<número_aleatorio_único>.<ext>
+  common_rust_maize_field_real_<número_aleatorio_único>.<ext>
 """
 
 import os
@@ -13,11 +13,11 @@ import shutil
 
 SOURCE_DIR = os.path.join(
     os.path.dirname(__file__),
-    "..", "data", "clean", "common-rust", "real", "CR"
+    "..", "data", "clean", "common_rust", "real", "CR"
 )
 DEST_DIR = os.path.join(
     os.path.dirname(__file__),
-    "..", "data", "clean", "common-rust", "real"
+    "..", "data", "clean", "common_rust", "real"
 )
 
 PREFIX = "common_rust_maize_field_real_"

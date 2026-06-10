@@ -1,35 +1,44 @@
 """
-Renombra las imágenes en:
-  data/clean/common-rust/lab/Common Rust/
-al patrón:
-  common_rust_maize_desease_<número_aleatorio_único>.<ext>
+Renombra y mueve las imágenes desde:
+  data/clean/common_rust/lab/multicrop/
+hacia:
+  data/clean/common_rust/lab/
+con el patrón:
+  common_rust_multi_desease_lab_<número_aleatorio_único>.<ext>
 """
 
 import os
 import random
+import shutil
 
 SOURCE_DIR = os.path.join(
     os.path.dirname(__file__),
-    "..", "data", "clean", "common-rust", "lab", "Common Rust"
+    "..", "data", "clean", "common_rust", "lab", "multicrop"
+)
+DEST_DIR = os.path.join(
+    os.path.dirname(__file__),
+    "..", "data", "clean", "common_rust", "lab"
 )
 
-PREFIX = "common_rust_maize_desease_lab_"
-RANDOM_DIGITS = 8  # longitud del número aleatorio
+PREFIX = "common_rust_multi_desease_lab_"
+RANDOM_DIGITS = 8
 
 
-def rename_images(source_dir: str) -> None:
+def move_and_rename(source_dir: str, dest_dir: str) -> None:
     source_dir = os.path.abspath(source_dir)
+    dest_dir = os.path.abspath(dest_dir)
+
     entries = [
         f for f in os.listdir(source_dir)
         if os.path.isfile(os.path.join(source_dir, f))
     ]
 
     if not entries:
-        print("No se encontraron archivos en el directorio.")
+        print("No se encontraron archivos en el directorio fuente.")
         return
 
     used_numbers: set[int] = set()
-    renamed = 0
+    moved = 0
     skipped = 0
 
     for filename in entries:
@@ -38,7 +47,6 @@ def rename_images(source_dir: str) -> None:
             skipped += 1
             continue
 
-        # Genera un número aleatorio único
         while True:
             number = random.randint(10 ** (RANDOM_DIGITS - 1), 10**RANDOM_DIGITS - 1)
             if number not in used_numbers:
@@ -47,15 +55,16 @@ def rename_images(source_dir: str) -> None:
 
         new_name = f"{PREFIX}{number}{ext}"
         src = os.path.join(source_dir, filename)
-        dst = os.path.join(source_dir, new_name)
+        dst = os.path.join(dest_dir, new_name)
 
-        os.rename(src, dst)
-        renamed += 1
+        shutil.move(src, dst)
+        moved += 1
 
-    print(f"Renombradas: {renamed} imágenes")
+    print(f"Movidas y renombradas: {moved} imágenes")
+    print(f"Destino: {dest_dir}")
     if skipped:
         print(f"Omitidas (sin extensión): {skipped}")
 
 
 if __name__ == "__main__":
-    rename_images(SOURCE_DIR)
+    move_and_rename(SOURCE_DIR, DEST_DIR)
