@@ -71,4 +71,13 @@ Se exploran los siguientes datasets, y se definen identificadores para cada uno,
 
 ## Resultados obtenidos
 
-(Pendiente de completar tras la limpieza y ordenado de los datasets)
+Tras aplicar las rutinas automatizadas de deduplicación y filtros de exclusión por calidad, el volumen neto de imágenes útiles extraídas e integradas en `data/clean/` es el siguiente:
+
+* **Maize Diseases 1.1 (`maize_desease`):** ~5,326 imágenes.
+* **Maize Africa v1.2 (`maize_africa`):** 1,872 imágenes.
+* **CropDG (Solo subcarpeta PV) (`cropdg`):** ~1,162 imágenes.
+* **Corn Leaf Roboflow:** ~1,000 imágenes.
+* **Maize In-Field Dataset (`maize_field`):** 877 imágenes netas (tras descartar multietiquetas y 22 duplicados).
+* **Maize Africa v1:** 468 imágenes.
+* **Maize Nutrient Deficiency:** ~72 imágenes.
+* **Maize Diseases 1.0:** 0 imágenes *(Descartado por ser idéntico y absorbido por la v1.1)*.
