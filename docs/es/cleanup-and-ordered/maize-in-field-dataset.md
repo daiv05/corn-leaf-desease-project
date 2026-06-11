@@ -88,3 +88,4 @@ Las imagenes con esta enfermedad fueron tomadas 607 en entornos reales. Se movie
 Se recopilaron alrededor de 140 imágenes con esta enfermedad. Todas fueron tomadas en entornos reales y se movieron a /clean/northern_corn_leaf_blight/real para el dataset limpio. No se encontraron imágenes duplicadas.
 
 ## Healthy | Sana
+Las 232 imágenes de la carpeta `NoFoliarSymptoms` fueron validadas y enviadas a `/data/clean/healthy/real`.
