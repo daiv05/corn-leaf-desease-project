@@ -15,8 +15,8 @@ hero:
 
 features:
   - icon: "🌽"
-    title: "4 Clases Foliares"
-    details: "Clasificación de roya común, tizón foliar del norte, mancha gris de la hoja y hoja sana mediante CNN con transferencia de aprendizaje."
+    title: "9 Clases Foliares"
+    details: "Clasificación de 5 enfermedades/plagas (roya, NCLB, GLS, cogollero, sana) y 3 deficiencias nutricionales (N, P, K) mediante CNN con transferencia de aprendizaje."
   - icon: "📱"
     title: "Edge AI Offline"
     details: "Modelo TensorFlow Lite con cuantización Int8, objetivo ≤ 20 MB y latencia ≤ 300 ms en CPU Snapdragon serie 6xx o equivalente."
@@ -55,15 +55,26 @@ En zonas rurales el acceso a asistencia técnica es limitado. Los diagnósticos 
 
 ### Clases Objetivo
 
-| Clase | Nombre en inglés | Patógeno | Síntoma visual | Orig. únicos | Campo real |
-|---|---|---|---|---|---|
-| **Roya común** | Common Rust | *Puccinia sorghi* | Pústulas anaranjadas dispersas en ambas caras de la hoja | ~1 591 | ~399 ⚠️ |
-| **Tizón foliar del norte (NCLB)** | Northern Corn Leaf Blight | *Exserohilum turcicum* | Lesiones alargadas grisáceas o marrones con bordes difusos | ~6 760 | ~5 775 |
-| **Mancha gris de la hoja (GLS)** | Gray Leaf Spot | *Cercospora zeae-maydis* | Lesiones rectangulares grises o marrones delimitadas por nervaduras | ~5 950 | ~5 437 |
-| **Hoja sana** | Healthy | - | Sin síntomas foliares de enfermedad | ~4 828 | ~3 666 |
+#### Enfermedades y plagas foliares
 
-::: warning Desbalance crítico en Roya común
-La clase **Roya común** dispone de solo **~399 imágenes de campo real** en todos los datasets evaluados (300 en Maize in Field + ~99 en el dataset de África), frente a ~5 775 de NCLB y ~5 437 de GLS. El objetivo es alcanzar **≥ 2 000 imágenes de campo real por clase** antes de la adaptación de dominio; Roya común es la única que no lo cumple y requiere data augmentation prioritaria sobre sus originales de campo.
+| Clase | Nombre en inglés | Patógeno/Agente | Síntoma visual | Campo real |
+|---|---|---|---|---|
+| **Roya común** | Common Rust | *Puccinia sorghi* | Pústulas anaranjadas dispersas en ambas caras de la hoja | ~399 ⚠️ |
+| **Tizón foliar del norte (NCLB)** | Northern Corn Leaf Blight | *Exserohilum turcicum* | Lesiones alargadas grisáceas o marrones con bordes difusos | ~6 067 |
+| **Mancha gris de la hoja (GLS)** | Gray Leaf Spot | *Cercospora zeae-maydis* | Lesiones rectangulares grises o marrones delimitadas por nervaduras | ~9 383 |
+| **Hoja sana** | Healthy | - | Sin síntomas foliares de enfermedad | ~4 285 |
+| **Gusano cogollero** | Fall Armyworm | *Spodoptera frugiperda* | Daño por masticación con excrementos en el cogollo y hojas | ~4 935 |
+
+#### Deficiencias nutricionales
+
+| Clase | Nombre en inglés | Síntoma visual | Campo real |
+|---|---|---|---|
+| **Deficiencia de nitrógeno** | Nitrogen Deficiency | Amarillamiento en "V" desde la punta de hojas inferiores | ~622 ⚠️ |
+| **Deficiencia de fósforo** | Phosphorus Deficiency | Bordes y puntas moradas/rojizas en hojas jóvenes | ~725 ⚠️ |
+| **Deficiencia de potasio** | Potassium Deficiency | Necrosis marginal en hojas más viejas | ~322 ⚠️ |
+
+::: warning Desbalance crítico en cuatro clases
+**Roya común** (~399 imgs campo), **Potasio** (~322), **Nitrógeno** (~622) y **Fósforo** (~725) no alcanzan el objetivo de ≥ 2 000 imágenes de campo real. Estas clases requieren data augmentation prioritaria antes de la etapa de adaptación de dominio.
 :::
 
 ### Metodología

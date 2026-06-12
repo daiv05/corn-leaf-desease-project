@@ -27,14 +27,25 @@ Una aplicación móvil que, dada una fotografía de hoja de maíz, identifica la
 
 ## Clases Objetivo
 
-| Clase | Patógeno | Síntomas | Imágenes únicas | Campo real |
-|---|---|---|---|---|
-| Roya común *(Common Rust)* | *Puccinia sorghi* | Pústulas anaranjadas en ambas caras | ~1 591 | ~399 ⚠️ |
-| Tizón foliar del norte *(NCLB)* | *Exserohilum turcicum* | Lesiones alargadas grisáceas | ~6 760 | ~5 775 |
-| Mancha gris *(GLS)* | *Cercospora zeae-maydis* | Lesiones rectangulares grises | ~5 950 | ~5 437 |
-| Hoja sana *(Healthy)* | - | Sin síntomas visibles | ~4 828 | ~3 666 |
+### Enfermedades y plagas foliares
 
-> **Nota crítica**: Roya común cuenta con apenas ~399 imágenes de campo real, 14× menos que NCLB. Esta clase requiere data augmentation prioritaria.
+| Clase | Patógeno/Agente | Síntomas | Campo real |
+|---|---|---|---|
+| Roya común *(Common Rust)* | *Puccinia sorghi* | Pústulas anaranjadas en ambas caras | ~399  |
+| Tizón foliar del norte *(NCLB)* | *Exserohilum turcicum* | Lesiones alargadas grisáceas | ~6 067 |
+| Mancha gris *(GLS)* | *Cercospora zeae-maydis* | Lesiones rectangulares grises | ~9 383 |
+| Hoja sana *(Healthy)* | - | Sin síntomas visibles | ~4 285 |
+| Gusano cogollero *(Fall Armyworm)* | *Spodoptera frugiperda* | Daño por masticación, excrementos en cogollo | ~4 935 |
+
+### Deficiencias nutricionales
+
+| Clase | Síntomas | Campo real |
+|---|---|---|
+| Deficiencia de nitrógeno *(Nitrogen)* | Amarillamiento en "V" desde puntas de hojas inferiores | ~622  |
+| Deficiencia de fósforo *(Phosphorus)* | Bordes y puntas moradas/rojizas en hojas jóvenes | ~725  |
+| Deficiencia de potasio *(Potassium)* | Necrosis marginal en hojas más viejas | ~322  |
+
+> **Nota crítica**: Roya común (~399), Potasio (~322), Nitrógeno (~622) y Fósforo (~725) no alcanzan el umbral de ≥ 2 000 imágenes de campo real. Estas cuatro clases requieren data augmentation prioritaria.
 
 ---
 
@@ -52,7 +63,7 @@ Una aplicación móvil que, dada una fotografía de hoja de maíz, identifica la
 
 ## Datasets
 
-Se consolidaron **5 fuentes de datos públicas** para construir el corpus de entrenamiento:
+Se consolidaron **8 fuentes de datos públicas** para construir el corpus de entrenamiento:
 
 | Dataset | Dominio | Imágenes (maíz) | Licencia |
 |---|---|---|---|
@@ -61,15 +72,22 @@ Se consolidaron **5 fuentes de datos públicas** para construir el corpus de ent
 | [Corn Leaf Diseases](docs/es/datasets/corn-leaf-diseases.md) | Lab augmentado (×17) | 52 360 | MIT |
 | [CropDG Unified Multidomain](docs/es/datasets/cropdg-unified-multidomain.md) | Multi-dominio | ~13 275 | CC BY-NC-SA 4.0 |
 | [Maize, Beans & Tomatoes Africa](docs/es/datasets/maize-beans-tomatoes-africa.md) | Campo real (África) | 23 286 | Apache 2.0 + CC |
+| [Multicrop Disease — Maize Pests and Disease](docs/es/datasets/multicrop-disease-maiz-disease-pests-and-disease.md) | Mixto | — | Desconocida |
+| [Maize Nutrient Deficiency](docs/es/datasets/maize-nutrient-deficiency.md) | Campo real (India) | 463 | CC BY 4.0 |
+| [Corn Leaf — Roboflow](docs/es/datasets/corn-leaf-roboflow.md) | Campo real | 3 943 | CC BY 4.0 |
 
-### Inventario Consolidado (Originales Únicos)
+### Inventario Consolidado — Campo Real
 
-| Clase | Lab original | Campo real | Total |
+| Clase | Campo real disponible | Objetivo | Estado |
 |---|---|---|---|
-| Roya común | ~1 192 | ~399 | **~1 591** |
-| NCLB | ~1 177 | ~5 775 | **~6 760** |
-| GLS | ~581 | ~5 437 | **~5 950** |
-| Sano | ~2 203 | ~3 666 | **~4 828** |
+| Roya común | ~399 | ≥ 2 000 | Requiere augmentation  |
+| NCLB | ~6 067 | ≥ 2 000 | Cubierto ✓ |
+| GLS | ~9 383 | ≥ 2 000 | Cubierto ✓ |
+| Sano | ~4 285 | ≥ 2 000 | Cubierto ✓ |
+| Cogollero | ~4 935 | ≥ 2 000 | Cubierto ✓ |
+| Nitrógeno | ~622 | ≥ 2 000 | Requiere augmentation  |
+| Fósforo | ~725 | ≥ 2 000 | Requiere augmentation  |
+| Potasio | ~322 | ≥ 2 000 | Requiere augmentation  |
 
 ### Estrategia de Augmentation
 
@@ -77,7 +95,7 @@ El dataset *Corn Leaf Diseases* aplica 17 técnicas de augmentation documentadas
 
 `brightness_adjusted` · `contrast_adjusted` · `cropped` · `flipped_horizontal` · `flipped_vertical` · `gaussian_noise` · `high_pass` · `hist_equalized` · `jittered` · `laplacian` · `poisson_noise` · `rotated` · `salt_pepper_noise` · `saturation_adjusted` · `sobel` · `translated` · `unsharp_mask`
 
-Se aplicará un ratio equivalente (×17) a las 399 imágenes de campo de Roya común para obtener ~6 783 imágenes adicionales.
+Se aplicará un ratio equivalente (×17) a las imágenes de campo de las clases deficitarias (Roya común, Nitrógeno, Fósforo, Potasio) para alcanzar el umbral de ≥ 2 000 imágenes de campo real por clase.
 
 ---
 
@@ -164,8 +182,10 @@ corn-leaf-desease-project/
 
 ## Estado del Proyecto
 
-- [x] Documentación de datasets consolidados
+- [x] Documentación de datasets consolidados (8 fuentes, 9 clases)
+- [x] Scripts de limpieza y organización de datos en `data/clean/`
 - [ ] Análisis exploratorio de datos (EDA)
+- [ ] Data augmentation para clases deficitarias (Roya, N, P, K)
 - [ ] Pipeline de preparación de datos
 - [ ] Entrenamiento y evaluación del modelo
 - [ ] Aplicación Android con TensorFlow Lite
