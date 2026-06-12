@@ -107,7 +107,7 @@ El objetivo de corpus es alcanzar **≥ 2 000 imágenes de campo real por clase*
 | Fósforo | ~725 | ≥ 2 000 | Requiere augmentation  |
 | Potasio | ~322 | ≥ 2 000 | Requiere augmentation  |
 
-**Restricciones activas:** Roya común (~399), Potasio (~322), Nitrógeno (~622) y Fósforo (~725) no alcanzan el umbral mínimo. Antes de iniciar la adaptación de dominio se deben generar imágenes adicionales mediante augmentation para estas cuatro clases.
+**Restricciones activas:** Roya común (~399), Potasio (~322), Nitrógeno (~622) y Fósforo (~725) no alcanzan el umbral mínimo. Antes de iniciar la adaptación de dominio se deben generar imágenes adicionales mediante augmentation para estas clases.
 
 La estrategia de entrenamiento tiene tres etapas:
 

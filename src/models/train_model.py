@@ -97,7 +97,7 @@ def main():
     x = base_model(x, training=False)
     x = layers.GlobalAveragePooling2D()(x)
     x = layers.Dropout(0.3)(x)
-    outputs = layers.Dense(4, activation='softmax', name='prediccion_enfermedad')(x)
+    outputs = layers.Dense(9, activation='softmax', name='prediccion_enfermedad')(x)
 
     model = tf.keras.Model(inputs, outputs)
 

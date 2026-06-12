@@ -1,4 +1,4 @@
-# DoctorMaiz - Detección de Enfermedades Foliares en Cultivos de Maíz
+# DoctorMaiz - Detección de Enfermedades, Plagas y Deficiencias Nutricionales en Cultivos de Maíz
 
 > **Clasificación mediante Deep Learning en Dispositivos Móviles (Edge AI Offline)**
 
@@ -10,18 +10,18 @@ Docente: Ing. Bladimir Díaz Campos
 
 ## Descripción
 
-DoctorMaiz es un sistema de clasificación de enfermedades foliares en cultivos de maíz orientado a pequeños agricultores de subsistencia en zonas rurales sin conectividad. Utiliza un modelo de Deep Learning cuantizado (TensorFlow Lite Int8) embebido en una aplicación Android que opera completamente offline.
+DoctorMaiz es un sistema de clasificación de enfermedades foliares, plagas y deficiencias nutricionales en cultivos de maíz orientado a pequeños agricultores de subsistencia en zonas rurales sin conectividad. Utiliza un modelo de Deep Learning cuantizado (TensorFlow Lite Int8) embebido en una aplicación Android que opera completamente offline.
 
 ### Problema
 
 - El maíz representa una fuente crítica de alimentación en El Salvador, donde la agricultura aporta el **5.6% del PIB**
 - El **82.1% de los productores** son pequeños agricultores con acceso limitado a asistencia técnica
-- Las enfermedades foliares pueden destruir hasta el **70% de una cosecha**
+- Las enfermedades, plagas y deficiencias nutricionales pueden destruir hasta el **70% de una cosecha**
 - El diagnóstico actual depende de experiencia empírica y no de análisis técnico objetivo
 
 ### Solución
 
-Una aplicación móvil que, dada una fotografía de hoja de maíz, identifica la enfermedad presente y orienta al agricultor sobre el tratamiento adecuado - sin necesidad de conexión a internet.
+Una aplicación móvil que, dada una fotografía de hoja de maíz, identifica la enfermedad, plaga o deficiencia nutricional presente y orienta al agricultor sobre el tratamiento adecuado - sin necesidad de conexión a internet.
 
 ---
 
@@ -45,7 +45,7 @@ Una aplicación móvil que, dada una fotografía de hoja de maíz, identifica la
 | Deficiencia de fósforo *(Phosphorus)* | Bordes y puntas moradas/rojizas en hojas jóvenes | ~725  |
 | Deficiencia de potasio *(Potassium)* | Necrosis marginal en hojas más viejas | ~322  |
 
-> **Nota crítica**: Roya común (~399), Potasio (~322), Nitrógeno (~622) y Fósforo (~725) no alcanzan el umbral de ≥ 2 000 imágenes de campo real. Estas cuatro clases requieren data augmentation prioritaria.
+> **Nota crítica**: Roya común (~399), Potasio (~322), Nitrógeno (~622) y Fósforo (~725) no alcanzan el umbral de ≥ 2 000 imágenes de campo real. Estas clases requieren data augmentation prioritaria.
 
 ---
 
