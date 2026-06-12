@@ -1,4 +1,4 @@
-# Corn Leaf — Roboflow (corn-leaf-hd9iy)
+# Corn Leaf - Roboflow (corn-leaf-hd9iy)
 
 ## Identificador
 

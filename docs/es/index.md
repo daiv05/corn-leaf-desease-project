@@ -76,7 +76,7 @@ En zonas rurales el acceso a asistencia técnica es limitado. Los diagnósticos 
 
 > Conteos post-limpieza y deduplicación en `data/clean/` (junio 2026). Total consolidado: **25 362 imágenes** (3 551 lab + 21 811 campo real).
 
-::: warning Desbalance crítico — GLS, Roya real, Áfidos y deficiencias nutricionales
+::: warning Desbalance crítico - GLS, Roya real, Áfidos y deficiencias nutricionales
 **Áfidos** (77 imgs), **Roya común** (solo 106 imgs de campo real), **GLS** (1 119 total), **Potasio** (266), **Nitrógeno** (523) y **Fósforo** (612) requieren data augmentation prioritaria antes de la etapa de adaptación de dominio. Se está evaluando el techo por clase (500, 1 000 o 2 000 imgs).
 :::
 

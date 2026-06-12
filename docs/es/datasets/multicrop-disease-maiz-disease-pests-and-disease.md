@@ -1,4 +1,4 @@
-# Multicrop Disease — Maize Disease, Pests and Disease
+# Multicrop Disease - Maize Disease, Pests and Disease
 
 ## Descripción
 
@@ -21,10 +21,10 @@ Las imágenes se organizan en subcarpetas por clase. El dataset combina imágene
 
 | Clase | Imágenes |
 |---|---|
-| Common Rust | — |
-| Gray Leaf Spot | — |
-| Northern Corn Leaf Blight | — |
-| Healthy | — |
+| Common Rust | - |
+| Gray Leaf Spot | - |
+| Northern Corn Leaf Blight | - |
+| Healthy | - |
 
 ## Formato
 

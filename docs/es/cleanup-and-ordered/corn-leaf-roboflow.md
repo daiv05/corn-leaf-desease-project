@@ -28,11 +28,11 @@ Imágenes integradas en `data/clean/` tras ejecutar el script (campo `real`, sin
 | Clase | Imágenes copiadas |
 |---|---|
 | `fall_armyworm` | 4 858 |
-| `healthy` | — (mezclado con otras fuentes) |
-| `gray_leaf_spot` | — (mezclado con otras fuentes) |
-| `magnesium_deficiency` | — (pendiente de conteo) |
+| `healthy` | - (mezclado con otras fuentes) |
+| `gray_leaf_spot` | - (mezclado con otras fuentes) |
+| `magnesium_deficiency` | - (pendiente de conteo) |
 | `nitrogen_deficiency` | 523 |
-| `northern_corn_leaf_blight` | — (mezclado con otras fuentes) |
+| `northern_corn_leaf_blight` | - (mezclado con otras fuentes) |
 | `phosphorus_deficiency` | 612 |
 | `potassium_deficiency` | 266 |
 

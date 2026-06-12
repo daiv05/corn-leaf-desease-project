@@ -8,11 +8,11 @@ En esta sección se documentan los datasets evaluados para el proyecto. Se busca
 
 Para cada dataset se registra:
 
-- **Licencia y permisos** — si permite uso académico y redistribución
-- **Dominio de captura** — laboratorio controlado, campo real, o mixto
-- **Clases disponibles** — enfermedades etiquetadas y alineación con las 9 clases objetivo
-- **Distribución por clase** — balance y posibles sesgos
-- **Calidad y particularidades** — resolución, condiciones de iluminación, fondos, artefactos
+- **Licencia y permisos** - si permite uso académico y redistribución
+- **Dominio de captura** - laboratorio controlado, campo real, o mixto
+- **Clases disponibles** - enfermedades etiquetadas y alineación con las 9 clases objetivo
+- **Distribución por clase** - balance y posibles sesgos
+- **Calidad y particularidades** - resolución, condiciones de iluminación, fondos, artefactos
 
 ## Resumen de Datasets
 
@@ -22,10 +22,10 @@ Para cada dataset se registra:
 | [Maize Diseases](/es/datasets/maize-diseases) | Laboratorio + campo  | ~16 162 (v1.0 + v1.1) | Roya, NCLB, GLS, Sano | CC BY-NC-SA 4.0 |
 | [Corn Leaf Diseases](/es/datasets/corn-leaf-diseases) | Laboratorio augmentado  | 52 360 (aug ×17) | Roya, NCLB, GLS, Sano | MIT |
 | [CropDG Unified Multi-Domain](/es/datasets/cropdg-unified-multidomain) | Multi-dominio  | ~13 275 (maíz + tomate) | NCLB, GLS, Sano (sin Roya) | CC BY-NC-SA 4.0 |
-| [Maize, Beans & Tomatoes — África](/es/datasets/maize-beans-tomatoes-africa) | Campo real  | 23 286 (12 clases) | Roya (~99), Sano (2 340), Cogollero | Apache 2.0 + CC |
-| [Multicrop Disease — Maize Pests and Disease](/es/datasets/multicrop-disease-maiz-disease-pests-and-disease) | Mixto  | — | Roya, NCLB, GLS, Sano | Desconocida |
+| [Maize, Beans & Tomatoes - África](/es/datasets/maize-beans-tomatoes-africa) | Campo real  | 23 286 (12 clases) | Roya (~99), Sano (2 340), Cogollero | Apache 2.0 + CC |
+| [Multicrop Disease - Maize Pests and Disease](/es/datasets/multicrop-disease-maiz-disease-pests-and-disease) | Mixto  | - | Roya, NCLB, GLS, Sano | Desconocida |
 | [Maize Nutrient Deficiency](/es/datasets/maize-nutrient-deficiency) | Campo real  | 463 | N, P, K, Mg, Sano | CC BY 4.0 |
-| [Corn Leaf — Roboflow](/es/datasets/corn-leaf-roboflow) | Campo real  | 3 943 | Cogollero, NCLB, GLS, Sano, N, P, K, Mg | CC BY 4.0 |
+| [Corn Leaf - Roboflow](/es/datasets/corn-leaf-roboflow) | Campo real  | 3 943 | Cogollero, NCLB, GLS, Sano, N, P, K, Mg | CC BY 4.0 |
 
 <!-- 
 ## Inventario por Clase
@@ -40,15 +40,15 @@ Conteo consolidado de imágenes **originales únicas** (sin augmentación sinté
 | NCLB | ~985 (PV) + ~192 (PlantDoc) | ~554 (ZA) + ~5 029 (CCMT) + ~292 (RF) | **~7 052** |
 | GLS | ~513 (PV) + ~68 (PlantDoc) | ~1 084 (ZA) + ~4 285 (CCMT) + ~3 946 (RF) | **~9 896** |
 | Sano | ~1 162 (PV) + ~1 041 (CCMT) | ~285 (ZA) + ~2 340 (África) + ~619 (RF) | **~5 447** |
-| Cogollero *(Fall Armyworm)* | — | ~77 (África) + ~4 858 (RF) | **~4 935** |
+| Cogollero *(Fall Armyworm)* | - | ~77 (África) + ~4 858 (RF) | **~4 935** |
 
 ### Clases de deficiencia nutricional
 
 | Clase | Lab original | Campo real | **Total original** |
 |---|---|---|---|
-| Nitrógeno | — | ~99 (MND) + ~523 (RF) | **~622** |
-| Fósforo | — | ~113 (MND) + ~612 (RF) | **~725** |
-| Potasio | — | ~56 (MND) + ~266 (RF) | **~322** |
+| Nitrógeno | - | ~99 (MND) + ~523 (RF) | **~622** |
+| Fósforo | - | ~113 (MND) + ~612 (RF) | **~725** |
+| Potasio | - | ~56 (MND) + ~266 (RF) | **~322** |
 
 > ZA = Maize in Field Dataset (Sudáfrica). CCMT = dominio campo de CropDG. PlantDoc = dominio PD de CropDG. RF = Corn Leaf Roboflow. MND = Maize Nutrient Deficiency. África = Maize, Beans & Tomatoes Africa.
 
@@ -60,11 +60,11 @@ Las imágenes de campo real son el activo más valioso para la robustez del mode
 
 | Clase | ZA (Maize in Field) | CCMT (CropDG) | PlantDoc (CropDG) | África | RF (Roboflow) | **Total campo real** |
 |---|---|---|---|---|---|---|
-| Roya común | 300 | — | — | ~99 | — | **~399**  |
-| NCLB | 554 | 5 029 | 192 | — | ~292 | **~6 067** |
-| GLS | 1 084 | 4 285 | 68 | — | ~3 946 | **~9 383** |
-| Sano | 285 | 1 041 | — | 2 340 | ~619 | **~4 285** |
-| Cogollero | — | — | — | ~77 | ~4 858 | **~4 935** |
+| Roya común | 300 | - | - | ~99 | - | **~399**  |
+| NCLB | 554 | 5 029 | 192 | - | ~292 | **~6 067** |
+| GLS | 1 084 | 4 285 | 68 | - | ~3 946 | **~9 383** |
+| Sano | 285 | 1 041 | - | 2 340 | ~619 | **~4 285** |
+| Cogollero | - | - | - | ~77 | ~4 858 | **~4 935** |
 
 ### Deficiencias nutricionales
 
@@ -74,7 +74,7 @@ Las imágenes de campo real son el activo más valioso para la robustez del mode
 | Fósforo | ~113 | ~612 | **~725**  |
 | Potasio | ~56 | ~266 | **~322**  |
 
-::: warning Desbalance crítico — Roya común y deficiencias nutricionales
+::: warning Desbalance crítico - Roya común y deficiencias nutricionales
 **Roya común** sigue siendo la clase más escasa con solo **~399 imágenes de campo real**. Las clases de deficiencia nutricional también presentan volúmenes bajos (322–725 imágenes). Todas estas clases requieren data augmentation antes de entrenamiento.
 :::
 

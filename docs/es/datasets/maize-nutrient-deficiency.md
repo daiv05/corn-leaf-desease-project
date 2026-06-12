@@ -18,11 +18,11 @@ Cinco subcarpetas, una por clase:
 
 ```
 maize-nutrient-deficiency/
-├── Helathy/        # sic — typo en el nombre original
-├── Magnessium/     # sic — typo en el nombre original
+├── Helathy/        # sic - typo en el nombre original
+├── Magnessium/     # sic - typo en el nombre original
 ├── Nitrogen/
 ├── Phosphorous/
-└── Pottasium/      # sic — typo en el nombre original
+└── Pottasium/      # sic - typo en el nombre original
 ```
 
 > Los nombres de tres carpetas contienen errores ortográficos del dataset original (`Helathy`, `Magnessium`, `Pottasium`). Se conservan tal cual en `raw/` para respetar la inmutabilidad de la fuente.

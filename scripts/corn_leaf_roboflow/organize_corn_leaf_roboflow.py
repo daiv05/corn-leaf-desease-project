@@ -11,7 +11,7 @@ Reglas:
   - El nombre destino sigue el patrón: <clase>_corn_leaf_roboflow_real_<random8>.jpg
   - Idempotente: si la imagen fuente ya fue copiada (mismo stem en destino), se omite.
   - El dataset mezcla formato YOLO bbox (5 campos) y segmentación (N>5 campos);
-    ambos son válidos — el class_id sigue siendo el primer token en ambos casos.
+    ambos son válidos - el class_id sigue siendo el primer token en ambos casos.
 """
 
 import random
