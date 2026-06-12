@@ -6,8 +6,7 @@
 
 ## Common Rust (CR) | Puccinia sorghi
 
-> **ALERTA DE CALIDAD / DESCARTE:** > Se detectó mediante inspección patológica que la enfermedad presente en este dataset **NO corresponde a la roya común** del maíz (*Puccinia sorghi*), sino que muestra características morfológicas de la roya del sur (*Puccinia polysora*). 
-* **Acción:** No se incluye en la versión final del dataset limpio para evitar contaminar la firma visual de la clase, pero se mantiene documentado aquí para evitar futuras reintroducciones erróneas.
+Se detectó que la enfermedad presente en este dataset **NO corresponde a la roya común** del maíz (*Puccinia sorghi*), sino que muestra características de la roya del sur (*Puccinia polysora*). 
 
 No se incluye en la versión final del dataset, pero se mantiene en esta etapa de limpieza y ordenado para evitar confusiones.
 
