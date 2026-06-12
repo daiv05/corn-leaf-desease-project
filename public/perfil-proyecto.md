@@ -60,7 +60,7 @@ En conjunto, el proyecto se orienta a fortalecer las capacidades de los producto
 
 ### Objetivo general
 
-Desarrollar e implementar un sistema movil basado en aprendizaje profundo capaz de clasificar 9 clases en hojas de maiz (5 enfermedades foliares y plagas, y 3 deficiencias nutricionales, mas hoja sana) a partir de imagenes capturadas con telefonos inteligentes, optimizado para ejecutarse localmente en dispositivos Android de gama media/baja, con inferencia completamente offline y funcionalidades opcionales de sincronizacion en linea.
+Desarrollar e implementar un sistema movil basado en aprendizaje profundo capaz de clasificar 9 clases en hojas de maiz (6 enfermedades foliares y plagas, y 3 deficiencias nutricionales, mas hoja sana) a partir de imagenes capturadas con telefonos inteligentes, optimizado para ejecutarse localmente en dispositivos Android de gama media/baja, con inferencia completamente offline y funcionalidades opcionales de sincronizacion en linea.
 
 ### Objetivos especificos
 
@@ -214,7 +214,7 @@ Han sido considerados como fuentes repositorios academicos como Kaggle, Zenodo, 
 
 Se priorizaran imagenes en entornos reales, pero se contempla emplear datasets de imagenes en entornos de estudio como auxiliares de entrenamiento inicial para robustecer el aprendizaje de patrones generales de enfermedad, siempre y cuando la evaluacion final se realice sobre datos reales.
 
-El alcance del proyecto cubre 9 clases: enfermedades foliares (Roya comun, NCLB, GLS), plaga (Gusano cogollero), hoja sana y deficiencias nutricionales (Nitrogeno, Fosforo, Potasio). Esta clasificacion no afecta la limitante de inferencia en dispositivos moviles dado el uso de arquitecturas livianas (MobileNetV3).
+El alcance del proyecto cubre 9 clases: enfermedades foliares (Roya comun, NCLB, GLS), plagas (Gusano cogollero, Afidos del maiz), hoja sana y deficiencias nutricionales (Nitrogeno, Fosforo, Potasio). Esta clasificacion no afecta la limitante de inferencia en dispositivos moviles dado el uso de arquitecturas livianas (MobileNetV3).
 
 ### Preparacion de los datos
 

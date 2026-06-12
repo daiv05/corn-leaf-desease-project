@@ -2,7 +2,7 @@
 
 En esta sección se documentan los datasets evaluados para el proyecto. Se busca priorizar fuentes con imágenes en entornos de campo real.
 
-> **Alcance actualizado (junio 2026):** El proyecto pasó de 4 a **9 clases objetivo** incorporando enfermedades adicionales (gusano cogollero) y deficiencias nutricionales (nitrógeno, fósforo, potasio).
+> **Alcance actualizado (junio 2026):** El proyecto pasó de 4 a **9 clases objetivo** incorporando plagas (gusano cogollero, áfidos del maíz) y deficiencias nutricionales (nitrógeno, fósforo, potasio).
 
 ## Criterios de Evaluación
 

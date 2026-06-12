@@ -16,7 +16,7 @@ hero:
 features:
   - icon: "🌽"
     title: "9 Clases"
-    details: "Clasificación de 5 enfermedades foliares y plagas (roya, NCLB, GLS, cogollero, sana) y 3 deficiencias nutricionales (N, P, K) mediante CNN con transferencia de aprendizaje."
+    details: "Clasificación de 6 enfermedades foliares y plagas (roya, NCLB, GLS, cogollero, áfidos, sana) y 3 deficiencias nutricionales (N, P, K) mediante CNN con transferencia de aprendizaje."
   - icon: "📱"
     title: "Edge AI Offline"
     details: "Modelo TensorFlow Lite con cuantización Int8, objetivo ≤ 20 MB y latencia ≤ 300 ms en CPU Snapdragon serie 6xx o equivalente."
@@ -51,30 +51,33 @@ features:
 
 La agricultura representa el 5.6% del PIB de El Salvador y es el sustento de más de 2 millones de personas rurales. El 82.1% de los productores son pequeños agricultores, muchos operando a nivel de subsistencia. El maíz -principal cultivo- es vulnerable a enfermedades foliares, plagas y deficiencias nutricionales que, sin detección temprana, pueden destruir hasta el 70% de la cosecha.
 
-En zonas rurales el acceso a asistencia técnica es limitado. Los diagnósticos dependen de la experiencia empírica del agricultor, lo que genera detecciones tardías y pérdidas económicas significativas. En 2023 la cosecha cayó un tercio respecto a 2021.
+En zonas rurales el acceso a asistencia técnica es limitado. Los diagnósticos dependen de la experiencia empírica del agricultor, lo que puede generar detecciones tardías y pérdidas económicas significativas. En 2023 la cosecha cayó un tercio respecto a 2021.
 
 ### Clases Objetivo
 
 #### Enfermedades y plagas foliares
 
-| Clase | Nombre en inglés | Patógeno/Agente | Síntoma visual | Campo real |
-|---|---|---|---|---|
-| **Roya común** | Common Rust | *Puccinia sorghi* | Pústulas anaranjadas dispersas en ambas caras de la hoja | ~399 ⚠️ |
-| **Tizón foliar del norte (NCLB)** | Northern Corn Leaf Blight | *Exserohilum turcicum* | Lesiones alargadas grisáceas o marrones con bordes difusos | ~6 067 |
-| **Mancha gris de la hoja (GLS)** | Gray Leaf Spot | *Cercospora zeae-maydis* | Lesiones rectangulares grises o marrones delimitadas por nervaduras | ~9 383 |
-| **Hoja sana** | Healthy | - | Sin síntomas foliares de enfermedad | ~4 285 |
-| **Gusano cogollero** | Fall Armyworm | *Spodoptera frugiperda* | Daño por masticación con excrementos en el cogollo y hojas | ~4 935 |
+| Clase | Nombre en inglés | Patógeno/Agente | Síntoma visual | Lab | Real | Total |
+|---|---|---|---|---:|---:|---:|
+| **Roya común** | Common Rust | *Puccinia sorghi* | Pústulas anaranjadas dispersas en ambas caras de la hoja | 2 150 | 106 ⚠️ | 2 256 |
+| **Tizón foliar del norte (NCLB)** | Northern Corn Leaf Blight | *Exserohilum turcicum* | Lesiones alargadas grisáceas o marrones con bordes difusos | 888 | 5 942 | 6 830 |
+| **Mancha gris de la hoja (GLS)** | Gray Leaf Spot | *Cercospora zeae-maydis* | Lesiones rectangulares grises o marrones delimitadas por nervaduras | 513 | 606 | 1 119 |
+| **Hoja sana** | Healthy | - | Sin síntomas foliares de enfermedad | 0 | 8 744 | 8 744 |
+| **Gusano cogollero** | Fall Armyworm | *Spodoptera frugiperda* | Daño por masticación con excrementos en el cogollo y hojas | 0 | 4 858 | 4 858 |
+| **Áfidos del maíz** | Maize Aphids | *Rhopalosiphum maidis* | Colonias de pulgones en hojas y cogollo, hojas enrolladas y amarillamiento | 0 | 77 ⚠️ | 77 |
 
 #### Deficiencias nutricionales
 
-| Clase | Nombre en inglés | Síntoma visual | Campo real |
-|---|---|---|---|
-| **Deficiencia de nitrógeno** | Nitrogen Deficiency | Amarillamiento en "V" desde la punta de hojas inferiores | ~622 ⚠️ |
-| **Deficiencia de fósforo** | Phosphorus Deficiency | Bordes y puntas moradas/rojizas en hojas jóvenes | ~725 ⚠️ |
-| **Deficiencia de potasio** | Potassium Deficiency | Necrosis marginal en hojas más viejas | ~322 ⚠️ |
+| Clase | Nombre en inglés | Síntoma visual | Lab | Real | Total |
+|---|---|---|---:|---:|---:|
+| **Deficiencia de nitrógeno** | Nitrogen Deficiency | Amarillamiento en "V" desde la punta de hojas inferiores | 0 | 523 ⚠️ | 523 |
+| **Deficiencia de fósforo** | Phosphorus Deficiency | Bordes y puntas moradas/rojizas en hojas jóvenes | 0 | 612 ⚠️ | 612 |
+| **Deficiencia de potasio** | Potassium Deficiency | Necrosis marginal en hojas más viejas | 0 | 266 ⚠️ | 266 |
 
-::: warning Desbalance crítico en 4 clases
-**Roya común** (~399 imgs campo), **Potasio** (~322), **Nitrógeno** (~622) y **Fósforo** (~725) no alcanzan el objetivo de ≥ 2 000 imágenes de campo real. Estas clases requieren data augmentation prioritaria antes de la etapa de adaptación de dominio.
+> Conteos post-limpieza y deduplicación en `data/clean/` (junio 2026). Total consolidado: **25 362 imágenes** (3 551 lab + 21 811 campo real).
+
+::: warning Desbalance crítico — GLS, Roya real, Áfidos y deficiencias nutricionales
+**Áfidos** (77 imgs), **Roya común** (solo 106 imgs de campo real), **GLS** (1 119 total), **Potasio** (266), **Nitrógeno** (523) y **Fósforo** (612) requieren data augmentation prioritaria antes de la etapa de adaptación de dominio. Se está evaluando el techo por clase (500, 1 000 o 2 000 imgs).
 :::
 
 ### Metodología

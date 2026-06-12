@@ -29,23 +29,26 @@ Una aplicación móvil que, dada una fotografía de hoja de maíz, identifica la
 
 ### Enfermedades y plagas foliares
 
-| Clase | Patógeno/Agente | Síntomas | Campo real |
-|---|---|---|---|
-| Roya común *(Common Rust)* | *Puccinia sorghi* | Pústulas anaranjadas en ambas caras | ~399  |
-| Tizón foliar del norte *(NCLB)* | *Exserohilum turcicum* | Lesiones alargadas grisáceas | ~6 067 |
-| Mancha gris *(GLS)* | *Cercospora zeae-maydis* | Lesiones rectangulares grises | ~9 383 |
-| Hoja sana *(Healthy)* | - | Sin síntomas visibles | ~4 285 |
-| Gusano cogollero *(Fall Armyworm)* | *Spodoptera frugiperda* | Daño por masticación, excrementos en cogollo | ~4 935 |
+| Clase | Patógeno/Agente | Síntomas | Lab | Real | Total |
+|---|---|---|---:|---:|---:|
+| Roya común *(Common Rust)* | *Puccinia sorghi* | Pústulas anaranjadas en ambas caras | 2 150 | 106 ⚠️ | 2 256 |
+| Tizón foliar del norte *(NCLB)* | *Exserohilum turcicum* | Lesiones alargadas grisáceas | 888 | 5 942 | 6 830 |
+| Mancha gris *(GLS)* | *Cercospora zeae-maydis* | Lesiones rectangulares grises | 513 | 606 | 1 119 |
+| Hoja sana *(Healthy)* | - | Sin síntomas visibles | 0 | 8 744 | 8 744 |
+| Gusano cogollero *(Fall Armyworm)* | *Spodoptera frugiperda* | Daño por masticación, excrementos en cogollo | 0 | 4 858 | 4 858 |
+| Áfidos del maíz *(Maize Aphids)* | *Rhopalosiphum maidis* | Colonias de pulgones, hojas enrolladas y amarillamiento | 0 | 77 ⚠️ | 77 |
 
 ### Deficiencias nutricionales
 
-| Clase | Síntomas | Campo real |
-|---|---|---|
-| Deficiencia de nitrógeno *(Nitrogen)* | Amarillamiento en "V" desde puntas de hojas inferiores | ~622  |
-| Deficiencia de fósforo *(Phosphorus)* | Bordes y puntas moradas/rojizas en hojas jóvenes | ~725  |
-| Deficiencia de potasio *(Potassium)* | Necrosis marginal en hojas más viejas | ~322  |
+| Clase | Síntomas | Lab | Real | Total |
+|---|---|---:|---:|---:|
+| Deficiencia de nitrógeno *(Nitrogen)* | Amarillamiento en "V" desde puntas de hojas inferiores | 0 | 523 ⚠️ | 523 |
+| Deficiencia de fósforo *(Phosphorus)* | Bordes y puntas moradas/rojizas en hojas jóvenes | 0 | 612 ⚠️ | 612 |
+| Deficiencia de potasio *(Potassium)* | Necrosis marginal en hojas más viejas | 0 | 266 ⚠️ | 266 |
 
-> **Nota crítica**: Roya común (~399), Potasio (~322), Nitrógeno (~622) y Fósforo (~725) no alcanzan el umbral de ≥ 2 000 imágenes de campo real. Estas clases requieren data augmentation prioritaria.
+> Conteos post-limpieza y deduplicación en `data/clean/` (junio 2026). Total consolidado: **25 362 imágenes** (3 551 lab + 21 811 campo real).
+
+> **Nota crítica**: Áfidos (77 imgs), Roya común (solo 106 imgs reales), GLS (1 119 total), Potasio (266), Nitrógeno (523) y Fósforo (612) requieren data augmentation prioritaria. Se está definiendo el techo por clase (500, 1 000 o 2 000 imgs).
 
 ---
 
@@ -76,18 +79,20 @@ Se consolidaron **8 fuentes de datos públicas** para construir el corpus de ent
 | [Maize Nutrient Deficiency](docs/es/datasets/maize-nutrient-deficiency.md) | Campo real (India) | 463 | CC BY 4.0 |
 | [Corn Leaf — Roboflow](docs/es/datasets/corn-leaf-roboflow.md) | Campo real | 3 943 | CC BY 4.0 |
 
-### Inventario Consolidado — Campo Real
+### Inventario Consolidado post-limpieza (`data/clean/`)
 
-| Clase | Campo real disponible | Objetivo | Estado |
-|---|---|---|---|
-| Roya común | ~399 | ≥ 2 000 | Requiere augmentation  |
-| NCLB | ~6 067 | ≥ 2 000 | Cubierto ✓ |
-| GLS | ~9 383 | ≥ 2 000 | Cubierto ✓ |
-| Sano | ~4 285 | ≥ 2 000 | Cubierto ✓ |
-| Cogollero | ~4 935 | ≥ 2 000 | Cubierto ✓ |
-| Nitrógeno | ~622 | ≥ 2 000 | Requiere augmentation  |
-| Fósforo | ~725 | ≥ 2 000 | Requiere augmentation  |
-| Potasio | ~322 | ≥ 2 000 | Requiere augmentation  |
+| Clase | Lab | Real | Total | Estado |
+|---|---:|---:|---:|---|
+| Roya común | 2 150 | 106 | 2 256 | Requiere augmentation real ⚠️ |
+| NCLB | 888 | 5 942 | 6 830 | Cubierto ✓ |
+| GLS | 513 | 606 | 1 119 | Requiere augmentation ⚠️ |
+| Sano | 0 | 8 744 | 8 744 | Cubierto ✓ |
+| Cogollero | 0 | 4 858 | 4 858 | Cubierto ✓ |
+| Nitrógeno | 0 | 523 | 523 | Requiere augmentation ⚠️ |
+| Fósforo | 0 | 612 | 612 | Requiere augmentation ⚠️ |
+| Potasio | 0 | 266 | 266 | Requiere augmentation ⚠️ |
+| Áfidos | 0 | 77 | 77 | Requiere augmentation ⚠️ |
+| **TOTAL** | **3 551** | **21 811** | **25 362** | |
 
 ### Estrategia de Augmentation
 
