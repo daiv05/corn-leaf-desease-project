@@ -1,6 +1,6 @@
 # Propuesta de Perfil de Proyecto
 
-**Deteccion de Enfermedades Foliares en Cultivos de Maiz mediante Deep Learning en Dispositivos Moviles**
+**Deteccion de Enfermedades Foliares, Plagas y Deficiencias Nutricionales en Cultivos de Maiz mediante Deep Learning en Dispositivos Moviles**
 
 - Universidad de El Salvador
 - Facultad de Ingenieria y Arquitectura
@@ -60,11 +60,11 @@ En conjunto, el proyecto se orienta a fortalecer las capacidades de los producto
 
 ### Objetivo general
 
-Desarrollar e implementar un sistema movil basado en aprendizaje profundo capaz de clasificar cuatro clases foliares del maiz (tres enfermedades comunes y hoja sana) a partir de imagenes capturadas con telefonos inteligentes, optimizado para ejecutarse localmente en dispositivos Android de gama media/baja, con inferencia completamente offline y funcionalidades opcionales de sincronizacion en linea.
+Desarrollar e implementar un sistema movil basado en aprendizaje profundo capaz de clasificar 9 clases en hojas de maiz (6 enfermedades foliares y plagas, y 3 deficiencias nutricionales, mas hoja sana) a partir de imagenes capturadas con telefonos inteligentes, optimizado para ejecutarse localmente en dispositivos Android de gama media/baja, con inferencia completamente offline y funcionalidades opcionales de sincronizacion en linea.
 
 ### Objetivos especificos
 
-1. Identificar, evaluar y consolidar datasets publicos de imagenes de hojas de maiz en condiciones controladas y de campo real, construyendo un repositorio curado de al menos 3,200 imagenes distribuidas en 4 clases, con un minimo aproximado de 700 imagenes por clase, documentando licencias y restricciones de uso, procedencia y dominio de captura, criterios de limpieza y estrategias para mitigar desbalance.
+1. Identificar, evaluar y consolidar datasets publicos de imagenes de hojas de maiz en condiciones controladas y de campo real, construyendo un repositorio curado de al menos 18,000 imagenes distribuidas en 9 clases, con un minimo de 2,000 imagenes de campo real por clase, documentando licencias y restricciones de uso, procedencia y dominio de captura, criterios de limpieza y estrategias para mitigar desbalance.
 2. Entrenar un modelo liviano de clasificacion multiclase basado en una arquitectura liviana, utilizando transferencia de aprendizaje estableciendo como meta un Macro F1-score >= 0.85 en un conjunto de prueba completamente independiente y compuesto prioritariamente por imagenes reales de campo. La evaluacion incluira matriz de confusion y curvas Precision-Recall por clase.
 3. Convertir el modelo entrenado a TensorFlow Lite aplicando cuantizacion post-entrenamiento (Int8), logrando un tamano del modelo de <= 20 MB y una latencia objetivo de <= 300 ms por inferencia en un dispositivo Android de gama media/baja (>=4GB RAM, CPU Snapdragon serie 6xx o equivalente).
 4. Implementar una PWA que permita capturar o seleccionar imagenes, ejecutar inferencia local sin conexion a internet y mostrar la clase predicha junto con su nivel de confianza.
@@ -214,7 +214,7 @@ Han sido considerados como fuentes repositorios academicos como Kaggle, Zenodo, 
 
 Se priorizaran imagenes en entornos reales, pero se contempla emplear datasets de imagenes en entornos de estudio como auxiliares de entrenamiento inicial para robustecer el aprendizaje de patrones generales de enfermedad, siempre y cuando la evaluacion final se realice sobre datos reales.
 
-Se delimitara inicialmente la investigacion a 4 clases (3 enfermedades y hoja sana), pero de ser posible, segun el dataset que se logre recopilar, se aumentara a la mayor cantidad de imagenes posibles (mientras esto no afecte la limitante de potencia por la inferencia en dispositivos moviles).
+El alcance del proyecto cubre 9 clases: enfermedades foliares (Roya comun, NCLB, GLS), plagas (Gusano cogollero, Afidos del maiz), hoja sana y deficiencias nutricionales (Nitrogeno, Fosforo, Potasio). Esta clasificacion no afecta la limitante de inferencia en dispositivos moviles dado el uso de arquitecturas livianas (MobileNetV3).
 
 ### Preparacion de los datos
 

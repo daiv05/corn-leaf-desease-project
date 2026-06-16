@@ -1,5 +1,9 @@
 # maize-in-field-dataset
 
+## Identificador
+
+`maize_field`
+
 ## Reorganización por enfermedad
 
 ### Estado original
@@ -23,19 +27,10 @@ Estructura del CSV:
 
 Cada fila puede tener **una o más etiquetas activas** (valor `1`).
 
-### Análisis previo al movimiento
-
-Antes de reorganizar se verificaron los siguientes puntos:
-
-- **Correspondencia CSV ↔ disco**: las 2355 entradas del CSV coinciden exactamente con los 2355 archivos en `leaf_images/`. Sin entradas faltantes ni archivos huérfanos.
-- **Duplicados en CSV**: ninguno - cada nombre de archivo aparece exactamente una vez.
-- **Colisiones de destino**: ninguna - no existen dos imágenes con el mismo nombre que vayan a la misma carpeta destino.
-- **Nombres con espacios**: 254 imágenes contienen espacios en su nombre (ej. `2012_03_IMG_6386_maize_diverse JM-C-Ac.JPG`). No representan un problema - se manejan correctamente con `pathlib.Path`.
-
 ### Criterio de organización
 
-- Imagen con **una sola etiqueta** → carpeta con el nombre de la enfermedad.
-- Imagen con **más de una etiqueta** → carpeta `multi_label/`.
+- Imagen con **una sola etiqueta** - carpeta con el nombre de la enfermedad.
+- Imagen con **más de una etiqueta** - carpeta `multi_label/`.
 
 ### Resultado
 
@@ -73,18 +68,18 @@ maize-in-field-dataset/
 └── UnidentifiedDisease/ (150 imágenes)
 ```
 
-### Script utilizado
-
-`scripts/sort_maize_by_disease.py` - lee `Database.csv`, determina la carpeta destino de cada imagen y la mueve. Soporta `--dry-run` para verificar sin ejecutar cambios.
-
 ## Common Rust (CR) | Puccinia sorghi
 
-Todas las imágenes presentes fueron tomadas en entornos reales. Se movieron a /clean/common_rust/real para el dataset limpio.
+Todas las imágenes presentes fueron tomadas en entornos reales. Se movieron al dataset limpio.
 
 ## Gray Leaf Spot (GLS) | Cercospora zeae-maydis
-Las imagenes con esta enfermedad fueron tomadas 607 en entornos reales. Se movieron a /clean/gray_leaf_spot/real para el dataset limpio. De 629 imágenes, se encontraron 22 duplicados que fueron eliminados.
+
+Las imagenes con esta enfermedad fueron tomadas 607 en entornos reales. Se movieron al dataset limpio. De 629 imágenes, se encontraron 22 duplicados que fueron eliminados.
 
 ## Northern Corn Leaf Blight (NCLB) | Exserohilum turcicum
-Se recopilaron alrededor de 140 imágenes con esta enfermedad. Todas fueron tomadas en entornos reales y se movieron a /clean/northern_corn_leaf_blight/real para el dataset limpio. No se encontraron imágenes duplicadas.
+
+Se recopilaron alrededor de 140 imágenes con esta enfermedad. Todas fueron tomadas en entornos reales y se movieron al dataset limpio. No se encontraron imágenes duplicadas.
 
 ## Healthy | Sana
+
+Las 232 imágenes de la carpeta `NoFoliarSymptoms` fueron validadas y enviadas al dataset limpio bajo la clase `healthy`. No se encontraron imágenes duplicadas.
