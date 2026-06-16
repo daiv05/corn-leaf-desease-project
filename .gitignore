@@ -10,6 +10,7 @@ cache/
 .vite/
 dist/
 node_modules/
+dataset/
 
 npm-debug.log*
 yarn-debug.log*
