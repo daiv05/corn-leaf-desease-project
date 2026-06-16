@@ -12,6 +12,12 @@ hero:
     - theme: brand
       text: Ver Datasets
       link: /es/datasets/
+    - theme: alt
+      text: Baselines
+      link: /es/baselines/
+    - theme: alt
+      text: Deep Learning
+      link: /es/deep-learning/
 
 features:
   - icon: "🌽"
