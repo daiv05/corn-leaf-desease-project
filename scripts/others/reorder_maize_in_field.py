@@ -2,7 +2,11 @@
 import argparse
 import csv
 import shutil
+import sys
 from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parents[2]))
+from src.config import DATASET_ROOT
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -10,17 +14,17 @@ def parse_args():
     )
     parser.add_argument(
         "--csv",
-        default="data/raw/maize-in-field-dataset/Kaggle Dataset/Database.csv",
+        default=str(DATASET_ROOT / "raw" / "maize-in-field-dataset" / "Kaggle Dataset" / "Database.csv"),
         help="Path to Database.csv",
     )
     parser.add_argument(
         "--images",
-        default="data/raw/maize-in-field-dataset/Kaggle Dataset/leaf_images",
+        default=str(DATASET_ROOT / "raw" / "maize-in-field-dataset" / "Kaggle Dataset" / "leaf_images"),
         help="Path to the leaf_images directory",
     )
     parser.add_argument(
         "--output",
-        default="data/clean/maize-in-field-dataset",
+        default=str(DATASET_ROOT / "clean" / "maize-in-field-dataset"),
         help="Output directory for organized images",
     )
     parser.add_argument(

@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 # Forzar la inclusión de la raíz para resolver importaciones locales
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
+from src.config import DATASET_ROOT
 from src.data.transforms import CornTransformFactory
 from src.data.dataset import CornDataset
 
@@ -15,8 +16,8 @@ def test_dataset_pipeline():
     print("=" * 60)
     print("🚀 INICIANDO DIAGNÓSTICO DEL PIPELINE DE CARGA DE MAÍZ")
     print("=" * 60)
-    
-    csv_train_path = "dataset/splits/seed_42/train.csv"
+
+    csv_train_path = str(DATASET_ROOT / "splits" / "seed_42" / "train.csv")
     config_yaml_path = "config/dataset.yaml"
     
     # 1. Validar existencia de los archivos manifiesto

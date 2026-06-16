@@ -8,12 +8,17 @@ con el patron:
 """
 
 import os
+import sys
 import random
 import shutil
+from pathlib import Path
 
-BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "data", "clean", "fall_armyworm")
-SOURCE_DIR = os.path.join(BASE_DIR, "maize_africa")
-DEST_DIR = os.path.join(BASE_DIR, "real")
+sys.path.append(str(Path(__file__).resolve().parents[2]))
+from src.config import DATASET_ROOT
+
+BASE_DIR = DATASET_ROOT / "clean" / "fall_armyworm"
+SOURCE_DIR = BASE_DIR / "maize_africa"
+DEST_DIR = BASE_DIR / "real"
 
 RANDOM_DIGITS = 8
 PREFIX = "fall_armyworm_maize_africa_real_"

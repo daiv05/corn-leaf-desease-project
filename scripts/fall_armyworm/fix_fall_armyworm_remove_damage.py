@@ -8,10 +8,13 @@ Ejemplo:
 """
 
 import os
+import sys
+from pathlib import Path
 
-TARGET_DIR = os.path.join(
-    os.path.dirname(__file__), "..", "..", "data", "clean", "fall_armyworm", "real"
-)
+sys.path.append(str(Path(__file__).resolve().parents[2]))
+from src.config import DATASET_ROOT
+
+TARGET_DIR = DATASET_ROOT / "clean" / "fall_armyworm" / "real"
 
 
 def rename_files(target_dir: str) -> None:

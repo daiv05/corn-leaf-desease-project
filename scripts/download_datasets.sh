@@ -1,6 +1,19 @@
 #!/usr/bin/env bash
 
-RAW_DIR="/mnt/datasets/data/corn-leaf-diseases/raw"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENV_FILE="$SCRIPT_DIR/../.env"
+if [[ -f "$ENV_FILE" ]]; then
+  set -a
+  source "$ENV_FILE"
+  set +a
+fi
+
+if [[ -z "${DATASET_ROOT:-}" ]]; then
+  echo "[download] DATASET_ROOT no está definido. Configúralo en .env" >&2
+  exit 1
+fi
+
+RAW_DIR="$DATASET_ROOT/raw"
 LOG_PREFIX="[download]"
 
 # Known datasets. Add new entries as needed.
