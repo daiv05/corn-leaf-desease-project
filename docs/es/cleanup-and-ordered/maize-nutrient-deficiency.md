@@ -9,8 +9,12 @@
 No se presentan duplicados ni necesidad de limpieza específica para este dataset.
 
 Fueron copiadas en su totalidad todas las imágenes referentes a:
-- `NitrogenDeficiency`
-- `PhosphorusDeficiency`
-- `PotassiumDeficiency`
+
+| Clase | Carpeta | Imágenes |
+|---|---|---|
+| Sano | `Helathy` | 72 |
+| Nitrógeno | `Nitrogen` | 99 |
+| Fósforo | `Phosphorous` | 113 |
+| Potasio | `Pottasium` | 56 |
 
 Solamente `MagnesiumDeficiency` no se incluyó en el dataset limpio, ya que no es una clase objetivo para este proyecto, debido a los pocos ejemplos disponibles y su relevancia menor en comparación con las otras deficiencias.

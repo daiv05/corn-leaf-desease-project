@@ -46,8 +46,7 @@ Las anotaciones mezclan formato YOLO bbox (5 campos por línea) y segmentación 
 ## Aspectos importantes
 
 - La clase dominante en anotaciones es `Leaf Spot` (ID 2), con ~3 946 instancias frente a ~55 de Nitrogen Deficiency y ~46 de Phosphorus Deficiency. El desbalance es significativo.
-- Las imágenes fueron preprocesadas por Roboflow: auto-orientación EXIF y redimensionado a **640 × 640 px** (stretch). No se aplicaron técnicas de augmentation.
-- La clase `Magnesium Deficiency` (ID 3) se incorpora a `data/clean/` pero **no forma parte de las clases objetivo del modelo** actual. Se mantiene como material de referencia.
+- Las imágenes fueron preprocesadas: auto-orientación EXIF y redimensionado a **640 × 640 px** (stretch). No se aplicaron técnicas de augmentation.
 - Las imágenes son de campo real; no existen contrapartes de laboratorio en este dataset.
 
 ::: warning Desbalance severo en deficiencias nutricionales
