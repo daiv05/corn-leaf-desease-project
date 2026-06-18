@@ -7,13 +7,12 @@ Muestra:
   - Para raw/:   desglose por fuente de dataset
 """
 
-import os
+import sys
 from pathlib import Path
-from dotenv import load_dotenv
 
-load_dotenv(Path(__file__).parents[2] / ".env")
+sys.path.append(str(Path(__file__).resolve().parents[2]))
+from src.config import DATASET_ROOT
 
-DATASET_ROOT = Path(os.getenv("DATASET_ROOT", ""))
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp"}
 
 COL_W = 52  # ancho de columna de nombre

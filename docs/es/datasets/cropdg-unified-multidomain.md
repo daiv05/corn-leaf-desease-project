@@ -1,5 +1,9 @@
 # CropDG Unified Multi-Domain Dataset
 
+## Identificador
+
+`cropdg`
+
 ## Descripción
 
 CropDG es un dataset unificado multi-dominio para enfermedades de cultivos, construido a partir de tres conjuntos publicos: PlantVillage (PV), CCMT y PlantDoc (PD). Integra y armoniza etiquetas para Tomato y Corn (Maize), con el objetivo de habilitar experimentos consistentes de aprendizaje centralizado, federado y de generalizacion de dominio.
@@ -52,7 +56,7 @@ Cada dominio (PV, CCMT, PD) se mantiene separado para habilitar entrenamiento fe
 - **Uso recomendado por el autor**: entrenamiento en PV + CCMT y prueba en PD (dominio no visto).
 
 ::: warning Este dataset no aporta ninguna imagen de campo real de Roya común
-Ni CCMT ni PlantDoc incluyen imágenes de **Roya común (Common Rust) para maíz**. Toda la cobertura de campo de este dataset se concentra en NCLB (~5 029 CCMT + 192 PD) y GLS (~4 285 CCMT + 68 PD). Además, **PlantDoc no tiene clase Healthy para maíz**, por lo que el dominio de prueba no visto (PD) solo cubre dos de las cuatro clases objetivo del proyecto.
+Ni CCMT ni PlantDoc incluyen imágenes de **Roya común (Common Rust) para maíz**. Toda la cobertura de campo de este dataset se concentra en NCLB (~5 029 CCMT + 192 PD) y GLS (~4 285 CCMT + 68 PD). Además, **PlantDoc no tiene clase Healthy para maíz**, por lo que el dominio de prueba no visto (PD) solo cubre dos de las clases objetivo del proyecto.
 :::
 
 ## Tamaño y distribución

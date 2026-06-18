@@ -1,0 +1,135 @@
+from abc import ABC, abstractmethod
+from pathlib import Path
+import torchvision.transforms as T
+import yaml
+
+from src.config import PROJECT_ROOT
+
+_DEFAULT_CONFIG = str(PROJECT_ROOT / "config" / "dataset.yaml")
+
+# Clases con ratio > 4x respecto a la mayoría (healthy, ~6k).
+# Reciben un pipeline de augmentation más agresivo para compensar su baja representación.
+# aphids_pest excluido del pipeline de entrenamiento (pendiente de decisión).
+MINORITY_CLASSES: frozenset[str] = frozenset({
+    "potassium_deficiency",   # 32.9x
+    "nitrogen_deficiency",    # 16.8x
+    "phosphorus_deficiency",  # 14.3x
+    "gray_leaf_spot",         #  7.9x
+    "common_rust",            #  3.9x
+})
+
+class TransformPipelineFactory(ABC):
+    """
+    Interfaz abstracta para la creación de pipelines de transformación (DIP).
+    """
+    @abstractmethod
+    def create_transforms(self) -> T.Compose:
+        pass
+
+
+class CornTrainingTransforms(TransformPipelineFactory):
+    """
+    Pipeline de transformaciones y augmentations específicas para el entrenamiento.
+    
+    Aplica distorsiones geométricas seguras para fitopatología, evitando
+    alteraciones agresivas de color que arruinen el diagnóstico de deficiencias.
+    """
+    def __init__(self, target_size: tuple[int, int]):
+        self.target_size = target_size
+        # Estadísticas espectrales estándar para normalización (pueden actualizarse con el EDA)
+        self.mean = [0.485, 0.456, 0.406]
+        self.std = [0.229, 0.224, 0.225]
+
+    def create_transforms(self) -> T.Compose:
+        return T.Compose([
+            # 1. Homogeneización de la dimensionalidad (Paso crítico de tamaño)
+            T.Resize(self.target_size),
+            
+            # 2. Augmentations Geométricas (Simula capturas del productor en campo)
+            T.RandomHorizontalFlip(p=0.5),
+            T.RandomVerticalFlip(p=0.5),
+            T.RandomRotation(degrees=15, interpolation=T.InterpolationMode.BILINEAR),
+            
+            # 3. Augmentation sutil de iluminación (Evita alterar drásticamente el Hue/Tono)
+            T.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.0, hue=0.0),
+            
+            # 4. Conversión a Tensor y Normalización Z-score espectral
+            T.ToTensor(),
+            T.Normalize(mean=self.mean, std=self.std)
+        ])
+
+
+class CornMinorityTransforms(TransformPipelineFactory):
+    """
+    Pipeline de augmentation extendida para clases minoritarias (ratio > 4x).
+
+    Más agresivo que CornTrainingTransforms en geometría y color, pero preserva
+    el hue diagnóstico: saturation y hue se tocan solo levemente para no destruir
+    la señal de clorosis/amarillamiento en deficiencias nutricionales.
+    """
+
+    def __init__(self, target_size: tuple[int, int]):
+        self.target_size = target_size
+        self.mean = [0.485, 0.456, 0.406]
+        self.std = [0.229, 0.224, 0.225]
+
+    def create_transforms(self) -> T.Compose:
+        return T.Compose([
+            T.RandomResizedCrop(self.target_size, scale=(0.7, 1.0)),
+            T.RandomHorizontalFlip(p=0.5),
+            T.RandomVerticalFlip(p=0.5),
+            T.RandomRotation(degrees=30, interpolation=T.InterpolationMode.BILINEAR),
+            T.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.2, hue=0.05),
+            T.GaussianBlur(kernel_size=3, sigma=(0.1, 1.5)),
+            T.ToTensor(),
+            T.Normalize(mean=self.mean, std=self.std),
+        ])
+
+
+class CornValidationTransforms(TransformPipelineFactory):
+    """
+    Pipeline de transformaciones deterministas para validación y prueba.
+    
+    No aplica augmentations aleatorias para garantizar una evaluación justa y reproducible.
+    """
+    def __init__(self, target_size: tuple[int, int]):
+        self.target_size = target_size
+        self.mean = [0.485, 0.456, 0.406]
+        self.std = [0.229, 0.224, 0.225]
+
+    def create_transforms(self) -> T.Compose:
+        return T.Compose([
+            # 1. Homogeneización de la dimensionalidad estricta
+            T.Resize(self.target_size),
+            
+            # 2. Conversión y Normalización directa
+            T.ToTensor(),
+            T.Normalize(mean=self.mean, std=self.std)
+        ])
+
+
+class CornTransformFactory:
+    """
+    Punto de acceso único (Factory) para obtener los pipelines según la etapa del flujo.
+    """
+    def __init__(self, config_path: str = _DEFAULT_CONFIG):
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+        
+        # Lee las dimensiones configuradas en tu archivo paramétrico
+        width, height = config['dataset']['target_size']
+        self.target_size = (width, height)
+
+    def get_pipeline(self, stage: str) -> T.Compose:
+        """Retorna el pipeline de transformación correspondiente a la etapa."""
+        if stage.lower() == "train":
+            return CornTrainingTransforms(self.target_size).create_transforms()
+        elif stage.lower() == "minority":
+            return CornMinorityTransforms(self.target_size).create_transforms()
+        elif stage.lower() in ["val", "test", "inference"]:
+            return CornValidationTransforms(self.target_size).create_transforms()
+        else:
+            raise ValueError(
+                f"Etapa de pipeline desconocida: '{stage}'. "
+                "Use 'train', 'minority', 'val', 'test' o 'inference'."
+            )

@@ -19,6 +19,18 @@ const esDatasetSidebar = [
         text: "Maize, Beans and Tomatoes image dataset for Africa",
         link: "/es/datasets/maize-beans-tomatoes-africa",
       },
+      {
+        text: "Multicrop disease maiz pests and disease",
+        link: "/es/datasets/multicrop-disease-maiz-disease-pests-and-disease",
+      },
+      {
+        text: "Maize Nutrient Deficiency",
+        link: "/es/datasets/maize-nutrient-deficiency",
+      },
+      {
+        text: "Corn Leaf - Roboflow",
+        link: "/es/datasets/corn-leaf-roboflow",
+      },
     ],
   },
   {
@@ -51,6 +63,14 @@ const esDatasetSidebar = [
       {
         text: "Multicrop disease maiz pests and disease",
         link: "/es/cleanup-and-ordered/multicrop-disease-maiz-disease-pests-and-disease"
+      },
+      {
+        text: "Maize Nutrient Deficiency",
+        link: "/es/cleanup-and-ordered/maize-nutrient-deficiency"
+      },
+      {
+        text: "Corn Leaf - Roboflow",
+        link: "/es/cleanup-and-ordered/corn-leaf-roboflow"
       }
     ],
   },
@@ -63,21 +83,47 @@ const esDatasetSidebar = [
       },
     ],
   },
-];
+  {
+    text: "Preprocesado",
+    items: [
+      { text: "Índice", link: "/es/preprocesado/" },
+    ],
+  },
+  {
+    text: "Baselines",
+    items: [
+      { text: "Modelos base", link: "/es/baselines/" },
+      {
+        text: "Pipeline",
+        items: [
+          { text: "Preprocesado", link: "/es/pipeline-baselines/preprocesado" },
+          { text: "Entrenamiento", link: "/es/pipeline-baselines/entrenamiento" },
+          { text: "Evaluación", link: "/es/pipeline-baselines/evaluacion" },
+          { text: "Interpretabilidad", link: "/es/pipeline-baselines/interpretabilidad" },
+          { text: "Experimentos", link: "/es/pipeline-baselines/experimentos" },
+        ],
+      },
+    ],
+  },
 
-// const enDatasetSidebar = [
-//   {
-//     text: 'Datasets',
-//     items: [
-//       { text: 'Overview', link: '/en/datasets/' },
-//       { text: 'Maize in Field Dataset', link: '/en/datasets/maize-in-field-dataset' },
-//       { text: 'Maize Diseases', link: '/en/datasets/maize-diseases' },
-//       { text: 'Corn Leaf Diseases', link: '/en/datasets/corn-leaf-diseases' },
-//       { text: 'CropDG Unified Multi-Domain', link: '/en/datasets/cropdg-unified-multidomain' },
-//       { text: 'Maize, Beans & Tomatoes (Africa)', link: '/en/datasets/maize-beans-tomatoes-africa' },
-//     ],
-//   },
-// ]
+  // EN ESPERA DE ETAPA 2 DEL PROYECTO
+  // {
+  //   text: "Deep Learning",
+  //   items: [
+  //     { text: "Redes neuronales", link: "/es/deep-learning/" },
+  //     {
+  //       text: "Pipeline",
+  //       items: [
+  //         { text: "Preprocesado", link: "/es/pipeline-deep-learning/preprocesado" },
+  //         { text: "Entrenamiento", link: "/es/pipeline-deep-learning/entrenamiento" },
+  //         { text: "Evaluación", link: "/es/pipeline-deep-learning/evaluacion" },
+  //         { text: "Interpretabilidad", link: "/es/pipeline-deep-learning/interpretabilidad" },
+  //         { text: "Experimentos", link: "/es/pipeline-deep-learning/experimentos" },
+  //       ],
+  //     },
+  //   ],
+  // },
+];
 
 export default defineConfig({
   vite: {
@@ -123,13 +169,59 @@ export default defineConfig({
       themeConfig: {
         nav: [
           { text: "Inicio", link: "/es/" },
-          { text: "Datasets", link: "/es/datasets/" },
-          { text: "Limpieza", link: "/es/cleanup-and-ordered/" },
-          { text: "Análisis Exploratorio", link: "/es/exploratory-data-analysis/" },
+          {
+            text: "Exploración",
+            items: [
+              { text: "Datasets", link: "/es/datasets/" },
+              { text: "Limpieza", link: "/es/cleanup-and-ordered/" },
+              { text: "Análisis Exploratorio", link: "/es/exploratory-data-analysis/" },
+            ]
+          },
+          { text: "Preprocesado", link: "/es/preprocesado/" },
+          {
+            text: "Baselines",
+            items: [
+              { text: "Modelos base", link: "/es/baselines/" },
+              {
+                text: "Pipeline",
+                items: [
+                  { text: "Preprocesado", link: "/es/pipeline-baselines/preprocesado" },
+                  { text: "Entrenamiento", link: "/es/pipeline-baselines/entrenamiento" },
+                  { text: "Evaluación", link: "/es/pipeline-baselines/evaluacion" },
+                  { text: "Interpretabilidad", link: "/es/pipeline-baselines/interpretabilidad" },
+                  { text: "Experimentos", link: "/es/pipeline-baselines/experimentos" },
+                ],
+              },
+            ]
+          },
+          // EN ESPERA DE ETAPA 2 DEL PROYECTO
+          // {
+          //   text: "Deep Learning",
+          //   items: [
+          //     { text: "Redes neuronales", link: "/es/deep-learning/" },
+          //     {
+          //       text: "Pipeline",
+          //       items: [
+          //         { text: "Preprocesado", link: "/es/pipeline-deep-learning/preprocesado" },
+          //         { text: "Entrenamiento", link: "/es/pipeline-deep-learning/entrenamiento" },
+          //         { text: "Evaluación", link: "/es/pipeline-deep-learning/evaluacion" },
+          //         { text: "Interpretabilidad", link: "/es/pipeline-deep-learning/interpretabilidad" },
+          //         { text: "Experimentos", link: "/es/pipeline-deep-learning/experimentos" },
+          //       ],
+          //     },
+          //   ]
+          // },
         ],
         sidebar: {
           "/es/": esDatasetSidebar,
           "/es/datasets/": esDatasetSidebar,
+          "/es/cleanup-and-ordered/": esDatasetSidebar,
+          "/es/exploratory-data-analysis/": esDatasetSidebar,
+          "/es/preprocesado/": esDatasetSidebar,
+          "/es/baselines/": esDatasetSidebar,
+          "/es/pipeline-baselines/": esDatasetSidebar,
+          "/es/deep-learning/": esDatasetSidebar,
+          "/es/pipeline-deep-learning/": esDatasetSidebar,
         },
         search: {
           provider: "local",

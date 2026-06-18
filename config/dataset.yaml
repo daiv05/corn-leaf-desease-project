@@ -1,0 +1,39 @@
+paths:
+  # Rutas relativas a DATASET_ROOT (definido en .env), para que el pipeline
+  # funcione igual en el servidor (volumen montado) y en local (cualquier ruta).
+  raw_dir: "clean"
+  split_output_dir: "splits/seed_42"
+
+dataset:
+  target_size: [224, 224]
+  seed: 42
+  classes:
+    - aphids_pest
+    - common_rust
+    - fall_armyworm
+    - gray_leaf_spot
+    - healthy
+    - nitrogen_deficiency
+    - northern_corn_leaf_blight
+    - phosphorus_deficiency
+    - potassium_deficiency
+
+features:
+  target_size: [224, 224]
+
+  hog:
+    orientations: 9
+    pixels_per_cell: [8, 8]
+    cells_per_block: [2, 2]
+
+  hsv:
+    bins: [16, 16, 16]
+
+  lbp:
+    radius: 3
+    n_points: 24
+
+  glcm:
+    distances: [1, 3]
+    angles: [0, 0.785, 1.571, 2.356]
+    properties: [contrast, correlation, energy, homogeneity]

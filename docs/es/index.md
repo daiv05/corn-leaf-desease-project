@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: "DoctorMaiz"
-  text: "Enfermedades Foliares en Maíz"
-  tagline: "Sistema de clasificación de enfermedades para pequeños productores de maíz en El Salvador, con inferencia completamente offline en dispositivos Android de gama media/baja."
+  text: "Enfermedades, Plagas y Deficiencias en Maíz"
+  tagline: "Sistema de clasificación de enfermedades foliares, plagas y deficiencias nutricionales para pequeños productores de maíz en El Salvador, con inferencia completamente offline en dispositivos Android de gama media/baja."
   image:
     src: /logo.svg
     alt: DoctorMaiz
@@ -12,11 +12,17 @@ hero:
     - theme: brand
       text: Ver Datasets
       link: /es/datasets/
+    - theme: alt
+      text: Baselines
+      link: /es/baselines/
+    - theme: alt
+      text: Deep Learning
+      link: /es/deep-learning/
 
 features:
   - icon: "🌽"
-    title: "4 Clases Foliares"
-    details: "Clasificación de roya común, tizón foliar del norte, mancha gris de la hoja y hoja sana mediante CNN con transferencia de aprendizaje."
+    title: "9 Clases"
+    details: "Clasificación de 6 enfermedades foliares y plagas (roya, NCLB, GLS, cogollero, áfidos, sana) y 3 deficiencias nutricionales (N, P, K) mediante CNN con transferencia de aprendizaje."
   - icon: "📱"
     title: "Edge AI Offline"
     details: "Modelo TensorFlow Lite con cuantización Int8, objetivo ≤ 20 MB y latencia ≤ 300 ms en CPU Snapdragon serie 6xx o equivalente."
@@ -30,7 +36,7 @@ features:
 
 ## El Proyecto
 
-**Detección de Enfermedades Foliares en Cultivos de Maíz mediante Deep Learning en Dispositivos Móviles**
+**Detección de Enfermedades Foliares, Plagas y Deficiencias Nutricionales en Cultivos de Maíz mediante Deep Learning en Dispositivos Móviles**
 
 | | |
 |---|---|
@@ -49,21 +55,35 @@ features:
 
 ### Contexto y Problema
 
-La agricultura representa el 5.6% del PIB de El Salvador y es el sustento de más de 2 millones de personas rurales. El 82.1% de los productores son pequeños agricultores, muchos operando a nivel de subsistencia. El maíz -principal cultivo- es vulnerable a enfermedades foliares que, sin detección temprana, pueden destruir hasta el 70% de la cosecha.
+La agricultura representa el 5.6% del PIB de El Salvador y es el sustento de más de 2 millones de personas rurales. El 82.1% de los productores son pequeños agricultores, muchos operando a nivel de subsistencia. El maíz -principal cultivo- es vulnerable a enfermedades foliares, plagas y deficiencias nutricionales que, sin detección temprana, pueden destruir hasta el 70% de la cosecha.
 
-En zonas rurales el acceso a asistencia técnica es limitado. Los diagnósticos dependen de la experiencia empírica del agricultor, lo que genera detecciones tardías y pérdidas económicas significativas. En 2023 la cosecha cayó un tercio respecto a 2021.
+En zonas rurales el acceso a asistencia técnica es limitado. Los diagnósticos dependen de la experiencia empírica del agricultor, lo que puede generar detecciones tardías y pérdidas económicas significativas. En 2023 la cosecha cayó un tercio respecto a 2021.
 
 ### Clases Objetivo
 
-| Clase | Nombre en inglés | Patógeno | Síntoma visual | Orig. únicos | Campo real |
-|---|---|---|---|---|---|
-| **Roya común** | Common Rust | *Puccinia sorghi* | Pústulas anaranjadas dispersas en ambas caras de la hoja | ~1 591 | ~399 ⚠️ |
-| **Tizón foliar del norte (NCLB)** | Northern Corn Leaf Blight | *Exserohilum turcicum* | Lesiones alargadas grisáceas o marrones con bordes difusos | ~6 760 | ~5 775 |
-| **Mancha gris de la hoja (GLS)** | Gray Leaf Spot | *Cercospora zeae-maydis* | Lesiones rectangulares grises o marrones delimitadas por nervaduras | ~5 950 | ~5 437 |
-| **Hoja sana** | Healthy | - | Sin síntomas foliares de enfermedad | ~4 828 | ~3 666 |
+#### Enfermedades y plagas foliares
 
-::: warning Desbalance crítico en Roya común
-La clase **Roya común** dispone de solo **~399 imágenes de campo real** en todos los datasets evaluados (300 en Maize in Field + ~99 en el dataset de África), frente a ~5 775 de NCLB y ~5 437 de GLS. El objetivo es alcanzar **≥ 2 000 imágenes de campo real por clase** antes de la adaptación de dominio; Roya común es la única que no lo cumple y requiere data augmentation prioritaria sobre sus originales de campo.
+| Clase | Nombre en inglés | Patógeno/Agente | Síntoma visual | Lab | Real | Total |
+|---|---|---|---|---:|---:|---:|
+| **Roya común** | Common Rust | *Puccinia sorghi* | Pústulas anaranjadas dispersas en ambas caras de la hoja | 2 150 | 106 ⚠️ | 2 256 |
+| **Tizón foliar del norte (NCLB)** | Northern Corn Leaf Blight | *Exserohilum turcicum* | Lesiones alargadas grisáceas o marrones con bordes difusos | 888 | 5 942 | 6 830 |
+| **Mancha gris de la hoja (GLS)** | Gray Leaf Spot | *Cercospora zeae-maydis* | Lesiones rectangulares grises o marrones delimitadas por nervaduras | 513 | 606 | 1 119 |
+| **Hoja sana** | Healthy | - | Sin síntomas foliares de enfermedad | 0 | 8 744 | 8 744 |
+| **Gusano cogollero** | Fall Armyworm | *Spodoptera frugiperda* | Daño por masticación con excrementos en el cogollo y hojas | 0 | 4 858 | 4 858 |
+| **Áfidos del maíz** | Maize Aphids | *Rhopalosiphum maidis* | Colonias de pulgones en hojas y cogollo, hojas enrolladas y amarillamiento | 0 | 77 ⚠️ | 77 |
+
+#### Deficiencias nutricionales
+
+| Clase | Nombre en inglés | Síntoma visual | Lab | Real | Total |
+|---|---|---|---:|---:|---:|
+| **Deficiencia de nitrógeno** | Nitrogen Deficiency | Amarillamiento en "V" desde la punta de hojas inferiores | 0 | 523 ⚠️ | 523 |
+| **Deficiencia de fósforo** | Phosphorus Deficiency | Bordes y puntas moradas/rojizas en hojas jóvenes | 0 | 612 ⚠️ | 612 |
+| **Deficiencia de potasio** | Potassium Deficiency | Necrosis marginal en hojas más viejas | 0 | 266 ⚠️ | 266 |
+
+> Conteos post-limpieza y deduplicación en `data/clean/` (junio 2026). Total consolidado: **25 362 imágenes** (3 551 lab + 21 811 campo real).
+
+::: warning Desbalance crítico - GLS, Roya real, Áfidos y deficiencias nutricionales
+**Áfidos** (77 imgs), **Roya común** (solo 106 imgs de campo real), **GLS** (1 119 total), **Potasio** (266), **Nitrógeno** (523) y **Fósforo** (612) requieren data augmentation prioritaria antes de la etapa de adaptación de dominio. Se está evaluando el techo por clase (500, 1 000 o 2 000 imgs).
 :::
 
 ### Metodología

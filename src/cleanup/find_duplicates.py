@@ -11,15 +11,15 @@ Opciones:
 """
 
 import os
+import sys
 import csv
 import json
 from pathlib import Path
 from datetime import datetime
-from dotenv import load_dotenv
 
-load_dotenv(Path(__file__).parents[2] / ".env")
+sys.path.append(str(Path(__file__).resolve().parents[2]))
+from src.config import DATASET_ROOT
 
-DATASET_ROOT = Path(os.getenv("DATASET_ROOT", ""))
 CLEAN_DIR = DATASET_ROOT / "clean"
 ANALYSIS_DIR = Path(__file__).parent / "results"
 

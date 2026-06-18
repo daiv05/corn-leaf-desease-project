@@ -14,11 +14,13 @@ Aquí se resume el proceso y hallazgos encontrados al limpiar, clasificar y esta
 
 Debido a que contiene imágenes procesadas (recortes, filtros, augmentaciones) y no se dispone del material original, se decidió omitir este dataset para evitar confusiones. Se mantiene documentado en esta etapa de limpieza para referencia futura.
 
-### Por procesar
+### A procesar
 
 Se exploran los siguientes datasets, y se definen identificadores para cada uno, que se incluirán en los nombres de las imágenes para mantener la trazabilidad:
 
 **DATASET                                       -----> IDENTIFICADOR**
+
+`corn-leaf-roboflow                                --> corn_leaf_roboflow`
 
 `cropdg-unified-multidomain                        --> cropdg`
 
@@ -28,17 +30,31 @@ Se exploran los siguientes datasets, y se definen identificadores para cada uno,
 
 `maize-in-field-dataset                            --> maize_field`
 
+`maize-nutrient-deficiency                         --> maize_nutrient`
+
 `multicrop-disease-maiz-disease-pests-and-disease  --> multi_desease`
 
-## Clases consideras (junio 2026) 
+## Clases consideradas (junio 2026)
 
-1. `Roya común` | `Common Rust` | `Puccinia sorghi` |
+### Enfermedades foliares
 
-2. `Tizón foliar del norte (NCLB)` | `Northern Corn Leaf Blight` | `Exserohilum turcicum` |
+1. `Roya común` | `Common Rust` | `Puccinia sorghi`
 
-3. `Mancha gris de la hoja (GLS)` | `Gray Leaf Spot` | `Cercospora zeae-maydis` |
+2. `Tizón foliar del norte (NCLB)` | `Northern Corn Leaf Blight` | `Exserohilum turcicum`
 
-4. `Hoja sana` | `Healthy` | `-` |
+3. `Mancha gris de la hoja (GLS)` | `Gray Leaf Spot` | `Cercospora zeae-maydis`
+
+4. `Hoja sana` | `Healthy` | `-`
+
+5. `Gusano cogollero` | `Fall Armyworm` | `Spodoptera frugiperda`
+
+### Deficiencias nutricionales
+
+6. `Deficiencia de nitrógeno` | `Nitrogen Deficiency`
+
+7. `Deficiencia de fósforo` | `Phosphorus Deficiency`
+
+8. `Deficiencia de potasio` | `Potassium Deficiency`
 
 ## Flujo de trabajo implementado
 
@@ -71,13 +87,21 @@ Se exploran los siguientes datasets, y se definen identificadores para cada uno,
 
 ## Resultados obtenidos
 
-Tras aplicar las rutinas automatizadas de deduplicación y filtros de exclusión por calidad, el volumen neto de imágenes útiles extraídas e integradas en `data/clean/` es el siguiente:
+Tras aplicar las rutinas automatizadas de deduplicación y filtros de exclusión por calidad, el volumen neto de imágenes útiles integradas en `data/clean/` por clase es el siguiente:
 
-* **Maize Diseases 1.1 (`maize_desease`):** ~5,326 imágenes.
-* **Maize Africa v1.2 (`maize_africa`):** 1,872 imágenes.
-* **CropDG (Solo subcarpeta PV) (`cropdg`):** ~1,162 imágenes.
-* **Corn Leaf Roboflow:** ~1,000 imágenes.
-* **Maize In-Field Dataset (`maize_field`):** 877 imágenes netas (tras descartar multietiquetas y 22 duplicados).
-* **Maize Africa v1:** 468 imágenes.
-* **Maize Nutrient Deficiency:** ~72 imágenes.
-* **Maize Diseases 1.0:** 0 imágenes *(Descartado por ser idéntico y absorbido por la v1.1)*.
+| Clase                        | Lab    | Real   | Total  | Tamaño    |
+|------------------------------|-------:|-------:|-------:|----------:|
+| `aphids_pest`                |      0 |     77 |     77 | 302.6 MB  |
+| `common_rust`                |  2 150 |    106 |  2 256 | 570.9 MB  |
+| `fall_armyworm`              |      0 |  4 858 |  4 858 |   2.1 GB  |
+| `gray_leaf_spot`             |    513 |    606 |  1 119 |   2.2 GB  |
+| `healthy`                    |      0 |  8 744 |  8 744 |   4.6 GB  |
+| `nitrogen_deficiency`        |      0 |    523 |    523 |  33.1 MB  |
+| `northern_corn_leaf_blight`  |    888 |  5 942 |  6 830 |   4.4 GB  |
+| `phosphorus_deficiency`      |      0 |    612 |    612 |  41.3 MB  |
+| `potassium_deficiency`       |      0 |    266 |    266 |  17.8 MB  |
+| **TOTAL**                    |  **3 551** | **21 734** | **25 285** | **14.3 GB** |
+
+## Observaciones
+
+> Junio 2026 - Se están analizando opciones para aumentar la cantidad de imágenes en clases con menor representación, como `aphids_pest` y las deficiencias nutricionales. Se evalúa la posibilidad de incluir datasets adicionales. Asi mismo se está por definir la cantidad o techo de imágenes por clase para evitar sesgos en el entrenamiento (500, 1000 o 2000 por clase).

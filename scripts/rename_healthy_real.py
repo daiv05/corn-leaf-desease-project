@@ -7,12 +7,14 @@ con correlativo iniciando en 1.
 """
 
 import os
+import sys
 import random
+from pathlib import Path
 
-SOURCE_DIR = os.path.join(
-    os.path.dirname(__file__),
-    "..", "data", "clean", "healthy", "real", "temporal"
-)
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+from src.config import DATASET_ROOT
+
+SOURCE_DIR = DATASET_ROOT / "clean" / "healthy" / "real" / "temporal"
 
 START_INDEX = 1
 RANDOM_DIGITS = 8
