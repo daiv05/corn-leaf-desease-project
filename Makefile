@@ -14,10 +14,10 @@ install:
 	$(PIP) install -e ".[dev]"
 
 splits:
-	$(PYTHON) scripts/create_splits.py
+	$(PYTHON) scripts/pipeline/create_splits.py
 
 train:
-	$(PYTHON) scripts/train.py
+	$(PYTHON) scripts/pipeline/train.py
 
 test-loader:
 	$(PYTHON) test_loader_integration.py
