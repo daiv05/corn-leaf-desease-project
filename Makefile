@@ -1,5 +1,12 @@
-PYTHON := venv/bin/python
-PIP    := venv/bin/pip
+ifeq ($(OS),Windows_NT)
+    PYTHON := venv\Scripts\python
+    PIP    := venv\Scripts\pip
+    RUFF   := venv\Scripts\ruff
+else
+    PYTHON := venv/bin/python
+    PIP    := venv/bin/pip
+    RUFF   := venv/bin/ruff
+endif
 
 .PHONY: install splits train test-loader summary lint fmt
 
@@ -19,7 +26,7 @@ summary:
 	$(PYTHON) src/data/dataset_summary.py
 
 lint:
-	venv/bin/ruff check src/ scripts/ test_loader_integration.py
+	$(RUFF) check src/ scripts/ test_loader_integration.py
 
 fmt:
-	venv/bin/ruff format src/ scripts/ test_loader_integration.py
+	$(RUFF) format src/ scripts/ test_loader_integration.py
