@@ -5,6 +5,7 @@ import sys
 import yaml
 import pandas as pd
 from pathlib import Path
+from PIL import Image
 from tqdm import tqdm
 
 PROJECT_ROOT = Path(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -71,13 +72,20 @@ def run_data_preparation_pipeline(config_path: str) -> None:
     all_records: list[dict] = []
     seen_hashes: set[str] = set()
     duplicates_found = 0
+    corrupt_found = 0
 
-    logger.info(f"Indexando {len(raw_image_paths)} imágenes con verificación SHA-256...")
+    logger.info(f"Indexando {len(raw_image_paths)} imágenes con verificación SHA-256 y validación PIL...")
 
     for class_name, environment, abs_path, rel_path in tqdm(
         raw_image_paths, desc="Indexando", unit="img"
     ):
         try:
+            # Verificación de integridad a nivel de imagen (cabecera + estructura interna).
+            # Image.verify() es barato — solo lee metadatos sin decodificar píxeles.
+            # Requiere re-abrir porque verify() deja el objeto en estado inválido.
+            with Image.open(abs_path) as img:
+                img.verify()
+
             digest = _sha256(abs_path)
             if digest in seen_hashes:
                 logger.warning(f"Duplicado exacto detectado y omitido: {rel_path}")
@@ -88,12 +96,13 @@ def run_data_preparation_pipeline(config_path: str) -> None:
                 {"image_path": rel_path, "label": class_name, "environment": environment}
             )
         except Exception as e:
-            tqdm.write(f"⚠️  Saltando archivo dañado o ilegible en {abs_path}: {e}")
+            tqdm.write(f"⚠️  Imagen corrupta o ilegible, omitida: {rel_path} — {e}")
+            corrupt_found += 1
 
     df_manifest = pd.DataFrame(all_records)
     logger.info(
-        f"Manifiesto construido: {len(df_manifest)} imágenes únicas "
-        f"(omitidas por duplicado exacto: {duplicates_found})"
+        f"Manifiesto construido: {len(df_manifest)} imágenes válidas "
+        f"(duplicados exactos omitidos: {duplicates_found} | corruptas omitidas: {corrupt_found})"
     )
 
     # 4. Partición balanceada jerárquica estratificada (70 / 15 / 15)
