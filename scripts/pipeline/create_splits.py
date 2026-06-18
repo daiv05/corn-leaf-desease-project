@@ -1,15 +1,11 @@
 import hashlib
 import logging
 import os
-import sys
 import yaml
 import pandas as pd
 from pathlib import Path
 from PIL import Image
 from tqdm import tqdm
-
-PROJECT_ROOT = Path(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-sys.path.append(str(PROJECT_ROOT))
 
 from src.config import DATASET_ROOT
 from src.data.splitter import HierarchicalStratifiedSplitter

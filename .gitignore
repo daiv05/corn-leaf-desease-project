@@ -11,7 +11,7 @@ cache/
 dist/
 node_modules/
 dataset/
-data
+/data
 
 npm-debug.log*
 yarn-debug.log*
