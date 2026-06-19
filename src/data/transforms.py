@@ -9,7 +9,6 @@ _DEFAULT_CONFIG = str(PROJECT_ROOT / "config" / "dataset.yaml")
 
 # Clases con ratio > 4x respecto a la mayoría (healthy, ~6k).
 # Reciben un pipeline de augmentation más agresivo para compensar su baja representación.
-# aphids_pest excluido del pipeline de entrenamiento (pendiente de decisión).
 MINORITY_CLASSES: frozenset[str] = frozenset({
     "potassium_deficiency",   # 32.9x
     "nitrogen_deficiency",    # 16.8x

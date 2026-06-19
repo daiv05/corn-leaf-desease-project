@@ -118,11 +118,11 @@ Definidas en `config/dataset.yaml → dataset.classes`. Orden canónico para `cl
 
 | Clase | Entornos disponibles | Nota |
 |---|---|---|
-| `aphids_pest` | real | Excluida del entrenamiento actual (`EXCLUDE_CLASSES`) |
 | `common_rust` | lab, real | Minoritaria (ratio 3.9x) |
 | `fall_armyworm` | real | — |
 | `gray_leaf_spot` | lab, real | Minoritaria (ratio 7.9x) |
 | `healthy` | lab, real | Clase mayoritaria de referencia |
+| `lethal_necrosis` | real | — |
 | `nitrogen_deficiency` | real | Minoritaria (ratio 16.8x) |
 | `northern_corn_leaf_blight` | lab, real | — |
 | `phosphorus_deficiency` | real | Minoritaria (ratio 14.3x) |

@@ -19,7 +19,7 @@ Implementada en `src/data/splitter.py → HierarchicalStratifiedSplitter`.
 
 ## Balanceo
 
-### Diagnóstico del desbalance (train, sin `aphids_pest`)
+### Diagnóstico del desbalance (train)
 
 | Clase | N | Ratio vs healthy |
 |---|---|---|
@@ -28,6 +28,7 @@ Implementada en `src/data/splitter.py → HierarchicalStratifiedSplitter`.
 | phosphorus_deficiency | 428 | 14.3x |
 | gray_leaf_spot | 778 | 7.9x |
 | common_rust | 1575 | 3.9x |
+| lethal_necrosis | 4491 | 1.4x |
 | fall_armyworm | 3223 | 1.9x |
 | northern_corn_leaf_blight | 4774 | 1.3x |
 | healthy | 6118 | 1.0x |
@@ -40,7 +41,7 @@ Implementada en `src/data/splitter.py → HierarchicalStratifiedSplitter`.
 
 ### Estrategia adoptada: tres capas complementarias
 
-**Capa 1 — Exclusión de `aphids_pest`:** pendiente de decisión sobre si incluir esta clase. Se excluye como parámetro reversible en `CornDataset(exclude_classes=["aphids_pest"])`. El CSV no se modifica.
+**Capa 1 — Sin exclusiones de clase:** `aphids_pest` fue considerada inicialmente pero se descartó definitivamente porque no se encontraron suficientes fuentes de imágenes adicionales — con solo ~77 fotos, el data augmentation no produciría variedad visual real sino repetición sintética. En su lugar se incorporó `lethal_necrosis` (~6 415 imágenes de campo real), que sí tiene masa crítica para el entrenamiento. El pipeline no excluye ninguna clase actualmente.
 
 **Capa 2 — `WeightedRandomSampler`:** cada muestra recibe un peso `1 / count_of_its_class`. El sampler repite muestras minoritarias dentro de cada epoch sin inflar su tamaño (`num_samples` = tamaño original). Combinado con augmentation en caliente, cada repetición recibe transformaciones distintas.
 
@@ -66,7 +67,7 @@ El ColorJitter es conservador (sin saturación ni hue) porque las deficiencias n
 
 ### Pipeline extendido (`CornMinorityTransforms`) — clases con ratio > 4x
 
-Aplicado en caliente a `potassium_deficiency`, `nitrogen_deficiency`, `phosphorus_deficiency`, `gray_leaf_spot` y `common_rust`:
+Aplicado en caliente a `potassium_deficiency`, `nitrogen_deficiency`, `phosphorus_deficiency`, `gray_leaf_spot` y `common_rust`. `lethal_necrosis` no entra en este grupo (ratio ~1.4x, bien representada):
 
 ```
 RandomResizedCrop(224×224, scale=(0.7, 1.0))   ← recortes aleatorios

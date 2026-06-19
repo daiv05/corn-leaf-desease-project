@@ -48,13 +48,17 @@ Se exploran los siguientes datasets, y se definen identificadores para cada uno,
 
 5. `Gusano cogollero` | `Fall Armyworm` | `Spodoptera frugiperda`
 
+6. `Necrosis letal del maíz` | `Lethal Necrosis` | `MLN (MCMV + SCMV)`
+
 ### Deficiencias nutricionales
 
-6. `Deficiencia de nitrógeno` | `Nitrogen Deficiency`
+7. `Deficiencia de nitrógeno` | `Nitrogen Deficiency`
 
-7. `Deficiencia de fósforo` | `Phosphorus Deficiency`
+8. `Deficiencia de fósforo` | `Phosphorus Deficiency`
 
-8. `Deficiencia de potasio` | `Potassium Deficiency`
+9. `Deficiencia de potasio` | `Potassium Deficiency`
+
+> **Nota:** `aphids_pest` (áfidos del maíz) fue evaluada pero descartada definitivamente. Solo se hallaron ~77 imágenes en los datasets disponibles y no se encontraron fuentes adicionales. Con ese volumen, el data augmentation replicaría variaciones sintéticas de un corpus mínimo sin aportar variedad visual real, lo que sesgaría el modelo hacia artefactos de augmentation. En su lugar se incorporó `lethal_necrosis`, que cuenta con ~6 415 imágenes de campo real de dos datasets distintos.
 
 ## Flujo de trabajo implementado
 
@@ -89,22 +93,22 @@ Se exploran los siguientes datasets, y se definen identificadores para cada uno,
 
 Tras aplicar las rutinas automatizadas de deduplicación y filtros de exclusión por calidad, el volumen neto de imágenes útiles integradas en `data/clean/` por clase es el siguiente:
 
-| Clase                        | Lab    | Real   | Total  | Tamaño    |
-|------------------------------|-------:|-------:|-------:|----------:|
-| `aphids_pest`                |      0 |     77 |     77 | 302.6 MB  |
-| `common_rust`                |  2 150 |    106 |  2 256 | 570.9 MB  |
-| `fall_armyworm`              |      0 |  4 858 |  4 858 |   2.1 GB  |
-| `gray_leaf_spot`             |    513 |    606 |  1 119 |   2.2 GB  |
-| `healthy`                    |      0 |  8 744 |  8 744 |   4.6 GB  |
-| `nitrogen_deficiency`        |      0 |    523 |    523 |  33.1 MB  |
-| `northern_corn_leaf_blight`  |    888 |  5 942 |  6 830 |   4.4 GB  |
-| `phosphorus_deficiency`      |      0 |    612 |    612 |  41.3 MB  |
-| `potassium_deficiency`       |      0 |    266 |    266 |  17.8 MB  |
-| **TOTAL**                    |  **3 551** | **21 734** | **25 285** | **14.3 GB** |
+| Clase                        | Lab    | Real   | Total  |
+|------------------------------|-------:|-------:|-------:|
+| `common_rust`                |  2 150 |    106 |  2 256 |
+| `fall_armyworm`              |      0 |  4 858 |  4 858 |
+| `gray_leaf_spot`             |    513 |    606 |  1 119 |
+| `healthy`                    |      0 |  8 744 |  8 744 |
+| `lethal_necrosis`            |      0 |  6 415 |  6 415 |
+| `nitrogen_deficiency`        |      0 |    523 |    523 |
+| `northern_corn_leaf_blight`  |    888 |  5 942 |  6 830 |
+| `phosphorus_deficiency`      |      0 |    612 |    612 |
+| `potassium_deficiency`       |      0 |    266 |    266 |
+| **TOTAL**                    |  **3 551** | **28 072** | **31 623** |
 
 ## Observaciones
 
-> Junio 2026 - Se están analizando opciones para aumentar la cantidad de imágenes en clases con menor representación, como `aphids_pest` y las deficiencias nutricionales. Se evalúa la posibilidad de incluir datasets adicionales. Asi mismo se está por definir la cantidad o techo de imágenes por clase para evitar sesgos en el entrenamiento (500, 1000 o 2000 por clase).
+> Junio 2026 — Las clases con menor representación son las deficiencias nutricionales (nitrógeno 523, fósforo 612, potasio 266). Se evalúa la posibilidad de incluir datasets adicionales para estas clases. Está pendiente definir un techo de imágenes por clase para evitar sesgos en el entrenamiento (500, 1000 o 2000 por clase).
 
 ---
 
@@ -199,6 +203,14 @@ No se encontraron imagenes correspondientes a esta enfermedad en este dataset, p
 ### Northern Corn Leaf Blight (NCLB) | Exserohilum turcicum
 
 Se reunieron un total de **4,223 imágenes** tomadas en un entorno de campo abierto (`real`)
+
+### Lethal Necrosis (MLN) | Maize Lethal Necrosis
+
+Se recopilaron imágenes de las carpetas `Maize Lethal Necrosis Disease` presentes en las versiones v1 y v2 del dataset. Ambas versiones contienen exactamente las mismas imágenes, por lo que se procesó únicamente la v1. Las imágenes fueron renombradas con el prefijo `lethal_necrosis_maize_africa_real_` e integradas en `clean/lethal_necrosis/real/`. No se reportaron duplicados.
+
+### Fall Armyworm | Spodoptera frugiperda
+
+Las carpetas `Maize Fall Army Worm Pest` y `Maize Fall Army Worm Activity` contienen imágenes de cogollero tomadas en campo. Fueron integradas en `clean/fall_armyworm/real/`.
 
 ### Healthy | Sana
 
@@ -345,4 +357,14 @@ Solamente `MagnesiumDeficiency` no se incluyó en el dataset limpio, ya que no e
 
 Por lo tanto, para salvaguardar la robustez del set consolidado, se decidió omitir este dataset del flujo final de limpieza.
 
+### Lethal Necrosis (MLN) | Maize Lethal Necrosis
+
+A diferencia de las otras clases de este dataset, las imágenes de Lethal Necrosis se encuentran correctamente aisladas en su propia carpeta y son identificables sin ambigüedad. Se integraron en su totalidad en `clean/lethal_necrosis/real/`. No se reportaron duplicados. Las imágenes son todas de entorno real.
+
+### Fall Armyworm | Spodoptera frugiperda
+
+-
+
 ### Healthy | Sana
+
+-

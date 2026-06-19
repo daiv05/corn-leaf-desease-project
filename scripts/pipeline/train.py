@@ -5,7 +5,7 @@ from src.config import DATASET_ROOT
 from src.data.dataset import CornDataset
 from src.data.transforms import CornTransformFactory
 
-EXCLUDE_CLASSES = ["aphids_pest"]
+EXCLUDE_CLASSES: list[str] = []
 SPLITS_DIR = DATASET_ROOT / "splits" / "seed_42"
 
 
