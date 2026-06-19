@@ -19,7 +19,7 @@ import shutil
 from collections import Counter
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 RAW_DIR = ROOT / "data" / "raw" / "corn-leaf-roboflow"
 CLEAN_DIR = ROOT / "data" / "clean"
 

@@ -38,40 +38,8 @@ const esDatasetSidebar = [
     items: [
       {
         text: "Limpieza y ordenado",
-        link: "/es/cleanup-and-ordered/"
+        link: "/es/cleanup-and-ordered/",
       },
-      {
-        text: "Corn Leaf Diseases",
-        link: "/es/cleanup-and-ordered/corn-leaf-diseases"
-      },
-      {
-        text: "CropDG Unified Multi-Domain",
-        link: "/es/cleanup-and-ordered/cropdg-unified-multidomain"
-      },
-      {
-        text: "Maize in Field Dataset",
-        link: "/es/cleanup-and-ordered/maize-in-field-dataset"
-      },
-      {
-        text: "Maize Diseases",
-        link: "/es/cleanup-and-ordered/maize-diseases"
-      },
-      {
-        text: "Maize, Beans and Tomatoes image dataset for Africa",
-        link: "/es/cleanup-and-ordered/maize-beans-tomatoes-africa"
-      },
-      {
-        text: "Multicrop disease maiz pests and disease",
-        link: "/es/cleanup-and-ordered/multicrop-disease-maiz-disease-pests-and-disease"
-      },
-      {
-        text: "Maize Nutrient Deficiency",
-        link: "/es/cleanup-and-ordered/maize-nutrient-deficiency"
-      },
-      {
-        text: "Corn Leaf - Roboflow",
-        link: "/es/cleanup-and-ordered/corn-leaf-roboflow"
-      }
     ],
   },
   {

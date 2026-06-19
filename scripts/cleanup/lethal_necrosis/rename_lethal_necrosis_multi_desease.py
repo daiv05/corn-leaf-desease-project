@@ -1,10 +1,10 @@
 """
 Mueve y renombra las imagenes en:
-    data/clean/aphids_pest/maize_africa/  (busqueda recursiva)
+    data/clean/lethal_necrosis/Maize Lethal Necrosis/  (busqueda recursiva)
 hacia:
-    data/clean/aphids_pest/real/
+    data/clean/lethal_necrosis/real/
 con el patron:
-    aphids_pest_maize_africa_real_<randomNumber>.<ext>
+    lethal_necrosis_multi_desease_real_<randomNumber>.<ext>
 """
 
 import os
@@ -16,12 +16,12 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[3]))
 from src.config import DATASET_ROOT
 
-BASE_DIR = DATASET_ROOT / "clean" / "aphids_pest"
-SOURCE_DIR = BASE_DIR / "maize_africa"
+BASE_DIR = DATASET_ROOT / "clean" / "lethal_necrosis"
+SOURCE_DIR = BASE_DIR / "Maize Lethal Necrosis"
 DEST_DIR = BASE_DIR / "real"
 
 RANDOM_DIGITS = 8
-PREFIX = "aphids_pest_maize_africa_real_"
+PREFIX = "lethal_necrosis_multi_desease_real_"
 
 
 def collect_images(source_dir: str) -> list[str]:

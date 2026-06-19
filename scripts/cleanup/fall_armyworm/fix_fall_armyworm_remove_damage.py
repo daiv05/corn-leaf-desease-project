@@ -11,7 +11,7 @@ import os
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parents[2]))
+sys.path.append(str(Path(__file__).resolve().parents[3]))
 from src.config import DATASET_ROOT
 
 TARGET_DIR = DATASET_ROOT / "clean" / "fall_armyworm" / "real"
