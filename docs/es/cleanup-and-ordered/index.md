@@ -108,7 +108,7 @@ Tras aplicar las rutinas automatizadas de deduplicación y filtros de exclusión
 
 ## Observaciones
 
-> Junio 2026 — Las clases con menor representación son las deficiencias nutricionales (nitrógeno 523, fósforo 612, potasio 266). Se evalúa la posibilidad de incluir datasets adicionales para estas clases. Está pendiente definir un techo de imágenes por clase para evitar sesgos en el entrenamiento (500, 1000 o 2000 por clase).
+> Junio 2026 - Las clases con menor representación son las deficiencias nutricionales (nitrógeno 523, fósforo 612, potasio 266). Se evalúa la posibilidad de incluir datasets adicionales para estas clases. Está pendiente definir un techo de imágenes por clase para evitar sesgos en el entrenamiento (500, 1000 o 2000 por clase).
 
 ---
 
@@ -215,8 +215,8 @@ Se recopilaron imágenes de las carpetas `Maize Lethal Necrosis Disease` present
 Las carpetas `Maize Fall Army Worm Pest` y `Maize Fall Army Worm Activity` contienen imágenes de cogollero tomadas en campo. Fueron integradas en `clean/fall_armyworm/real/`.
 
 > **Contenido visual por carpeta:**
-> - `Maize Fall Army Worm Activity` — imágenes de **hoja con daño** (sin insecto visible).
-> - `Maize Fall Army Worm Pest` — imágenes de **hoja con daño y gusano** visible sobre la planta.
+> - `Maize Fall Army Worm Activity` - imágenes de **hoja con daño** (sin insecto visible).
+> - `Maize Fall Army Worm Pest` - imágenes de **hoja con daño y gusano** visible sobre la planta.
 
 ### Healthy | Sana
 

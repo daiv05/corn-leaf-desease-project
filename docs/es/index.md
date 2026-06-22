@@ -15,9 +15,6 @@ hero:
     - theme: alt
       text: Baselines
       link: /es/baselines/
-    - theme: alt
-      text: Deep Learning
-      link: /es/deep-learning/
 
 features:
   - icon: "🌽"
@@ -108,7 +105,7 @@ Inferencia CNN - TensorFlow Lite (Int8)
       ↓
 Clase predicha + nivel de confianza
       ↓ (cuando hay conexión)
-Módulo de sincronización → API FastAPI + MySQL
+Módulo de sincronización - API FastAPI + MySQL
 ```
 
 ### Restricciones Técnicas

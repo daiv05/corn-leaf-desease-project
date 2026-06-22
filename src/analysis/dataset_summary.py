@@ -2,8 +2,8 @@
 Resumen del dataset: conteo por clase/entorno y tamaño en disco.
 
 Funciones públicas:
-  count_clean_dataset(clean_dir)  → DataFrame con columnas Clase, Lab, Real, Total
-  print_disk_summary(dataset_root) → reporte de disco por subcarpeta raíz
+  count_clean_dataset(clean_dir)  - DataFrame con columnas Clase, Lab, Real, Total
+  print_disk_summary(dataset_root) - reporte de disco por subcarpeta raíz
 """
 
 from pathlib import Path
@@ -26,7 +26,7 @@ def count_clean_dataset(clean_dir: Path) -> pd.DataFrame:
     Cuenta imágenes en clean/<clase>/{lab,real}/.
 
     Returns:
-        DataFrame con columnas Clase, Lab, Real, Total — una fila por clase.
+        DataFrame con columnas Clase, Lab, Real, Total - una fila por clase.
     """
     if not clean_dir.exists():
         raise FileNotFoundError(f"Directorio no encontrado: {clean_dir}")
@@ -144,7 +144,7 @@ def print_disk_summary(dataset_root: Path) -> None:
     grand_c = grand_s = 0
     for top in sorted(d for d in dataset_root.iterdir() if d.is_dir()):
         if top.name == "clean":
-            c, s = _print_section("clean/  (por enfermedad → lab / real)", top, depth=2)
+            c, s = _print_section("clean/  (por enfermedad - lab / real)", top, depth=2)
         elif top.name == "raw":
             c, s = _print_section("raw/  (por fuente)", top, depth=1)
         else:

@@ -109,7 +109,7 @@ def run_data_preparation_pipeline(config_path: str, sample_fraction: float | Non
                 {"image_path": rel_path, "label": class_name, "environment": environment}
             )
         except Exception as e:
-            tqdm.write(f"⚠️  Imagen corrupta o ilegible, omitida: {rel_path} — {e}")
+            tqdm.write(f"⚠️  Imagen corrupta o ilegible, omitida: {rel_path} - {e}")
             corrupt_found += 1
 
     df_manifest = pd.DataFrame(all_records)
@@ -123,7 +123,7 @@ def run_data_preparation_pipeline(config_path: str, sample_fraction: float | Non
         df_manifest = _sample_manifest(df_manifest, sample_fraction, sampling_seed)
         logger.info(
             f"Muestreo estratificado {int(sample_fraction * 100)}%: "
-            f"{before} → {len(df_manifest)} imágenes"
+            f"{before} - {len(df_manifest)} imágenes"
         )
 
     logger.info("Ejecutando división jerárquica estratificada (70% Train, 15% Val, 15% Test)...")

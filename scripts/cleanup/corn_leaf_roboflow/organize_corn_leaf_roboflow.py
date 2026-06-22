@@ -146,7 +146,7 @@ def copy_images(by_class: dict[str, list[Path]]) -> None:
             shutil.copy2(src, dest_dir / dst_name)
             copied += 1
 
-        print(f"  {cls_name:30s} → {dest_folder}/real/  ({copied} copiadas)")
+        print(f"  {cls_name:30s} - {dest_folder}/real/  ({copied} copiadas)")
 
 
 def main() -> None:

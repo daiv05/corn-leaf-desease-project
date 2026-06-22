@@ -50,7 +50,7 @@ Las imágenes se organizan en subcarpetas por clase. El dataset combina imágene
 
 Adege, Abebe (2026), "Maize Crop Disease (Leaf)", Mendeley Data, V1, doi: 10.17632/6w6gsvghfw.1
 
-Este trabajo fue parcialmente financiado por la Universidad de los Emiratos Árabes Unidos (UAEU) a través del fondo UAEU African Women Empowerment—SDG Research Grant (Grant No. 12T045).
+Este trabajo fue parcialmente financiado por la Universidad de los Emiratos Árabes Unidos (UAEU) a través del fondo UAEU African Women Empowerment-SDG Research Grant (Grant No. 12T045).
 
 ## Licencia
 

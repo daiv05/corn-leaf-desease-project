@@ -10,7 +10,7 @@ else
 	PYRIGHT := venv/bin/pyright
 endif
 
-.PHONY: install splits splits-sample train train-baselines train-baselines-full test-loader summary lint fmt
+.PHONY: install splits splits-sample train train-baselines train-baselines-full test-loader summary docs-eda lint fmt
 
 install:
 	$(PIP) install -e ".[dev,analysis]"
@@ -34,6 +34,9 @@ train-baselines-full:
 
 summary:
 	$(PYTHON) src/data/dataset_summary.py
+
+docs-eda:
+	cp tmp/eda_*.png public/eda/
 
 lint:
 	$(RUFF) check src/ scripts/

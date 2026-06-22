@@ -10,8 +10,8 @@ import yaml
 from sklearn.metrics import classification_report, f1_score
 from torch.utils.data import DataLoader
 
-import src.models.baselines.efficientnet  # noqa: F401 — registra modelos
-import src.models.baselines.mobilenet  # noqa: F401 — registra modelos
+import src.models.baselines.efficientnet  # noqa: F401 - registra modelos
+import src.models.baselines.mobilenet  # noqa: F401 - registra modelos
 from src.config import DATASET_ROOT, PROJECT_ROOT, set_global_seed
 from src.data.dataset import CornDataset, build_weighted_sampler
 from src.data.transforms import CornTransformFactory
@@ -138,7 +138,7 @@ def train_baseline(
         val_f1 = f1_score(val_labels, val_preds, average="macro", zero_division=0)
 
         logger.info(
-            f"[{model_name}] Epoch {epoch}/{epochs} — "
+            f"[{model_name}] Epoch {epoch}/{epochs} - "
             f"loss: {train_loss:.4f} | val macro-F1: {val_f1:.4f}"
         )
 

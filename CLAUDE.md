@@ -1,4 +1,4 @@
-# CLAUDE.md — Corn Leaf Disease Project
+# CLAUDE.md - Corn Leaf Disease Project
 
 ## Reglas de datos
 
@@ -37,9 +37,9 @@ corn-leaf-desease-project/
 │   │   └── find_duplicates.py  # CLI interactiva de deduplicación perceptual (PHash)
 │   ├── data/
 │   │   ├── loader.py         # load_and_normalize_image(): carga PIL + corrección EXIF/RGB
-│   │   ├── dataset.py        # CornDataset (torch.Dataset) — consumo indexado por DataLoader
-│   │   ├── feature_dataset.py # CornFeatureDataset — devuelve (np.ndarray, int) para sklearn
-│   │   ├── splitter.py       # HierarchicalStratifiedSplitter — división estratificada label+env
+│   │   ├── dataset.py        # CornDataset (torch.Dataset) - consumo indexado por DataLoader
+│   │   ├── feature_dataset.py # CornFeatureDataset - devuelve (np.ndarray, int) para sklearn
+│   │   ├── splitter.py       # HierarchicalStratifiedSplitter - división estratificada label+env
 │   │   ├── transforms.py     # CornTransformFactory + pipelines train/minority/val
 │   │   ├── dataset_summary.py # CLI: conteo de imágenes y tamaño por enfermedad/entorno
 │   │   └── count_dataset.py  # Función auxiliar de conteo (Markdown output)
@@ -60,13 +60,13 @@ corn-leaf-desease-project/
 
 | Módulo | Rol | Dependencias internas |
 |---|---|---|
-| `src/config.py` | Resuelve rutas de entorno (`DATASET_ROOT`, `PROJECT_ROOT`) | — |
+| `src/config.py` | Resuelve rutas de entorno (`DATASET_ROOT`, `PROJECT_ROOT`) | - |
 | `src/data/loader.py` | Carga atómica de imagen con corrección EXIF y normalización RGB | `config.py` |
-| `src/data/splitter.py` | División estratificada reproducible por `label + environment` | — |
+| `src/data/splitter.py` | División estratificada reproducible por `label + environment` | - |
 | `src/data/transforms.py` | Factory de pipelines torchvision por etapa (`train`, `minority`, `val`, `test`) | `config.py` |
-| `src/data/dataset.py` | `CornDataset` — `torch.Dataset` para DataLoader, usa transforms torchvision | `loader.py`, `transforms.py`, `config.py` |
-| `src/data/feature_dataset.py` | `CornFeatureDataset` — dataset para baselines sklearn, devuelve `np.ndarray` | `loader.py`, `features/extractors.py`, `config.py` |
-| `src/features/extractors.py` | `HOG`, `HSV`, `LBP`, `GLCM`, `CombinedExtractor` — vectores de features | `config.py` |
+| `src/data/dataset.py` | `CornDataset` - `torch.Dataset` para DataLoader, usa transforms torchvision | `loader.py`, `transforms.py`, `config.py` |
+| `src/data/feature_dataset.py` | `CornFeatureDataset` - dataset para baselines sklearn, devuelve `np.ndarray` | `loader.py`, `features/extractors.py`, `config.py` |
+| `src/features/extractors.py` | `HOG`, `HSV`, `LBP`, `GLCM`, `CombinedExtractor` - vectores de features | `config.py` |
 | `src/cleanup/find_duplicates.py` | CLI interactiva de deduplicación perceptual (PHash vía imagededup) | `config.py` |
 
 ### Principios de diseño
@@ -84,8 +84,8 @@ corn-leaf-desease-project/
 ### Pipeline de datos compartido
 
 ```
-clean/<clase>/{lab,real}/  →  scripts/pipeline/create_splits.py
-                           →  splits/seed_42/{train,val,test}.csv   (70/15/15)
+clean/<clase>/{lab,real}/  -  scripts/pipeline/create_splits.py
+                           -  splits/seed_42/{train,val,test}.csv   (70/15/15)
 ```
 
 `create_splits.py` valida integridad PIL, deduplica por SHA-256 y estratifica por `label + environment`.
@@ -94,37 +94,37 @@ clean/<clase>/{lab,real}/  →  scripts/pipeline/create_splits.py
 
 ```
 splits/seed_42/train.csv
-    → CornDataset(transform=CornTrainingTransforms, minority_transform=CornMinorityTransforms)
-    → WeightedRandomSampler
-    → DataLoader
-    → modelo (pendiente: loop de entrenamiento en scripts/pipeline/train.py)
+    - CornDataset(transform=CornTrainingTransforms, minority_transform=CornMinorityTransforms)
+    - WeightedRandomSampler
+    - DataLoader
+    - modelo (pendiente: loop de entrenamiento en scripts/pipeline/train.py)
 ```
 
 ### Pipeline Baselines (sklearn)
 
 ```
 splits/seed_42/train.csv
-    → CornFeatureDataset(extractor=CombinedExtractor.from_config())
-    → CornFeatureDataset.load_all()  →  (X: np.ndarray, y: np.ndarray)
-    → StandardScaler + SVM / RandomForest / k-NN  (class_weight='balanced')
-    → entrypoint pendiente: scripts/pipeline/train_baselines.py
+    - CornFeatureDataset(extractor=CombinedExtractor.from_config())
+    - CornFeatureDataset.load_all()  -  (X: np.ndarray, y: np.ndarray)
+    - StandardScaler + SVM / RandomForest / k-NN  (class_weight='balanced')
+    - entrypoint pendiente: scripts/pipeline/train_baselines.py
 ```
 
 ---
 
 ## Clases del dataset
 
-Definidas en `config/dataset.yaml → dataset.classes`. Orden canónico para `class_to_idx`:
+Definidas en `config/dataset.yaml - dataset.classes`. Orden canónico para `class_to_idx`:
 
 | Clase | Entornos disponibles | Nota |
 |---|---|---|
 | `common_rust` | lab, real | Minoritaria (ratio 3.9x) |
-| `fall_armyworm` | real | — |
+| `fall_armyworm` | real | - |
 | `gray_leaf_spot` | lab, real | Minoritaria (ratio 7.9x) |
 | `healthy` | lab, real | Clase mayoritaria de referencia |
-| `lethal_necrosis` | real | — |
+| `lethal_necrosis` | real | - |
 | `nitrogen_deficiency` | real | Minoritaria (ratio 16.8x) |
-| `northern_corn_leaf_blight` | lab, real | — |
+| `northern_corn_leaf_blight` | lab, real | - |
 | `phosphorus_deficiency` | real | Minoritaria (ratio 14.3x) |
 | `potassium_deficiency` | real | Minoritaria (ratio 32.9x) |
 

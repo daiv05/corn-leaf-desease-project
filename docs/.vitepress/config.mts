@@ -43,10 +43,10 @@ const esDatasetSidebar = [
     ],
   },
   {
-    text: "Análisis Exploratorio",
+    text: "Análisis Exploratorio de Datos",
     items: [
       {
-        text: "Explorando",
+        text: "Exploración",
         link: "/es/exploratory-data-analysis/",
       },
     ],
@@ -54,7 +54,7 @@ const esDatasetSidebar = [
   {
     text: "Preprocesado",
     items: [
-      { text: "Índice", link: "/es/preprocesado/" },
+      { text: "Proceso", link: "/es/preprocesado/" },
     ],
   },
   {

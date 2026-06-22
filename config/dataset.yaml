@@ -1,6 +1,5 @@
 paths:
-  # Rutas relativas a DATASET_ROOT (definido en .env), para que el pipeline
-  # funcione igual en el servidor (volumen montado) y en local (cualquier ruta).
+  # Rutas relativas a DATASET_ROOT
   raw_dir: "clean"
   split_output_dir: "splits/seed_42"
 

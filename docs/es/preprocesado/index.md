@@ -2,15 +2,15 @@
 
 ## Normalizado
 
-Toda imagen se carga en caliente mediante `src/data/loader.py → load_and_normalize_image()`:
+Toda imagen se carga en caliente mediante `src/data/loader.py - load_and_normalize_image()`:
 
-1. **Corrección EXIF** (`ImageOps.exif_transpose`) — corrige la orientación físca de fotos tomadas con smartphones antes de cualquier transformación.
-2. **Conversión a RGB estricta** — elimina canal alfa (RGBA) y expande imágenes monocromáticas. Garantiza 3 canales en todos los tensores.
-3. **Estadísticas de normalización** — se usan las medias y desviaciones estándar de ImageNet (`mean=[0.485, 0.456, 0.406]`, `std=[0.229, 0.224, 0.225]`). Se eligieron porque todos los backbones preentrenados esperan esta normalización. Cuando se calcule el EDA propio del dataset se podrán sustituir por estadísticas reales del corpus.
+1. **Corrección EXIF** (`ImageOps.exif_transpose`) - corrige la orientación físca de fotos tomadas con smartphones antes de cualquier transformación.
+2. **Conversión a RGB estricta** - elimina canal alfa (RGBA) y expande imágenes monocromáticas. Garantiza 3 canales en todos los tensores.
+3. **Estadísticas de normalización** - se usan las medias y desviaciones estándar de ImageNet (`mean=[0.485, 0.456, 0.406]`, `std=[0.229, 0.224, 0.225]`). Se eligieron porque todos los backbones preentrenados esperan esta normalización. Cuando se calcule el EDA propio del dataset se podrán sustituir por estadísticas reales del corpus.
 
 ## División
 
-Implementada en `src/data/splitter.py → HierarchicalStratifiedSplitter`.
+Implementada en `src/data/splitter.py - HierarchicalStratifiedSplitter`.
 
 - **Proporciones:** 70% train / 15% val / 15% test.
 - **Seed fijo:** 42, declarado en `config/dataset.yaml`. Garantiza reproducibilidad exacta entre ejecuciones.
@@ -41,17 +41,17 @@ Implementada en `src/data/splitter.py → HierarchicalStratifiedSplitter`.
 
 ### Estrategia adoptada: tres capas complementarias
 
-**Capa 1 — Sin exclusiones de clase:** `aphids_pest` fue considerada inicialmente pero se descartó definitivamente porque no se encontraron suficientes fuentes de imágenes adicionales — con solo ~77 fotos, el data augmentation no produciría variedad visual real sino repetición sintética. En su lugar se incorporó `lethal_necrosis` (~6 415 imágenes de campo real), que sí tiene masa crítica para el entrenamiento. El pipeline no excluye ninguna clase actualmente.
+**Capa 1 - Sin exclusiones de clase:** `aphids_pest` fue considerada inicialmente pero se descartó definitivamente porque no se encontraron suficientes fuentes de imágenes adicionales - con solo ~77 fotos, el data augmentation no produciría variedad visual real sino repetición sintética. En su lugar se incorporó `lethal_necrosis` (~6 415 imágenes de campo real), que sí tiene masa crítica para el entrenamiento. El pipeline no excluye ninguna clase actualmente.
 
-**Capa 2 — `WeightedRandomSampler`:** cada muestra recibe un peso `1 / count_of_its_class`. El sampler repite muestras minoritarias dentro de cada epoch sin inflar su tamaño (`num_samples` = tamaño original). Combinado con augmentation en caliente, cada repetición recibe transformaciones distintas.
+**Capa 2 - `WeightedRandomSampler`:** cada muestra recibe un peso `1 / count_of_its_class`. El sampler repite muestras minoritarias dentro de cada epoch sin inflar su tamaño (`num_samples` = tamaño original). Combinado con augmentation en caliente, cada repetición recibe transformaciones distintas.
 
-**Capa 3 — `CrossEntropyLoss` ponderada:** peso por clase `w_i = total / (num_clases × count_i)`. Refuerza el gradiente de clases minoritarias incluso cuando aparecen en menor proporción dentro de un batch. Complementa al sampler que actúa sobre frecuencia de aparición.
+**Capa 3 - `CrossEntropyLoss` ponderada:** peso por clase `w_i = total / (num_clases × count_i)`. Refuerza el gradiente de clases minoritarias incluso cuando aparecen en menor proporción dentro de un batch. Complementa al sampler que actúa sobre frecuencia de aparición.
 
 ## Data Augmentation
 
-Implementada en `src/data/transforms.py`. Se aplica **únicamente en train** — val y test usan transformaciones deterministas para garantizar evaluación justa.
+Implementada en `src/data/transforms.py`. Se aplica **únicamente en train** - val y test usan transformaciones deterministas para garantizar evaluación justa.
 
-### Pipeline estándar (`CornTrainingTransforms`) — todas las clases de train
+### Pipeline estándar (`CornTrainingTransforms`) - todas las clases de train
 
 ```
 Resize(224×224)
@@ -65,7 +65,7 @@ Normalize(ImageNet)
 
 El ColorJitter es conservador (sin saturación ni hue) porque las deficiencias nutricionales se diagnostican por color. Alteraciones agresivas de tono destruirían la señal diagnóstica.
 
-### Pipeline extendido (`CornMinorityTransforms`) — clases con ratio > 4x
+### Pipeline extendido (`CornMinorityTransforms`) - clases con ratio > 4x
 
 Aplicado en caliente a `potassium_deficiency`, `nitrogen_deficiency`, `phosphorus_deficiency`, `gray_leaf_spot` y `common_rust`. `lethal_necrosis` no entra en este grupo (ratio ~1.4x, bien representada):
 

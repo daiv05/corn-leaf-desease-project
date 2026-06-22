@@ -109,7 +109,7 @@ download_roboflow() {
   local out_name="$2"
 
   if [[ -z "${ROBOFLOW_API_KEY:-}" ]]; then
-    read -r -p "Enter your Roboflow API key (Account → Roboflow Keys): " ROBOFLOW_API_KEY
+    read -r -p "Enter your Roboflow API key (Account - Roboflow Keys): " ROBOFLOW_API_KEY
   fi
   if [[ -z "$ROBOFLOW_API_KEY" ]]; then
     echo "$LOG_PREFIX ROBOFLOW_API_KEY is required."

@@ -1,13 +1,13 @@
 """
 Herramienta interactiva para encontrar y eliminar imágenes duplicadas
-usando imagededup (PHash — rápido, escala a 20k+ imágenes).
+usando imagededup (PHash - rápido, escala a 20k+ imágenes).
 
 Analiza cada enfermedad completa (lab/ + real/ juntos).
 
 Opciones:
-  1. Encontrar duplicados  → guarda CSV en $DATASET_ROOT/analysis/
-  2. Encontrar y eliminar  → guarda CSV y elimina duplicados
-  3. Eliminar duplicados   → elimina basándose en CSV ya existente
+  1. Encontrar duplicados  - guarda CSV en $DATASET_ROOT/analysis/
+  2. Encontrar y eliminar  - guarda CSV y elimina duplicados
+  3. Eliminar duplicados   - elimina basándose en CSV ya existente
 """
 
 import csv
@@ -110,8 +110,8 @@ def deduplicate_groups(raw: dict[str, list[str]]) -> dict[str, list[str]]:
     eligiendo como 'original' el representante con menor ruta (reproducible)
     y listando el resto como duplicados a eliminar.
 
-    Garantía: cada imagen aparece en exactamente un grupo — como original
-    o como duplicado — nunca en ambos.
+    Garantía: cada imagen aparece en exactamente un grupo - como original
+    o como duplicado - nunca en ambos.
     """
     visited: set[str] = set()
     result: dict[str, list[str]] = {}
@@ -140,8 +140,8 @@ def deduplicate_groups(raw: dict[str, list[str]]) -> dict[str, list[str]]:
 
 def find_duplicates(disease_dir: Path) -> tuple[dict[str, list[str]], dict[str, Path]]:
     """
-    Usa PHash con rutas absolutas directamente — sin directorio temporal.
-    Retorna (duplicados, mapa_clave→Path_real).
+    Usa PHash con rutas absolutas directamente - sin directorio temporal.
+    Retorna (duplicados, mapa_clave-Path_real).
     """
     from imagededup.methods import PHash
 
@@ -275,7 +275,7 @@ def delete_duplicates_from_csv(disease_dir: Path) -> None:
 
 def main() -> None:
     print("=" * 60)
-    print("  Detector de imágenes duplicadas — Corn Leaf Disease")
+    print("  Detector de imágenes duplicadas - Corn Leaf Disease")
     print("=" * 60)
 
     disease_dir = choose_disease()

@@ -6,8 +6,8 @@ import torch
 import yaml
 from torch.utils.data import DataLoader
 
-import src.models.baselines.efficientnet  # noqa: F401 — registra modelos
-import src.models.baselines.mobilenet  # noqa: F401 — registra modelos
+import src.models.baselines.efficientnet  # noqa: F401 - registra modelos
+import src.models.baselines.mobilenet  # noqa: F401 - registra modelos
 from src.config import DATASET_ROOT, PROJECT_ROOT, set_global_seed
 from src.data.dataset import CornDataset, build_weighted_sampler
 from src.data.transforms import CornTransformFactory
