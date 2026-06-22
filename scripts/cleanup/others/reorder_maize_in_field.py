@@ -8,18 +8,23 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[3]))
 from src.config import DATASET_ROOT
 
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Move maize-in-field images into disease folders based on the CSV labels."
     )
     parser.add_argument(
         "--csv",
-        default=str(DATASET_ROOT / "raw" / "maize-in-field-dataset" / "Kaggle Dataset" / "Database.csv"),
+        default=str(
+            DATASET_ROOT / "raw" / "maize-in-field-dataset" / "Kaggle Dataset" / "Database.csv"
+        ),
         help="Path to Database.csv",
     )
     parser.add_argument(
         "--images",
-        default=str(DATASET_ROOT / "raw" / "maize-in-field-dataset" / "Kaggle Dataset" / "leaf_images"),
+        default=str(
+            DATASET_ROOT / "raw" / "maize-in-field-dataset" / "Kaggle Dataset" / "leaf_images"
+        ),
         help="Path to the leaf_images directory",
     )
     parser.add_argument(
@@ -33,6 +38,7 @@ def parse_args():
         help="Print actions without moving files",
     )
     return parser.parse_args()
+
 
 def main():
     args = parse_args()
@@ -53,11 +59,7 @@ def main():
 
     with csv_path.open("r", newline="", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
-        label_columns = [
-            col
-            for col in reader.fieldnames
-            if col not in {"imgID_id", "filePath"}
-        ]
+        label_columns = [col for col in reader.fieldnames if col not in {"imgID_id", "filePath"}]
 
         for row in reader:
             file_name = row.get("filePath", "").strip()
@@ -65,9 +67,7 @@ def main():
                 missing_label += 1
                 continue
 
-            labels = [
-                col for col in label_columns if row.get(col, "0").strip() == "1"
-            ]
+            labels = [col for col in label_columns if row.get(col, "0").strip() == "1"]
 
             if len(labels) == 0:
                 target_folder = "missing_label"
@@ -102,6 +102,7 @@ def main():
     print(f"Missing label: {missing_label}")
     for key in sorted(counts):
         print(f"  {key}: {counts[key]}")
+
 
 if __name__ == "__main__":
     main()

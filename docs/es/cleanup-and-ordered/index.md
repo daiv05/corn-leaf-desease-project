@@ -133,6 +133,8 @@ El dataset original usa formato YOLO (bounding boxes + polígonos de segmentaci�
 | Clase YOLO | Carpeta destino | Clases objetivo |
 |---|---|---|
 | `fall_armyworm_damage` (0) | `fall_armyworm/real/` | Sí  |
+
+> **Contenido visual:** la clase `fall_armyworm_damage` de Roboflow contiene imágenes de **hoja con daño** (perforaciones, mordeduras características) sin presencia visible del insecto. No hay imágenes del gusano en sí.
 | `healthy` (1) | `healthy/real/` | Sí  |
 | `leaf_spot` (2) | `gray_leaf_spot/real/` | Parcial  |
 | `magnesium_deficiency` (3) | `magnesium_deficiency/real/` | No (referencia) |
@@ -211,6 +213,10 @@ Se recopilaron imágenes de las carpetas `Maize Lethal Necrosis Disease` present
 ### Fall Armyworm | Spodoptera frugiperda
 
 Las carpetas `Maize Fall Army Worm Pest` y `Maize Fall Army Worm Activity` contienen imágenes de cogollero tomadas en campo. Fueron integradas en `clean/fall_armyworm/real/`.
+
+> **Contenido visual por carpeta:**
+> - `Maize Fall Army Worm Activity` — imágenes de **hoja con daño** (sin insecto visible).
+> - `Maize Fall Army Worm Pest` — imágenes de **hoja con daño y gusano** visible sobre la planta.
 
 ### Healthy | Sana
 
@@ -363,7 +369,7 @@ A diferencia de las otras clases de este dataset, las imágenes de Lethal Necros
 
 ### Fall Armyworm | Spodoptera frugiperda
 
--
+> **Contenido visual:** las imágenes de cogollero de este dataset son una mezcla de **hoja con daño** y **hoja con daño + gusano** visible, sin separación entre ambos tipos dentro de la carpeta.
 
 ### Healthy | Sana
 

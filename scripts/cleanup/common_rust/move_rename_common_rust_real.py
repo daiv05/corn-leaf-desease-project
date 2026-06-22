@@ -12,13 +12,9 @@ import random
 import shutil
 
 SOURCE_DIR = os.path.join(
-    os.path.dirname(__file__),
-    "..", "data", "clean", "common_rust", "real", "CR"
+    os.path.dirname(__file__), "..", "data", "clean", "common_rust", "real", "CR"
 )
-DEST_DIR = os.path.join(
-    os.path.dirname(__file__),
-    "..", "data", "clean", "common_rust", "real"
-)
+DEST_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "clean", "common_rust", "real")
 
 PREFIX = "common_rust_maize_field_real_"
 RANDOM_DIGITS = 8
@@ -28,10 +24,7 @@ def move_and_rename(source_dir: str, dest_dir: str) -> None:
     source_dir = os.path.abspath(source_dir)
     dest_dir = os.path.abspath(dest_dir)
 
-    entries = [
-        f for f in os.listdir(source_dir)
-        if os.path.isfile(os.path.join(source_dir, f))
-    ]
+    entries = [f for f in os.listdir(source_dir) if os.path.isfile(os.path.join(source_dir, f))]
 
     if not entries:
         print("No se encontraron archivos en el directorio fuente.")

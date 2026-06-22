@@ -25,7 +25,8 @@ def rename_files(target_dir: str) -> None:
         return
 
     candidates = [
-        f for f in os.listdir(target_dir)
+        f
+        for f in os.listdir(target_dir)
         if "_damage_" in f and os.path.isfile(os.path.join(target_dir, f))
     ]
 

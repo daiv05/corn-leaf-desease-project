@@ -12,13 +12,9 @@ import shutil
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 SOURCE_DIR = os.path.join(
-    BASE_DIR,
-    "data", "clean", "northern_corn_leaf_blight", "real", "temporal"
+    BASE_DIR, "data", "clean", "northern_corn_leaf_blight", "real", "temporal"
 )
-DEST_DIR = os.path.join(
-    BASE_DIR,
-    "data", "clean", "northern_corn_leaf_blight", "real"
-)
+DEST_DIR = os.path.join(BASE_DIR, "data", "clean", "northern_corn_leaf_blight", "real")
 
 
 def move_images(source_dir: str, dest_dir: str) -> None:
@@ -31,10 +27,7 @@ def move_images(source_dir: str, dest_dir: str) -> None:
 
     os.makedirs(dest_dir, exist_ok=True)
 
-    entries = [
-        f for f in os.listdir(source_dir)
-        if os.path.isfile(os.path.join(source_dir, f))
-    ]
+    entries = [f for f in os.listdir(source_dir) if os.path.isfile(os.path.join(source_dir, f))]
 
     if not entries:
         print("No se encontraron archivos en el directorio fuente.")

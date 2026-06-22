@@ -5,6 +5,7 @@ requires-python = ">=3.11"
 dependencies = [
     "torch>=2.2",
     "torchvision>=0.17",
+    "timm>=0.9",
     "Pillow>=10.0",
     "pandas>=2.0",
     "scikit-learn>=1.4",
@@ -14,7 +15,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev      = ["ipykernel", "jupyterlab", "matplotlib", "seaborn", "ruff"]
+dev      = ["ipykernel", "jupyterlab", "matplotlib", "seaborn", "ruff", "pyright"]
 analysis = ["imagededup", "fiftyone", "imageio", "mongoengine", "motor"]
 
 [build-system]

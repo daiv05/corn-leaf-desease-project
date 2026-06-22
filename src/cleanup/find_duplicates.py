@@ -10,12 +10,11 @@ Opciones:
   3. Eliminar duplicados   → elimina basándose en CSV ya existente
 """
 
-import os
-import sys
 import csv
 import json
-from pathlib import Path
+import sys
 from datetime import datetime
+from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 from src.config import DATASET_ROOT
@@ -30,19 +29,19 @@ IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp"}
 PHASH_THRESHOLD = 0
 
 
-#  helpers 
+#  helpers
+
 
 def get_disease_dirs() -> list[Path]:
     if not CLEAN_DIR.exists():
-        raise SystemExit(f"No se encontró la carpeta clean en {DATASET_ROOT}. Verifica DATASET_ROOT en .env")
+        raise SystemExit(
+            f"No se encontró la carpeta clean en {DATASET_ROOT}. Verifica DATASET_ROOT en .env"
+        )
     return sorted([d for d in CLEAN_DIR.iterdir() if d.is_dir()])
 
 
 def count_images(disease_dir: Path) -> int:
-    return sum(
-        1 for f in disease_dir.rglob("*")
-        if f.is_file() and f.suffix.lower() in IMAGE_EXTS
-    )
+    return sum(1 for f in disease_dir.rglob("*") if f.is_file() and f.suffix.lower() in IMAGE_EXTS)
 
 
 def choose_disease() -> Path:
@@ -85,13 +84,12 @@ def csv_path_for(disease_dir: Path) -> Path:
 
 
 def latest_csv_for(disease_dir: Path) -> Path | None:
-    matches = sorted(
-        ANALYSIS_DIR.glob(f"duplicates_{disease_dir.name}_*.csv"), reverse=True
-    )
+    matches = sorted(ANALYSIS_DIR.glob(f"duplicates_{disease_dir.name}_*.csv"), reverse=True)
     return matches[0] if matches else None
 
 
-#  core 
+#  core
+
 
 def collect_images(disease_dir: Path) -> dict[str, Path]:
     """
@@ -134,7 +132,7 @@ def deduplicate_groups(raw: dict[str, list[str]]) -> dict[str, list[str]]:
                     queue.append(nb)
 
         visited |= component
-        members = sorted(component)   # orden determinista
+        members = sorted(component)  # orden determinista
         result[members[0]] = members[1:]
 
     return result
@@ -173,8 +171,8 @@ def _encode_all(hasher, image_map: dict[str, Path]) -> dict[str, str]:
     Encoda todas las imágenes de image_map una a una usando PHash.
     Evita crear directorios temporales y soporta archivos en múltiples carpetas.
     """
-    from PIL import Image
     import numpy as np
+    from PIL import Image
 
     encodings: dict[str, str] = {}
     total = len(image_map)
@@ -272,7 +270,8 @@ def delete_duplicates_from_csv(disease_dir: Path) -> None:
     delete_paths(dupe_paths)
 
 
-#  main 
+#  main
+
 
 def main() -> None:
     print("=" * 60)

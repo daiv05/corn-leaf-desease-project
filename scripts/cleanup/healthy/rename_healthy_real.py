@@ -7,8 +7,8 @@ con correlativo iniciando en 1.
 """
 
 import os
-import sys
 import random
+import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[3]))
@@ -53,10 +53,7 @@ def ask_order_mode() -> str:
 
 def rename_images(source_dir: str, prefix: str, order_mode: str) -> None:
     source_dir = os.path.abspath(source_dir)
-    entries = [
-        f for f in os.listdir(source_dir)
-        if os.path.isfile(os.path.join(source_dir, f))
-    ]
+    entries = [f for f in os.listdir(source_dir) if os.path.isfile(os.path.join(source_dir, f))]
 
     if not entries:
         print("No se encontraron archivos en el directorio.")

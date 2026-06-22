@@ -1,90 +1,145 @@
+import argparse
+import logging
+from pathlib import Path
+
 import torch
-from torch.utils.data import DataLoader, WeightedRandomSampler
+import yaml
+from torch.utils.data import DataLoader
 
-from src.config import DATASET_ROOT
-from src.data.dataset import CornDataset
+import src.models.baselines.efficientnet  # noqa: F401 — registra modelos
+import src.models.baselines.mobilenet  # noqa: F401 — registra modelos
+from src.config import DATASET_ROOT, PROJECT_ROOT, set_global_seed
+from src.data.dataset import CornDataset, build_weighted_sampler
 from src.data.transforms import CornTransformFactory
+from src.models.registry import MODEL_REGISTRY
 
-EXCLUDE_CLASSES: list[str] = []
-SPLITS_DIR = DATASET_ROOT / "splits" / "seed_42"
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
+
+_DEFAULT_SPLITS_DIR = str(DATASET_ROOT / "splits" / "seed_42")
+_DEFAULT_OUTPUT_DIR = str(DATASET_ROOT / "results" / "main")
 
 
-def build_weighted_sampler(dataset: CornDataset) -> WeightedRandomSampler:
-    """Construye un WeightedRandomSampler que iguala la frecuencia de aparición por clase."""
-    labels = dataset.data_frame["label"].tolist()
-    class_counts = dataset.data_frame["label"].value_counts().to_dict()
+def _resolve_model_names(requested: list[str]) -> list[str]:
+    available = MODEL_REGISTRY.list_names()
+    if requested == ["all"]:
+        return available
+    unknown = [n for n in requested if n not in MODEL_REGISTRY]
+    if unknown:
+        raise SystemExit(f"Modelos desconocidos: {unknown}. Disponibles: {available}")
+    return requested
 
-    # Peso por muestra = 1 / tamaño de su clase
-    sample_weights = torch.tensor(
-        [1.0 / class_counts[label] for label in labels], dtype=torch.float
-    )
-    return WeightedRandomSampler(
-        weights=sample_weights,
-        num_samples=len(sample_weights),
-        replacement=True,
-    )
+
+def _worker_init_fn(worker_id: int, seed: int) -> None:
+    import random
+
+    import numpy as np
+
+    worker_seed = seed + worker_id
+    random.seed(worker_seed)
+    np.random.seed(worker_seed)
+    torch.manual_seed(worker_seed)
 
 
 def build_class_weights(dataset: CornDataset) -> torch.Tensor:
-    """
-    Calcula pesos de clase para CrossEntropyLoss:
-        w_i = total / (num_classes * count_i)
-    Devuelve un tensor ordenado por class_to_idx.
-    """
     counts = dataset.data_frame["label"].value_counts().to_dict()
     total = sum(counts.values())
     num_classes = len(dataset.class_to_idx)
-    weights = [
-        total / (num_classes * counts[cls])
-        for cls in dataset.allowed_classes
-    ]
+    weights = [total / (num_classes * counts[cls]) for cls in dataset.allowed_classes]
     return torch.tensor(weights, dtype=torch.float)
 
 
 def main() -> None:
-    factory = CornTransformFactory()
-    train_t    = factory.get_pipeline("train")
-    minority_t = factory.get_pipeline("minority")
-    val_t      = factory.get_pipeline("val")
-    test_t     = factory.get_pipeline("test")
+    parser = argparse.ArgumentParser(description="Entrena el pipeline principal de Deep Learning.")
+    parser.add_argument(
+        "--models",
+        nargs="+",
+        default=["all"],
+        help='Nombres de modelos a entrenar, o "all" para todos. '
+        f"Disponibles: {MODEL_REGISTRY.list_names()}",
+    )
+    parser.add_argument(
+        "--splits-dir",
+        default=_DEFAULT_SPLITS_DIR,
+        dest="splits_dir",
+        help=f"Directorio con train/val/test.csv (default: {_DEFAULT_SPLITS_DIR})",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default=_DEFAULT_OUTPUT_DIR,
+        dest="output_dir",
+        help=f"Directorio de salida para checkpoints y métricas (default: {_DEFAULT_OUTPUT_DIR})",
+    )
+    parser.add_argument("--epochs", type=int, default=30)
+    parser.add_argument("--batch-size", type=int, default=32, dest="batch_size")
+    parser.add_argument(
+        "--config",
+        default=str(PROJECT_ROOT / "config" / "dataset.yaml"),
+    )
+    args = parser.parse_args()
 
+    with open(args.config) as f:
+        cfg = yaml.safe_load(f)
+    seed = cfg["dataset"]["seed"]
+    set_global_seed(seed)
+
+    model_names = _resolve_model_names(args.models)
+    splits_dir = Path(args.splits_dir)
+    output_dir = Path(args.output_dir)
+
+    if not splits_dir.exists():
+        raise SystemExit(
+            f"El directorio de splits no existe: {splits_dir}\n"
+            "Genera los splits primero con: make splits"
+        )
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    logger.info(f"Dispositivo: {device}")
+    logger.info(f"Modelos a entrenar: {model_names}")
+
+    factory = CornTransformFactory()
     train_dataset = CornDataset(
-        csv_path=str(SPLITS_DIR / "train.csv"),
-        transform=train_t,
-        minority_transform=minority_t,
-        exclude_classes=EXCLUDE_CLASSES,
+        csv_path=str(splits_dir / "train.csv"),
+        transform=factory.get_pipeline("train"),
+        minority_transform=factory.get_pipeline("minority"),
     )
     val_dataset = CornDataset(
-        csv_path=str(SPLITS_DIR / "val.csv"),
-        transform=val_t,
-        exclude_classes=EXCLUDE_CLASSES,
+        csv_path=str(splits_dir / "val.csv"),
+        transform=factory.get_pipeline("val"),
     )
     test_dataset = CornDataset(
-        csv_path=str(SPLITS_DIR / "test.csv"),
-        transform=test_t,
-        exclude_classes=EXCLUDE_CLASSES,
+        csv_path=str(splits_dir / "test.csv"),
+        transform=factory.get_pipeline("test"),
     )
 
-    sampler = build_weighted_sampler(train_dataset)
-    class_weights = build_class_weights(train_dataset)
+    sampler = build_weighted_sampler(train_dataset, seed=seed)
+    class_weights = build_class_weights(train_dataset).to(device)
+    num_classes = len(train_dataset.class_to_idx)
 
-    train_loader = DataLoader(
+    train_loader = DataLoader(  # noqa: F841
         train_dataset,
-        batch_size=32,
-        sampler=sampler,       # incompatible con shuffle=True
+        batch_size=args.batch_size,
+        sampler=sampler,
         num_workers=4,
         pin_memory=True,
+        worker_init_fn=lambda wid: _worker_init_fn(wid, seed=seed),
     )
-    val_loader = DataLoader(
-        val_dataset, batch_size=32, shuffle=False, num_workers=4, pin_memory=True
+    val_loader = DataLoader(  # noqa: F841
+        val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=4, pin_memory=True
     )
-    test_loader = DataLoader(
-        test_dataset, batch_size=32, shuffle=False, num_workers=4, pin_memory=True
+    test_loader = DataLoader(  # noqa: F841
+        test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=4, pin_memory=True
     )
 
-    criterion = torch.nn.CrossEntropyLoss(weight=class_weights)
+    criterion = torch.nn.CrossEntropyLoss(weight=class_weights)  # noqa: F841
 
-    # TODO: definir arquitectura, optimizador y loop de entrenamiento
+    for model_name in model_names:
+        model = MODEL_REGISTRY.build(model_name, num_classes=num_classes).to(device)  # noqa: F841
+        ckpt_dir = output_dir / model_name
+        ckpt_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"[{model_name}] Modelo construido. Checkpoints en {ckpt_dir}")
+
+        # TODO: loop de entrenamiento
 
 
 if __name__ == "__main__":

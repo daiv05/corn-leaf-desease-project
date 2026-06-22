@@ -6,8 +6,8 @@ Funciones públicas:
   print_disk_summary(dataset_root) → reporte de disco por subcarpeta raíz
 """
 
-import sys
 from pathlib import Path
+
 import pandas as pd
 
 from src.config import DATASET_ROOT
@@ -19,6 +19,7 @@ _COL_W = 52
 # ---------------------------------------------------------------------------
 # Funciones de conteo
 # ---------------------------------------------------------------------------
+
 
 def count_clean_dataset(clean_dir: Path) -> pd.DataFrame:
     """
@@ -35,13 +36,17 @@ def count_clean_dataset(clean_dir: Path) -> pd.DataFrame:
         if not class_dir.is_dir():
             continue
         lab_count = len(list((class_dir / "lab").iterdir())) if (class_dir / "lab").exists() else 0
-        real_count = len(list((class_dir / "real").iterdir())) if (class_dir / "real").exists() else 0
-        rows.append({
-            "Clase": class_dir.name,
-            "Lab": lab_count,
-            "Real": real_count,
-            "Total": lab_count + real_count,
-        })
+        real_count = (
+            len(list((class_dir / "real").iterdir())) if (class_dir / "real").exists() else 0
+        )
+        rows.append(
+            {
+                "Clase": class_dir.name,
+                "Lab": lab_count,
+                "Real": real_count,
+                "Total": lab_count + real_count,
+            }
+        )
 
     return pd.DataFrame(rows)
 
@@ -72,6 +77,7 @@ def print_class_table(clean_dir: Path) -> None:
 # ---------------------------------------------------------------------------
 # Funciones de disco
 # ---------------------------------------------------------------------------
+
 
 def _fmt_size(n_bytes: int) -> str:
     for unit in ("B", "KB", "MB", "GB"):
@@ -161,6 +167,7 @@ def print_disk_summary(dataset_root: Path) -> None:
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     import argparse

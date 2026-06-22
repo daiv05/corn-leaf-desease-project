@@ -12,12 +12,10 @@ import random
 import shutil
 
 SOURCE_DIR = os.path.join(
-    os.path.dirname(__file__),
-    "..", "..", "data", "clean", "potassium_deficiency", "Pottasium"
+    os.path.dirname(__file__), "..", "..", "data", "clean", "potassium_deficiency", "Pottasium"
 )
 DEST_DIR = os.path.join(
-    os.path.dirname(__file__),
-    "..", "..", "data", "clean", "potassium_deficiency", "real"
+    os.path.dirname(__file__), "..", "..", "data", "clean", "potassium_deficiency", "real"
 )
 
 PREFIX = "potassium_deficiency_maize_nutrient_real_"
@@ -28,10 +26,7 @@ def move_and_rename(source_dir: str, dest_dir: str) -> None:
     source_dir = os.path.abspath(source_dir)
     dest_dir = os.path.abspath(dest_dir)
 
-    entries = [
-        f for f in os.listdir(source_dir)
-        if os.path.isfile(os.path.join(source_dir, f))
-    ]
+    entries = [f for f in os.listdir(source_dir) if os.path.isfile(os.path.join(source_dir, f))]
 
     if not entries:
         print("No se encontraron archivos en el directorio fuente.")

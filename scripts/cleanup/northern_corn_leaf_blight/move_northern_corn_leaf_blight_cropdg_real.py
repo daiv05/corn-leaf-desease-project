@@ -13,14 +13,8 @@ import shutil
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-SOURCE_DIR = os.path.join(
-    BASE_DIR,
-    "data", "clean", "northern_corn_leaf_blight", "real"
-)
-DEST_DIR = os.path.join(
-    BASE_DIR,
-    "data", "clean", "northern_corn_leaf_blight", "lab"
-)
+SOURCE_DIR = os.path.join(BASE_DIR, "data", "clean", "northern_corn_leaf_blight", "real")
+DEST_DIR = os.path.join(BASE_DIR, "data", "clean", "northern_corn_leaf_blight", "lab")
 
 NAME_PATTERN = "northern_corn_leaf_blight_cropdg_real_"
 
@@ -36,7 +30,8 @@ def move_images(source_dir: str, dest_dir: str, name_pattern: str) -> None:
     os.makedirs(dest_dir, exist_ok=True)
 
     entries = [
-        f for f in os.listdir(source_dir)
+        f
+        for f in os.listdir(source_dir)
         if os.path.isfile(os.path.join(source_dir, f)) and name_pattern in f
     ]
 

@@ -9,8 +9,7 @@ import os
 import random
 
 SOURCE_DIR = os.path.join(
-    os.path.dirname(__file__),
-    "..", "..", "data", "clean", "phosphorus_deficiency", "real"
+    os.path.dirname(__file__), "..", "..", "data", "clean", "phosphorus_deficiency", "real"
 )
 
 PREFIX = "phosphorus_deficiency_maize_nutrient_real_"
@@ -20,10 +19,7 @@ RANDOM_DIGITS = 8
 def rename_images(source_dir: str) -> None:
     source_dir = os.path.abspath(source_dir)
 
-    entries = [
-        f for f in os.listdir(source_dir)
-        if os.path.isfile(os.path.join(source_dir, f))
-    ]
+    entries = [f for f in os.listdir(source_dir) if os.path.isfile(os.path.join(source_dir, f))]
 
     if not entries:
         print("No se encontraron archivos en el directorio fuente.")

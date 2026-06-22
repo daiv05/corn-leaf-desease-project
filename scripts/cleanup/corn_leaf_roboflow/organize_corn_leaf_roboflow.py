@@ -35,14 +35,14 @@ CLASS_NAMES = {
 }
 
 DEST_FOLDER = {
-    "fall_armyworm_damage":    "fall_armyworm_damage",
-    "healthy":                 "healthy",
-    "leaf_spot":               "leaf_spot",
-    "magnesium_deficiency":    "magnesium_deficiency",
-    "nitrogen_deficiency":     "nitrogen_deficiency",
+    "fall_armyworm_damage": "fall_armyworm_damage",
+    "healthy": "healthy",
+    "leaf_spot": "leaf_spot",
+    "magnesium_deficiency": "magnesium_deficiency",
+    "nitrogen_deficiency": "nitrogen_deficiency",
     "northern_corn_leaf_blight": "northern_corn_leaf_blight",
-    "phosphorus_deficiency":   "phosphorus_deficiency",
-    "potassium_deficiency":    "potassium_deficiency",
+    "phosphorus_deficiency": "phosphorus_deficiency",
+    "potassium_deficiency": "potassium_deficiency",
 }
 
 SPLITS = ["train", "valid", "test"]

@@ -1,9 +1,11 @@
+import argparse
 import hashlib
 import logging
 import os
-import yaml
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
+import yaml
 from PIL import Image
 from tqdm import tqdm
 
@@ -18,10 +20,25 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def run_data_preparation_pipeline(config_path: str) -> None:
-    """Orquesta todo el flujo de preparación e indexación de datos."""
+def _sample_manifest(df: pd.DataFrame, fraction: float, seed: int) -> pd.DataFrame:
+    if fraction == 1.0:
+        return df
+    stratify_col = df["label"] + "_" + df["environment"]
+    return (
+        df.groupby(stratify_col, group_keys=False)
+        .apply(lambda g: g.sample(frac=fraction, random_state=seed))
+        .reset_index(drop=True)
+    )
 
-    # 1. Cargar configuraciones del proyecto
+
+def _split_output_dir(base: Path, fraction: float) -> Path:
+    if fraction == 1.0:
+        return base
+    pct = int(round(fraction * 100))
+    return base.parent / (base.name + f"_sample{pct}")
+
+
+def run_data_preparation_pipeline(config_path: str, sample_fraction: float | None = None) -> None:
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
 
@@ -30,14 +47,18 @@ def run_data_preparation_pipeline(config_path: str) -> None:
             f"DATASET_ROOT no encontrado: {DATASET_ROOT}. Verifica DATASET_ROOT en .env"
         )
 
+    if sample_fraction is None:
+        sample_fraction = config.get("sampling", {}).get("fraction", 1.0)
+    sampling_seed = config.get("sampling", {}).get("seed", 42)
+
     clean_dir = DATASET_ROOT / config["paths"]["raw_dir"]
-    output_dir = DATASET_ROOT / config["paths"]["split_output_dir"]
+    base_output_dir = DATASET_ROOT / config["paths"]["split_output_dir"]
+    output_dir = _split_output_dir(base_output_dir, sample_fraction)
     seed = config["dataset"]["seed"]
     allowed_classes = config["dataset"]["classes"]
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # 2. Recopilación de rutas candidatas
     logger.info("Escaneando directorios para calcular la carga de trabajo...")
     raw_image_paths: list[tuple[str, str, Path, str]] = []
 
@@ -62,23 +83,19 @@ def run_data_preparation_pipeline(config_path: str) -> None:
     if not raw_image_paths:
         raise ValueError(f"El pipeline no pudo indexar ninguna imagen válida en '{clean_dir}'.")
 
-    # 3. Construcción del manifiesto con red de seguridad SHA-256.
-    # Detecta duplicados exactos (mismo contenido binario, distinto nombre) que pudieran
-    # haberse añadido a clean/ sin pasar por el flujo de deduplicación perceptual.
     all_records: list[dict] = []
     seen_hashes: set[str] = set()
     duplicates_found = 0
     corrupt_found = 0
 
-    logger.info(f"Indexando {len(raw_image_paths)} imágenes con verificación SHA-256 y validación PIL...")
+    logger.info(
+        f"Indexando {len(raw_image_paths)} imágenes con verificación SHA-256 y validación PIL..."
+    )
 
     for class_name, environment, abs_path, rel_path in tqdm(
         raw_image_paths, desc="Indexando", unit="img"
     ):
         try:
-            # Verificación de integridad a nivel de imagen (cabecera + estructura interna).
-            # Image.verify() es barato — solo lee metadatos sin decodificar píxeles.
-            # Requiere re-abrir porque verify() deja el objeto en estado inválido.
             with Image.open(abs_path) as img:
                 img.verify()
 
@@ -101,14 +118,20 @@ def run_data_preparation_pipeline(config_path: str) -> None:
         f"(duplicados exactos omitidos: {duplicates_found} | corruptas omitidas: {corrupt_found})"
     )
 
-    # 4. Partición balanceada jerárquica estratificada (70 / 15 / 15)
+    if sample_fraction < 1.0:
+        before = len(df_manifest)
+        df_manifest = _sample_manifest(df_manifest, sample_fraction, sampling_seed)
+        logger.info(
+            f"Muestreo estratificado {int(sample_fraction * 100)}%: "
+            f"{before} → {len(df_manifest)} imágenes"
+        )
+
     logger.info("Ejecutando división jerárquica estratificada (70% Train, 15% Val, 15% Test)...")
     splitter = HierarchicalStratifiedSplitter(seed=seed)
     train_df, val_df, test_df = splitter.split(
         df_manifest, train_size=0.70, val_size=0.15, test_size=0.15
     )
 
-    # 5. Persistir manifiestos CSV
     train_df.to_csv(output_dir / "train.csv", index=False)
     val_df.to_csv(output_dir / "val.csv", index=False)
     test_df.to_csv(output_dir / "test.csv", index=False)
@@ -118,7 +141,6 @@ def run_data_preparation_pipeline(config_path: str) -> None:
         f"Distribución -> Train: {len(train_df)} | Val: {len(val_df)} | Test: {len(test_df)}"
     )
 
-    # 6. Reporte de auditoría de estratificación
     logger.info("Generando reporte de auditoría del split...")
     report_dir = DATASET_ROOT / "reports" / "class_distribution"
     report_dir.mkdir(parents=True, exist_ok=True)
@@ -127,9 +149,7 @@ def run_data_preparation_pipeline(config_path: str) -> None:
     val_counts = val_df.groupby(["label", "environment"]).size().rename("val_count")
     test_counts = test_df.groupby(["label", "environment"]).size().rename("test_count")
 
-    report_df = (
-        pd.concat([train_counts, val_counts, test_counts], axis=1).fillna(0).astype(int)
-    )
+    report_df = pd.concat([train_counts, val_counts, test_counts], axis=1).fillna(0).astype(int)
     report_df["total_count"] = report_df.sum(axis=1)
     report_df = report_df.reset_index()
     report_df.to_csv(report_dir / "split_audit_report.csv", index=False)
@@ -138,4 +158,18 @@ def run_data_preparation_pipeline(config_path: str) -> None:
 
 
 if __name__ == "__main__":
-    run_data_preparation_pipeline(config_path="config/dataset.yaml")
+    parser = argparse.ArgumentParser(description="Genera splits CSV estratificados.")
+    parser.add_argument(
+        "--config",
+        default="config/dataset.yaml",
+        help="Ruta al archivo de configuración (default: config/dataset.yaml)",
+    )
+    parser.add_argument(
+        "--sample-fraction",
+        type=float,
+        default=None,
+        dest="sample_fraction",
+        help="Fracción del dataset a usar (0.0-1.0). Si se omite, usa sampling.fraction del YAML.",
+    )
+    args = parser.parse_args()
+    run_data_preparation_pipeline(config_path=args.config, sample_fraction=args.sample_fraction)

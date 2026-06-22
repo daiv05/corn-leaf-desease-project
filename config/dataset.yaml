@@ -18,22 +18,6 @@ dataset:
     - phosphorus_deficiency
     - potassium_deficiency
 
-features:
-  target_size: [224, 224]
-
-  hog:
-    orientations: 9
-    pixels_per_cell: [8, 8]
-    cells_per_block: [2, 2]
-
-  hsv:
-    bins: [16, 16, 16]
-
-  lbp:
-    radius: 3
-    n_points: 24
-
-  glcm:
-    distances: [1, 3]
-    angles: [0, 0.785, 1.571, 2.356]
-    properties: [contrast, correlation, energy, homogeneity]
+sampling:
+  fraction: 1.0
+  seed: 42

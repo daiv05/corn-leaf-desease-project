@@ -14,20 +14,16 @@ import argparse
 import csv
 import shutil
 import sys
+from collections import Counter, defaultdict
 from pathlib import Path
-from collections import defaultdict, Counter
 
-KAGGLE_DIR = Path(
-    "/mnt/datasets/data/corn-leaf-diseases/raw"
-    "/maize-in-field-dataset/Kaggle Dataset"
-)
-CSV_FILE   = KAGGLE_DIR / "Database.csv"
-SRC_DIR    = KAGGLE_DIR / "leaf_images"
-DST_ROOT   = KAGGLE_DIR  # subcarpetas creadas aquí
+KAGGLE_DIR = Path("/mnt/datasets/data/corn-leaf-diseases/raw/maize-in-field-dataset/Kaggle Dataset")
+CSV_FILE = KAGGLE_DIR / "Database.csv"
+SRC_DIR = KAGGLE_DIR / "leaf_images"
+DST_ROOT = KAGGLE_DIR  # subcarpetas creadas aquí
 
-LABEL_COLS = ["GLS", "NCLB", "PLS", "CR", "SR",
-              "NoFoliarSymptoms", "Other", "UnidentifiedDisease"]
-MULTI_DIR  = "multi_label"
+LABEL_COLS = ["GLS", "NCLB", "PLS", "CR", "SR", "NoFoliarSymptoms", "Other", "UnidentifiedDisease"]
+MULTI_DIR = "multi_label"
 
 
 def build_move_plan(csv_path: Path) -> list[tuple[Path, Path]]:
@@ -120,9 +116,12 @@ def print_summary(plan: list[tuple[Path, Path]]) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Reorganiza maize-in-field-dataset por enfermedad.")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Muestra qué se haría sin mover nada.")
+    parser = argparse.ArgumentParser(
+        description="Reorganiza maize-in-field-dataset por enfermedad."
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Muestra qué se haría sin mover nada."
+    )
     args = parser.parse_args()
 
     for path, label in [(CSV_FILE, "CSV"), (SRC_DIR, "directorio de imágenes")]:

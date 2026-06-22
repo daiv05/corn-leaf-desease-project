@@ -16,8 +16,7 @@ except Exception:
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 SOURCE_DIR = os.path.join(
-    BASE_DIR,
-    "data", "clean", "northern_corn_leaf_blight", "real", "temporal"
+    BASE_DIR, "data", "clean", "northern_corn_leaf_blight", "real", "temporal"
 )
 
 CHUNK_SIZE = 1024 * 1024  # 1 MB
@@ -46,10 +45,7 @@ def delete_duplicates(source_dir: str) -> None:
         print(f"Directorio no encontrado: {source_dir}")
         return
 
-    entries = [
-        f for f in os.listdir(source_dir)
-        if os.path.isfile(os.path.join(source_dir, f))
-    ]
+    entries = [f for f in os.listdir(source_dir) if os.path.isfile(os.path.join(source_dir, f))]
 
     if not entries:
         print("No se encontraron archivos en el directorio.")

@@ -11,10 +11,7 @@ import random
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-SOURCE_DIR = os.path.join(
-    BASE_DIR,
-    "data", "clean", "gray_leaf_spot", "real", "temporal"
-)
+SOURCE_DIR = os.path.join(BASE_DIR, "data", "clean", "gray_leaf_spot", "real", "temporal")
 
 START_INDEX = 1
 RANDOM_DIGITS = 8
@@ -53,10 +50,7 @@ def ask_order_mode() -> str:
 
 def rename_images(source_dir: str, prefix: str, order_mode: str) -> None:
     source_dir = os.path.abspath(source_dir)
-    entries = [
-        f for f in os.listdir(source_dir)
-        if os.path.isfile(os.path.join(source_dir, f))
-    ]
+    entries = [f for f in os.listdir(source_dir) if os.path.isfile(os.path.join(source_dir, f))]
 
     if not entries:
         print("No se encontraron archivos en el directorio.")
