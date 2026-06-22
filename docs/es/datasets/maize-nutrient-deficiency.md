@@ -29,7 +29,7 @@ maize-nutrient-deficiency/
 
 ## Aspectos importantes
 
-- El dataset cubre deficiencias nutricionales. Sus clases de N, P y K sí se alinean con las 9 clases objetivo del proyecto; la clase Magnesio no forma parte del alcance actual. Las imágenes de N, P, K y Sano se integran al corpus como fuente secundaria de campo real.
+- El dataset cubre deficiencias nutricionales. Sus clases de N, P y K sí se alinean con las 9 clases objetivo del proyecto (common_rust, fall_armyworm, gray_leaf_spot, healthy, lethal_necrosis, nitrogen_deficiency, northern_corn_leaf_blight, phosphorus_deficiency, potassium_deficiency); la clase Magnesio no forma parte del alcance actual. Las imágenes de N, P, K y Sano se integran al corpus como fuente secundaria de campo real.
 - La clase Sano (`Helathy`) sí es compatible y podría aprovecharse como datos adicionales de hojas sanas si la calidad lo permite.
 - El volumen total es reducido (463 imágenes, 29 MB), con un desbalance notable entre clases: Potasio tiene menos de la mitad de imágenes que Magnesio.
 - Las imágenes fueron tomadas en campo por expertos del dominio durante relevamientos en las aldeas de Mangsuli y Bedag (frontera Maharashtra–Karnataka, India), con un smartphone Redmi Note 13s. Resolución: 4080 × 3060 px. Reflejan variabilidad ambiental real de cultivos de maíz.

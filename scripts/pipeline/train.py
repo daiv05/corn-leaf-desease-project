@@ -1,19 +1,11 @@
-import os
-import sys
-from pathlib import Path
-
-import pandas as pd
 import torch
 from torch.utils.data import DataLoader, WeightedRandomSampler
-
-PROJECT_ROOT = Path(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-sys.path.append(str(PROJECT_ROOT))
 
 from src.config import DATASET_ROOT
 from src.data.dataset import CornDataset
 from src.data.transforms import CornTransformFactory
 
-EXCLUDE_CLASSES = ["aphids_pest"]
+EXCLUDE_CLASSES: list[str] = []
 SPLITS_DIR = DATASET_ROOT / "splits" / "seed_42"
 
 

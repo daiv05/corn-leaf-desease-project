@@ -6,8 +6,8 @@ Fuente:  .../raw/maize-in-field-dataset/Kaggle Dataset/leaf_images/
 Destino: .../raw/maize-in-field-dataset/Kaggle Dataset/  (subcarpetas por etiqueta)
 
 Ejecutar desde cualquier directorio:
-    python scripts/sort_maize_by_disease.py
-    python scripts/sort_maize_by_disease.py --dry-run   # solo muestra lo que haría
+    python scripts/cleanup/others/sort_maize_by_disease.py
+    python scripts/cleanup/others/sort_maize_by_disease.py --dry-run   # solo muestra lo que haría
 """
 
 import argparse

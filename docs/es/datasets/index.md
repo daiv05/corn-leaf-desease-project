@@ -2,7 +2,7 @@
 
 En esta sección se documentan los datasets evaluados para el proyecto. Se busca priorizar fuentes con imágenes en entornos de campo real.
 
-> **Alcance actualizado (junio 2026):** El proyecto pasó de 4 a **9 clases objetivo** incorporando plagas (gusano cogollero, áfidos del maíz) y deficiencias nutricionales (nitrógeno, fósforo, potasio).
+> **Alcance actualizado (junio 2026):** El proyecto pasó de 4 a **9 clases objetivo** incorporando plagas (gusano cogollero, necrosis letal), enfermedades foliares (roya común, NCLB, GLS) y deficiencias nutricionales (nitrógeno, fósforo, potasio). `aphids_pest` fue descartada por insuficiencia de datos (~77 imágenes, augmentation no viable); en su lugar se incorporó `lethal_necrosis` (~6 415 imágenes de campo real).
 
 ## Criterios de Evaluación
 
@@ -10,7 +10,7 @@ Para cada dataset se registra:
 
 - **Licencia y permisos** - si permite uso académico y redistribución
 - **Dominio de captura** - laboratorio controlado, campo real, o mixto
-- **Clases disponibles** - enfermedades etiquetadas y alineación con las 9 clases objetivo
+- **Clases disponibles** - enfermedades etiquetadas y alineación con las 9 clases objetivo (ver tabla en cleanup-and-ordered)
 - **Distribución por clase** - balance y posibles sesgos
 - **Calidad y particularidades** - resolución, condiciones de iluminación, fondos, artefactos
 

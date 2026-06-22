@@ -8,11 +8,11 @@ dataset:
   target_size: [224, 224]
   seed: 42
   classes:
-    - aphids_pest
     - common_rust
     - fall_armyworm
     - gray_leaf_spot
     - healthy
+    - lethal_necrosis
     - nitrogen_deficiency
     - northern_corn_leaf_blight
     - phosphorus_deficiency

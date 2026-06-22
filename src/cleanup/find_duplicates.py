@@ -30,7 +30,7 @@ IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp"}
 PHASH_THRESHOLD = 0
 
 
-# ── helpers ───────────────────────────────────────────────────────────────────
+#  helpers 
 
 def get_disease_dirs() -> list[Path]:
     if not CLEAN_DIR.exists():
@@ -91,7 +91,7 @@ def latest_csv_for(disease_dir: Path) -> Path | None:
     return matches[0] if matches else None
 
 
-# ── core ──────────────────────────────────────────────────────────────────────
+#  core 
 
 def collect_images(disease_dir: Path) -> dict[str, Path]:
     """
@@ -200,7 +200,7 @@ def report(duplicates: dict[str, list[str]]) -> None:
     for original, dupes in duplicates.items():
         print(f"  conservar: {Path(original).name}  ({Path(original).parent.name})")
         for d in dupes:
-            print(f"    └─ eliminar: {Path(d).name}  ({Path(d).parent.name})")
+            print(f"    └ eliminar: {Path(d).name}  ({Path(d).parent.name})")
 
 
 def save_csv(
@@ -267,12 +267,12 @@ def delete_duplicates_from_csv(disease_dir: Path) -> None:
     for original, dupes in duplicates.items():
         print(f"  conservar: {Path(original).name}  ({Path(original).parent.name})")
         for d in dupes:
-            print(f"    └─ eliminar: {Path(d).name}  ({Path(d).parent.name})")
+            print(f"    └ eliminar: {Path(d).name}  ({Path(d).parent.name})")
 
     delete_paths(dupe_paths)
 
 
-# ── main ──────────────────────────────────────────────────────────────────────
+#  main 
 
 def main() -> None:
     print("=" * 60)
