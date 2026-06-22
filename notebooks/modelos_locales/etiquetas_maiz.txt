@@ -1,0 +1,9 @@
+aphids_pest
+common_rust
+fall_armyworm
+gray_leaf_spot
+healthy
+nitrogen_deficiency
+northern_corn_leaf_blight
+phosphorus_deficiency
+potassium_deficiency
