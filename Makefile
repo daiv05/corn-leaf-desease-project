@@ -13,7 +13,7 @@ endif
 .PHONY: install splits splits-sample train train-baselines train-baselines-full test-loader summary lint fmt
 
 install:
-	$(PIP) install -e ".[dev]"
+	$(PIP) install -e ".[dev,analysis]"
 
 splits:
 	$(PYTHON) scripts/pipeline/create_splits.py
