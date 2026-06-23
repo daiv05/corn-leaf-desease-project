@@ -40,22 +40,21 @@ class CornTrainingTransforms(TransformPipelineFactory):
 
     def __init__(self, target_size: tuple[int, int]):
         self.target_size = target_size
-        # Estadísticas espectrales estándar para normalización (pueden actualizarse con el EDA)
         self.mean = [0.485, 0.456, 0.406]
         self.std = [0.229, 0.224, 0.225]
 
     def create_transforms(self) -> T.Compose:
         return T.Compose(
             [
-                # 1. Homogeneización de la dimensionalidad (Paso crítico de tamaño)
+                # Dimensiones
                 T.Resize(self.target_size),
-                # 2. Augmentations Geométricas (Simula capturas del productor en campo)
+                # Augmentations geometricas
                 T.RandomHorizontalFlip(p=0.5),
                 T.RandomVerticalFlip(p=0.5),
                 T.RandomRotation(degrees=15, interpolation=T.InterpolationMode.BILINEAR),
-                # 3. Augmentation sutil de iluminación (Evita alterar drásticamente el Hue/Tono)
+                # Augmentation sutil de iluminación
                 T.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.0, hue=0.0),
-                # 4. Conversión a Tensor y Normalización Z-score espectral
+                # Conversión a Tensor y Normalización Z-score espectral
                 T.ToTensor(),
                 T.Normalize(mean=self.mean, std=self.std),
             ]
@@ -106,9 +105,9 @@ class CornValidationTransforms(TransformPipelineFactory):
     def create_transforms(self) -> T.Compose:
         return T.Compose(
             [
-                # 1. Homogeneización de la dimensionalidad estricta
+                # Dimensiones
                 T.Resize(self.target_size),
-                # 2. Conversión y Normalización directa
+                # Conversión y normalización directa
                 T.ToTensor(),
                 T.Normalize(mean=self.mean, std=self.std),
             ]

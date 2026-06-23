@@ -43,7 +43,7 @@ const esDatasetSidebar = [
     ],
   },
   {
-    text: "Análisis Exploratorio de Datos",
+    text: "Análisis Exploratorio",
     items: [
       {
         text: "Exploración",
@@ -54,15 +54,21 @@ const esDatasetSidebar = [
   {
     text: "Preprocesado",
     items: [
-      { text: "Proceso", link: "/es/preprocesado/" },
+      { text: "Flujo realizado", link: "/es/preprocesado/" },
     ],
   },
   {
-    text: "Baselines",
+    text: "Deep Learning",
     items: [
-      { text: "Modelos base", link: "/es/baselines/" },
+      { text: "Teoría", link: "/es/deep-learning/" },
+      { text: "Baselines", link: "/es/baselines/" },
+    ],
+  },
+  {
+    text: "Pipelines",
+    items: [
       {
-        text: "Pipeline",
+        text: "Baselines",
         items: [
           { text: "Preprocesado", link: "/es/pipeline-baselines/preprocesado" },
           { text: "Entrenamiento", link: "/es/pipeline-baselines/entrenamiento" },
@@ -71,26 +77,18 @@ const esDatasetSidebar = [
           { text: "Experimentos", link: "/es/pipeline-baselines/experimentos" },
         ],
       },
+      // {
+      //   text: "Principal",
+      //   items: [
+      //     { text: "Preprocesado", link: "/es/pipeline/preprocesado" },
+      //     { text: "Entrenamiento", link: "/es/pipeline/entrenamiento" },
+      //     { text: "Evaluación", link: "/es/pipeline/evaluacion" },
+      //     { text: "Interpretabilidad", link: "/es/pipeline/interpretabilidad" },
+      //     { text: "Experimentos", link: "/es/pipeline/experimentos" },
+      //   ],
+      // },
     ],
   },
-
-  // EN ESPERA DE ETAPA 2 DEL PROYECTO
-  // {
-  //   text: "Deep Learning",
-  //   items: [
-  //     { text: "Redes neuronales", link: "/es/deep-learning/" },
-  //     {
-  //       text: "Pipeline",
-  //       items: [
-  //         { text: "Preprocesado", link: "/es/pipeline-deep-learning/preprocesado" },
-  //         { text: "Entrenamiento", link: "/es/pipeline-deep-learning/entrenamiento" },
-  //         { text: "Evaluación", link: "/es/pipeline-deep-learning/evaluacion" },
-  //         { text: "Interpretabilidad", link: "/es/pipeline-deep-learning/interpretabilidad" },
-  //         { text: "Experimentos", link: "/es/pipeline-deep-learning/experimentos" },
-  //       ],
-  //     },
-  //   ],
-  // },
 ];
 
 export default defineConfig({
@@ -147,11 +145,17 @@ export default defineConfig({
           },
           { text: "Preprocesado", link: "/es/preprocesado/" },
           {
-            text: "Baselines",
+            text: "Deep Learning",
             items: [
-              { text: "Modelos base", link: "/es/baselines/" },
+              { text: "Teoría", link: "/es/deep-learning/" },
+              { text: "Baselines", link: "/es/baselines/" },
+            ]
+          },
+          {
+            text: "Pipelines",
+            items: [
               {
-                text: "Pipeline",
+                text: "Baselines",
                 items: [
                   { text: "Preprocesado", link: "/es/pipeline-baselines/preprocesado" },
                   { text: "Entrenamiento", link: "/es/pipeline-baselines/entrenamiento" },
@@ -160,25 +164,18 @@ export default defineConfig({
                   { text: "Experimentos", link: "/es/pipeline-baselines/experimentos" },
                 ],
               },
+              // {
+              //   text: "Principal",
+              //   items: [
+              //     { text: "Preprocesado", link: "/es/pipeline/preprocesado" },
+              //     { text: "Entrenamiento", link: "/es/pipeline/entrenamiento" },
+              //     { text: "Evaluación", link: "/es/pipeline/evaluacion" },
+              //     { text: "Interpretabilidad", link: "/es/pipeline/interpretabilidad" },
+              //     { text: "Experimentos", link: "/es/pipeline/experimentos" },
+              //   ],
+              // },
             ]
           },
-          // EN ESPERA DE ETAPA 2 DEL PROYECTO
-          // {
-          //   text: "Deep Learning",
-          //   items: [
-          //     { text: "Redes neuronales", link: "/es/deep-learning/" },
-          //     {
-          //       text: "Pipeline",
-          //       items: [
-          //         { text: "Preprocesado", link: "/es/pipeline-deep-learning/preprocesado" },
-          //         { text: "Entrenamiento", link: "/es/pipeline-deep-learning/entrenamiento" },
-          //         { text: "Evaluación", link: "/es/pipeline-deep-learning/evaluacion" },
-          //         { text: "Interpretabilidad", link: "/es/pipeline-deep-learning/interpretabilidad" },
-          //         { text: "Experimentos", link: "/es/pipeline-deep-learning/experimentos" },
-          //       ],
-          //     },
-          //   ]
-          // },
         ],
         sidebar: {
           "/es/": esDatasetSidebar,
@@ -189,7 +186,7 @@ export default defineConfig({
           "/es/baselines/": esDatasetSidebar,
           "/es/pipeline-baselines/": esDatasetSidebar,
           "/es/deep-learning/": esDatasetSidebar,
-          "/es/pipeline-deep-learning/": esDatasetSidebar,
+          "/es/pipeline/": esDatasetSidebar,
         },
         search: {
           provider: "local",
