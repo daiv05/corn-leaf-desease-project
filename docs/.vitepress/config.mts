@@ -57,13 +57,13 @@ const esDatasetSidebar = [
       { text: "Flujo realizado", link: "/es/preprocesado/" },
     ],
   },
-  {
-    text: "Deep Learning",
-    items: [
-      { text: "Teoría", link: "/es/deep-learning/" },
-      { text: "Baselines", link: "/es/baselines/" },
-    ],
-  },
+  // {
+  //   text: "Deep Learning",
+  //   items: [
+  //     { text: "Teoría", link: "/es/deep-learning/" },
+  //     { text: "Baselines", link: "/es/baselines/" },
+  //   ],
+  // },
   {
     text: "Pipelines",
     items: [
@@ -144,13 +144,13 @@ export default defineConfig({
             ]
           },
           { text: "Preprocesado", link: "/es/preprocesado/" },
-          {
-            text: "Deep Learning",
-            items: [
-              { text: "Teoría", link: "/es/deep-learning/" },
-              { text: "Baselines", link: "/es/baselines/" },
-            ]
-          },
+          // {
+          //   text: "Deep Learning",
+          //   items: [
+          //     { text: "Teoría", link: "/es/deep-learning/" },
+          //     { text: "Baselines", link: "/es/baselines/" },
+          //   ]
+          // },
           {
             text: "Pipelines",
             items: [
