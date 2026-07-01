@@ -17,6 +17,7 @@ dependencies = [
 [project.optional-dependencies]
 dev      = ["ipykernel", "jupyterlab", "matplotlib", "seaborn", "ruff", "pyright"]
 analysis = ["imagededup", "fiftyone", "imageio", "mongoengine", "motor"]
+cloud    = ["huggingface_hub>=0.24", "gdown>=5.1"]
 
 [build-system]
 requires = ["hatchling"]

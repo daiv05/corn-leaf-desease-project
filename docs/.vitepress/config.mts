@@ -89,6 +89,12 @@ const esDatasetSidebar = [
       // },
     ],
   },
+  {
+    text: "Deployment",
+    items: [
+      { text: "GPU en vast.ai", link: "/es/deployment/vast-ai" },
+    ],
+  },
 ];
 
 export default defineConfig({
@@ -176,6 +182,12 @@ export default defineConfig({
               // },
             ]
           },
+          {
+            text: "Deployment",
+            items: [
+              { text: "GPU en vast.ai", link: "/es/deployment/vast-ai" },
+            ],
+          },
         ],
         sidebar: {
           "/es/": esDatasetSidebar,
@@ -187,6 +199,7 @@ export default defineConfig({
           "/es/pipeline-baselines/": esDatasetSidebar,
           "/es/deep-learning/": esDatasetSidebar,
           "/es/pipeline/": esDatasetSidebar,
+          "/es/deployment/": esDatasetSidebar,
         },
         search: {
           provider: "local",

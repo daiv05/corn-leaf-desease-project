@@ -20,25 +20,36 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _sample_manifest(df: pd.DataFrame, fraction: float, seed: int) -> pd.DataFrame:
-    if fraction == 1.0:
-        return df
-    stratify_col = df["label"] + "_" + df["environment"]
-    return (
-        df.groupby(stratify_col, group_keys=False)
-        .apply(lambda g: g.sample(frac=fraction, random_state=seed))
-        .reset_index(drop=True)
-    )
+def _cap_manifest_per_class(df: pd.DataFrame, max_per_class: int, seed: int) -> pd.DataFrame:
+    """Limita cada clase a lo sumo `max_per_class` imágenes (muestreo aleatorio reproducible).
+
+    Clases con menos imágenes que el límite quedan intactas (p.ej. nitrogen_deficiency).
+
+    Nota: se itera el groupby en vez de usar `.apply(lambda g: ...)` porque, al agrupar por
+    el nombre literal de una columna, pandas >= 2.2 puede excluir esa columna del grupo
+    pasado a la función (comportamiento por defecto desde pandas 3.0), lo que rompía el
+    split posterior al perder la columna "label".
+    """
+    parts = []
+    for _, group in df.groupby("label"):
+        if len(group) > max_per_class:
+            group = group.sample(n=max_per_class, random_state=seed)
+        parts.append(group)
+    return pd.concat(parts).reset_index(drop=True)
 
 
-def _split_output_dir(base: Path, fraction: float) -> Path:
-    if fraction == 1.0:
-        return base
-    pct = int(round(fraction * 100))
-    return base.parent / (base.name + f"_sample{pct}")
+def _split_output_dir(base: Path, suffix: str | None = None) -> Path:
+    if suffix:
+        return base.parent / (base.name + f"_{suffix}")
+    return base
 
 
-def run_data_preparation_pipeline(config_path: str, sample_fraction: float | None = None) -> None:
+def run_data_preparation_pipeline(
+    config_path: str,
+    baseline: bool = False,
+    classes: list[str] | None = None,
+    max_per_class: int | None = None,
+) -> None:
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
 
@@ -47,15 +58,16 @@ def run_data_preparation_pipeline(config_path: str, sample_fraction: float | Non
             f"DATASET_ROOT no encontrado: {DATASET_ROOT}. Verifica DATASET_ROOT en .env"
         )
 
-    if sample_fraction is None:
-        sample_fraction = config.get("sampling", {}).get("fraction", 1.0)
-    sampling_seed = config.get("sampling", {}).get("seed", 42)
+    baseline_cfg = config.get("baseline", {}) if baseline else {}
+    allowed_classes = classes or baseline_cfg.get("classes") or config["dataset"]["classes"]
+    max_per_class = (
+        max_per_class if max_per_class is not None else baseline_cfg.get("max_images_per_class")
+    )
 
     clean_dir = DATASET_ROOT / config["paths"]["raw_dir"]
     base_output_dir = DATASET_ROOT / config["paths"]["split_output_dir"]
-    output_dir = _split_output_dir(base_output_dir, sample_fraction)
+    output_dir = _split_output_dir(base_output_dir, suffix="baseline" if baseline else None)
     seed = config["dataset"]["seed"]
-    allowed_classes = config["dataset"]["classes"]
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -118,12 +130,12 @@ def run_data_preparation_pipeline(config_path: str, sample_fraction: float | Non
         f"(duplicados exactos omitidos: {duplicates_found} | corruptas omitidas: {corrupt_found})"
     )
 
-    if sample_fraction < 1.0:
+    if max_per_class is not None:
         before = len(df_manifest)
-        df_manifest = _sample_manifest(df_manifest, sample_fraction, sampling_seed)
+        df_manifest = _cap_manifest_per_class(df_manifest, max_per_class, seed)
         logger.info(
-            f"Muestreo estratificado {int(sample_fraction * 100)}%: "
-            f"{before} - {len(df_manifest)} imágenes"
+            f"Límite de {max_per_class} imágenes por clase aplicado: "
+            f"{before} -> {len(df_manifest)} imágenes"
         )
 
     logger.info("Ejecutando división jerárquica estratificada (70% Train, 15% Val, 15% Test)...")
@@ -165,11 +177,29 @@ if __name__ == "__main__":
         help="Ruta al archivo de configuración (default: config/dataset.yaml)",
     )
     parser.add_argument(
-        "--sample-fraction",
-        type=float,
+        "--baseline",
+        action="store_true",
+        help="Usa el perfil 'baseline' de config/dataset.yaml (subset de clases + límite de "
+        "imágenes por clase) como defaults. --classes/--max-per-class lo sobrescriben.",
+    )
+    parser.add_argument(
+        "--classes",
+        nargs="+",
         default=None,
-        dest="sample_fraction",
-        help="Fracción del dataset a usar (0.0-1.0). Si se omite, usa sampling.fraction del YAML.",
+        help="Lista explícita de clases a incluir (sobrescribe dataset.classes / baseline.classes)",
+    )
+    parser.add_argument(
+        "--max-per-class",
+        type=int,
+        default=None,
+        dest="max_per_class",
+        help="Límite de imágenes por clase, aplicado antes del split (sobrescribe "
+        "baseline.max_images_per_class).",
     )
     args = parser.parse_args()
-    run_data_preparation_pipeline(config_path=args.config, sample_fraction=args.sample_fraction)
+    run_data_preparation_pipeline(
+        config_path=args.config,
+        baseline=args.baseline,
+        classes=args.classes,
+        max_per_class=args.max_per_class,
+    )

@@ -17,6 +17,14 @@ dataset:
     - phosphorus_deficiency
     - potassium_deficiency
 
-sampling:
-  fraction: 1.0
+# Perfil reducido para el pipeline de baselines (scripts/pipeline/train_baselines.py).
+# Se activa con `create_splits.py --baseline` / `make splits-baseline`.
+# No afecta a `dataset.classes` ni al pipeline principal (train.py).
+baseline:
+  classes:
+    - healthy
+    - common_rust
+    - fall_armyworm
+    - nitrogen_deficiency
+  max_images_per_class: 500
   seed: 42

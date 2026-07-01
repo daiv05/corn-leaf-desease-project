@@ -1,0 +1,15 @@
+.git
+.github
+data
+venv
+.venv
+__pycache__
+*.pyc
+.ruff_cache
+notebooks
+docs/.vitepress/dist
+docs/.vitepress/cache
+fiftyone
+.env
+.env.*
+*.local

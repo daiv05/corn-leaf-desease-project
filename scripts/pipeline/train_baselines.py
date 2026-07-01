@@ -1,4 +1,5 @@
 import argparse
+import functools
 import json
 import logging
 from pathlib import Path
@@ -115,7 +116,7 @@ def train_baseline(
         sampler=sampler,
         num_workers=4,
         pin_memory=True,
-        worker_init_fn=lambda wid: _worker_init_fn(wid, seed=seed),
+        worker_init_fn=functools.partial(_worker_init_fn, seed=seed),
     )
     val_loader = DataLoader(
         val_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True
@@ -213,7 +214,7 @@ def main() -> None:
     if not splits_dir.exists():
         raise SystemExit(
             f"El directorio de splits no existe: {splits_dir}\n"
-            "Genera los splits primero con: make splits  (o make splits-sample para muestra)"
+            "Genera los splits primero con: make splits  (o make splits-baseline para el subset)"
         )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

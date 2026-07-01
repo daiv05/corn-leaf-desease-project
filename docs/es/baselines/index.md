@@ -11,18 +11,29 @@ Los tres modelos elegidos son redes convolucionales ligeras pre-entrenadas en Im
 
 ## Dataset utilizado
 
-Los baselines se entrenan sobre un **20 % del dataset limpio**, muestreado de forma estratificada en `splits/seed_42_sample20/`:
+Los baselines se entrenan sobre el **perfil reducido `baseline`** de `config/dataset.yaml`: 4 clases
+(`healthy`, `common_rust`, `fall_armyworm`, `nitrogen_deficiency`) con un tope de 500 imágenes por
+clase, generado con `make splits-baseline` en `splits/seed_42_baseline/`:
 
 | Split | Imágenes |
 |---|---:|
-| Entrenamiento (`train.csv`) | 4 426 |
-| Validación (`val.csv`) | 949 |
-| Prueba (`test.csv`) | 949 |
-| **Total** | **6 324** |
+| Entrenamiento (`train.csv`) | 1 400 |
+| Validación (`val.csv`) | 300 |
+| Prueba (`test.csv`) | 300 |
+| **Total** | **2 000** (500 por clase) |
 
-El split completo (100 %, `splits/seed_42/`) contiene 25 001 imágenes en proporción 70 / 15 / 15. El 20 % mantiene esa misma proporción y la estratificación por `label + environment`, por lo que la distribución de clases y entornos es representativa del corpus completo.
+El split completo (`splits/seed_42/`, generado con `make splits`) usa las 9 clases sin límite por
+clase. El perfil `baseline` mantiene la misma estratificación por `label + environment` y el mismo
+seed (42), solo que sobre un subconjunto de clases y con un tope de imágenes por clase — ambos
+configurables desde `config/dataset.yaml` (sección `baseline:`) o por CLI
+(`create_splits.py --classes ... --max-per-class ...`).
 
-**Por qué el 20 % y no el 100 %:** los baselines son una exploración inicial, no el entrenamiento definitivo. Con una fracción del corpus es posible comparar el comportamiento de las tres arquitecturas -detectar colapso de clases, gradientes muertos, diferencias de convergencia- en un tiempo de cómputo mucho menor, sin comprometer el ciclo completo de experimentación. Los modelos finalistas identificados aquí se re-entrenarán sobre el split completo en la fase de producción.
+**Por qué un subset y no el dataset completo:** los baselines son una exploración inicial, no el
+entrenamiento definitivo. Con un subconjunto acotado es posible comparar el comportamiento de las
+tres arquitecturas -detectar colapso de clases, gradientes muertos, diferencias de convergencia- en
+un tiempo de cómputo mucho menor, sin comprometer el ciclo completo de experimentación. Los modelos
+finalistas identificados aquí se re-entrenarán sobre el split completo (`make train-baselines-full`)
+en la fase de producción.
 
 ---
 

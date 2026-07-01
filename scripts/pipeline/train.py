@@ -1,4 +1,5 @@
 import argparse
+import functools
 import logging
 from pathlib import Path
 
@@ -122,7 +123,7 @@ def main() -> None:
         sampler=sampler,
         num_workers=4,
         pin_memory=True,
-        worker_init_fn=lambda wid: _worker_init_fn(wid, seed=seed),
+        worker_init_fn=functools.partial(_worker_init_fn, seed=seed),
     )
     val_loader = DataLoader(  # noqa: F841
         val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=4, pin_memory=True

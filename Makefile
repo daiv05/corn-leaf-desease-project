@@ -10,30 +10,35 @@ else
 	PYRIGHT := venv/bin/pyright
 endif
 
-.PHONY: install splits splits-sample train train-baselines train-baselines-full test-loader summary docs-eda lint fmt
+MODELS ?= all
+
+.PHONY: install download-dataset splits splits-baseline train train-baselines train-baselines-full test-loader summary docs-eda lint fmt
 
 install:
 	$(PIP) install -e ".[dev,analysis]"
 
+download-dataset:
+	$(PYTHON) scripts/dataset/download_dataset.py
+
 splits:
 	$(PYTHON) scripts/pipeline/create_splits.py
 
-splits-sample:
-	$(PYTHON) scripts/pipeline/create_splits.py --sample-fraction 0.2
+splits-baseline:
+	$(PYTHON) scripts/pipeline/create_splits.py --baseline
 
 train:
 	$(PYTHON) scripts/pipeline/train.py
 
 train-baselines:
-	$(PYTHON) scripts/pipeline/train_baselines.py --models all \
-		--splits-dir $${DATASET_ROOT}/splits/seed_42_sample20
+	$(PYTHON) scripts/pipeline/train_baselines.py --models $(MODELS) \
+		--splits-dir $${DATASET_ROOT}/splits/seed_42_baseline
 
 train-baselines-full:
-	$(PYTHON) scripts/pipeline/train_baselines.py --models all \
+	$(PYTHON) scripts/pipeline/train_baselines.py --models $(MODELS) \
 		--splits-dir $${DATASET_ROOT}/splits/seed_42
 
 summary:
-	$(PYTHON) src/data/dataset_summary.py
+	$(PYTHON) src/analysis/dataset_summary.py
 
 docs-eda:
 	cp tmp/eda_*.png public/eda/

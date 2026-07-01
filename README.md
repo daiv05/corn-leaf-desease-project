@@ -117,6 +117,34 @@ El proyecto sigue el marco **CRISP-DM iterativo**:
 
 ---
 
+## Pipeline de Machine Learning
+
+El código de datos/entrenamiento vive en `src/` (librería instalable) y `scripts/` (entrypoints). Hay
+dos pipelines paralelos sobre el mismo dataset limpio (`data/clean/`):
+
+- **Baselines** (`scripts/pipeline/train_baselines.py`): EfficientNet-B0, EfficientNet-Lite0 y
+  MobileNetV3-Large pre-entrenados, funcional de punta a punta. Por defecto entrena sobre un subset
+  configurable (`config/dataset.yaml -> baseline:`, 4 clases y hasta 500 imágenes por clase) para
+  comparar arquitecturas rápido y barato; ver [Baselines](docs/es/baselines/index.md).
+- **Pipeline principal** (`scripts/pipeline/train.py`): comparte toda la infraestructura de datos y
+  modelos; el loop de entrenamiento está pendiente de implementar.
+
+### Quickstart
+
+```bash
+cp .env.example .env        # ajustar DATASET_ROOT (y HF_DATASET_REPO/GDRIVE_DATASET_ID si aplica)
+make install                # pip install -e ".[dev,analysis]"
+make download-dataset       # descarga data/clean/ (Hugging Face Hub, fallback Google Drive)
+make splits-baseline        # genera splits/seed_42_baseline (subset configurable)
+make train-baselines        # entrena los baselines (MODELS=<nombre> para entrenar uno solo)
+```
+
+Para entrenar en una GPU alquilada en [vast.ai](https://vast.ai) con el mismo flujo reproducible
+(Docker + descarga automática del dataset), ver la guía en
+[docs/es/deployment/vast-ai.md](docs/es/deployment/vast-ai.md).
+
+---
+
 ## Equipo
 
 | Nombre | Carné |
@@ -158,6 +186,8 @@ La documentación estará disponible en `http://localhost:5173`.
 
 ```
 corn-leaf-desease-project/
+├── config/
+│   └── dataset.yaml            # Clases, tamaño de imagen, seed, perfil "baseline"
 ├── docs/
 │   ├── .vitepress/
 │   │   ├── components/         # Componentes Vue reutilizables
@@ -171,14 +201,30 @@ corn-leaf-desease-project/
 │   └── es/                     # Documentación en español
 │       ├── index.md            # Página de inicio
 │       ├── datasets/           # Documentación de datasets
-│       └── exploratory-data-analysis/
+│       ├── exploratory-data-analysis/
+│       ├── baselines/          # Baselines de Deep Learning (EfficientNet, MobileNetV3)
+│       └── deployment/         # Entrenamiento reproducible en GPU (vast.ai)
 ├── notebooks/
-│   └── exploration.ipynb       # Análisis exploratorio
+│   └── 01_eda.ipynb            # Análisis exploratorio
 ├── public/                     # Activos estáticos
 │   ├── logo.svg
 │   ├── corn-leaf-desease/      # Imágenes de ejemplo
 │   ├── maize-diseases/
 │   └── maize-in-field-dataset/
+├── scripts/
+│   ├── cleanup/                 # Limpieza por clase/dataset (one-shot, ya ejecutados)
+│   ├── dataset/                 # Subida/descarga de data/clean/ (Hugging Face Hub, Google Drive)
+│   ├── pipeline/                # create_splits.py, train_baselines.py, train.py
+│   └── vastai/                  # Orquestación de GPU remota en vast.ai
+├── src/                         # Librería principal (pip install -e .)
+│   ├── config.py
+│   ├── analysis/                # Resumen del dataset
+│   ├── cleanup/                 # Deduplicación perceptual (PHash)
+│   ├── data/                    # CornDataset, loader, splitter, transforms
+│   └── models/                  # Registro de modelos + baselines (EfficientNet, MobileNetV3)
+├── Dockerfile                   # Imagen reproducible (Python 3.11 + PyTorch CUDA) para GPU remota
+├── pyproject.toml
+├── Makefile
 ├── package.json
 └── tsconfig.json
 ```
@@ -189,10 +235,12 @@ corn-leaf-desease-project/
 
 - [x] Documentación de datasets consolidados (8 fuentes, 9 clases)
 - [x] Scripts de limpieza y organización de datos en `data/clean/`
-- [ ] Análisis exploratorio de datos (EDA)
-- [ ] Data augmentation para clases deficitarias (Roya, N, P, K)
-- [ ] Pipeline de preparación de datos
-- [ ] Entrenamiento y evaluación del modelo
+- [x] Análisis exploratorio de datos (EDA)
+- [x] Pipeline de preparación de datos (splits estratificados, perfil baseline configurable)
+- [x] Data augmentation para clases minoritarias (pipeline extendido por clase en `transforms.py`)
+- [x] Entrenamiento de baselines (EfficientNet-B0/Lite0, MobileNetV3-Large) + soporte GPU remota (vast.ai)
+- [ ] Loop de entrenamiento del pipeline principal (`scripts/pipeline/train.py`)
+- [ ] Evaluación exhaustiva y selección de modelo final
 - [ ] Aplicación Android con TensorFlow Lite
 
 ---
