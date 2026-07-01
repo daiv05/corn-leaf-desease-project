@@ -12,7 +12,10 @@ from sklearn.metrics import classification_report, f1_score
 from torch.utils.data import DataLoader
 
 import src.models.baselines.efficientnet  # noqa: F401 - registra modelos
+import src.models.baselines.fastvit  # noqa: F401 - registra modelos
+import src.models.baselines.ghostnet  # noqa: F401 - registra modelos
 import src.models.baselines.mobilenet  # noqa: F401 - registra modelos
+import src.models.baselines.shufflenet  # noqa: F401 - registra modelos
 from src.config import DATASET_ROOT, PROJECT_ROOT, set_global_seed
 from src.data.dataset import CornDataset, build_weighted_sampler
 from src.data.transforms import CornTransformFactory
