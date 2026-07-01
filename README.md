@@ -2,9 +2,6 @@
 
 > **Clasificación mediante Deep Learning en Dispositivos Móviles (Edge AI Offline)**
 
-Proyecto académico de la **Universidad de El Salvador** - Facultad de Ingeniería y Arquitectura  
-Especialización en Machine Learning · Ciclo I 2026 · Grupo 02  
-Docente: Ing. Bladimir Díaz Campos
 
 ---
 
@@ -46,9 +43,6 @@ Una aplicación móvil que, dada una fotografía de hoja de maíz, identifica la
 | Deficiencia de fósforo *(Phosphorus)* | Bordes y puntas moradas/rojizas en hojas jóvenes | 0 | 612 ⚠️ | 612 |
 | Deficiencia de potasio *(Potassium)* | Necrosis marginal en hojas más viejas | 0 | 266 ⚠️ | 266 |
 
-> Conteos post-limpieza y deduplicación en `data/clean/` (junio 2026). Total consolidado: **25 362 imágenes** (3 551 lab + 21 811 campo real).
-
-> **Nota crítica**: Áfidos (77 imgs), Roya común (solo 106 imgs reales), GLS (1 119 total), Potasio (266), Nitrógeno (523) y Fósforo (612) requieren data augmentation prioritaria. Se está definiendo el techo por clase (500, 1 000 o 2 000 imgs).
 
 ---
 
@@ -60,7 +54,7 @@ Una aplicación móvil que, dada una fotografía de hoja de maíz, identifica la
 | Tamaño del modelo (post Int8) | ≤ 20 MB |
 | Latencia de inferencia | ≤ 300 ms/imagen |
 | Dispositivo objetivo | Android ≥ 4 GB RAM, Snapdragon 6xx |
-| Arquitectura base | MobileNetV3 (comparando con V2 y EfficientNet-B0) |
+| Arquitectura base | -- Por definir -- |
 
 ---
 
@@ -79,28 +73,12 @@ Se consolidaron **8 fuentes de datos públicas** para construir el corpus de ent
 | [Maize Nutrient Deficiency](docs/es/datasets/maize-nutrient-deficiency.md) | Campo real (India) | 463 | CC BY 4.0 |
 | [Corn Leaf - Roboflow](docs/es/datasets/corn-leaf-roboflow.md) | Campo real | 3 943 | CC BY 4.0 |
 
-### Inventario Consolidado post-limpieza (`data/clean/`)
-
-| Clase | Lab | Real | Total | Estado |
-|---|---:|---:|---:|---|
-| Roya común | 2 150 | 106 | 2 256 | Requiere augmentation real ⚠️ |
-| NCLB | 888 | 5 942 | 6 830 | Cubierto ✓ |
-| GLS | 513 | 606 | 1 119 | Requiere augmentation ⚠️ |
-| Sano | 0 | 8 744 | 8 744 | Cubierto ✓ |
-| Cogollero | 0 | 4 858 | 4 858 | Cubierto ✓ |
-| Nitrógeno | 0 | 523 | 523 | Requiere augmentation ⚠️ |
-| Fósforo | 0 | 612 | 612 | Requiere augmentation ⚠️ |
-| Potasio | 0 | 266 | 266 | Requiere augmentation ⚠️ |
-| Áfidos | 0 | 77 | 77 | Requiere augmentation ⚠️ |
-| **TOTAL** | **3 551** | **21 811** | **25 362** | |
 
 ### Estrategia de Augmentation
 
 El dataset *Corn Leaf Diseases* aplica 17 técnicas de augmentation documentadas:
 
 `brightness_adjusted` · `contrast_adjusted` · `cropped` · `flipped_horizontal` · `flipped_vertical` · `gaussian_noise` · `high_pass` · `hist_equalized` · `jittered` · `laplacian` · `poisson_noise` · `rotated` · `salt_pepper_noise` · `saturation_adjusted` · `sobel` · `translated` · `unsharp_mask`
-
-Se aplicará un ratio equivalente (×17) a las imágenes de campo de las clases deficitarias (Roya común, Nitrógeno, Fósforo, Potasio) para alcanzar el umbral de ≥ 2 000 imágenes de campo real por clase.
 
 ---
 
@@ -122,25 +100,17 @@ El proyecto sigue el marco **CRISP-DM iterativo**:
 El código de datos/entrenamiento vive en `src/` (librería instalable) y `scripts/` (entrypoints). Hay
 dos pipelines paralelos sobre el mismo dataset limpio (`data/clean/`):
 
-- **Baselines** (`scripts/pipeline/train_baselines.py`): EfficientNet-B0, EfficientNet-Lite0 y
-  MobileNetV3-Large pre-entrenados, funcional de punta a punta. Por defecto entrena sobre un subset
-  configurable (`config/dataset.yaml -> baseline:`, 4 clases y hasta 500 imágenes por clase) para
-  comparar arquitecturas rápido y barato; ver [Baselines](docs/es/baselines/index.md).
-- **Pipeline principal** (`scripts/pipeline/train.py`): comparte toda la infraestructura de datos y
-  modelos; el loop de entrenamiento está pendiente de implementar.
+- **Baselines** (`scripts/pipeline/train_baselines.py`): EfficientNet-B0, EfficientNet-Lite0 y MobileNetV3-Large pre-entrenados, funcional de punta a punta. Por defecto entrena sobre un subset configurable (`config/dataset.yaml -> baseline:`, 4 clases y hasta 500 imágenes por clase) para comparar arquitecturas rápido y barato; ver [Baselines](docs/es/baselines/index.md).
+- **Pipeline principal** (`scripts/pipeline/train.py`): comparte toda la infraestructura de datos y modelos; el loop de entrenamiento está pendiente de implementar.
 
 ### Quickstart
 
 ```bash
-cp .env.example .env        # ajustar DATASET_ROOT (y HF_DATASET_REPO/GDRIVE_DATASET_ID si aplica)
-make install                # pip install -e ".[dev,analysis]"
-make download-dataset       # descarga data/clean/ (Hugging Face Hub, fallback Google Drive)
-make splits-baseline        # genera splits/seed_42_baseline (subset configurable)
-make train-baselines        # entrena los baselines (MODELS=<nombre> para entrenar uno solo)
+cp .env.example .env && make install && make download-dataset && make splits-baseline && make train-baselines
 ```
 
-Para entrenar en una GPU alquilada en [vast.ai](https://vast.ai) con el mismo flujo reproducible
-(Docker + descarga automática del dataset), ver la guía en
+Guía completa de instalación (venv, `.env`, dataset) en [LOCAL.md](LOCAL.md). Para entrenar en una GPU
+alquilada en [vast.ai](https://vast.ai) con el mismo flujo reproducible, ver
 [docs/es/deployment/vast-ai.md](docs/es/deployment/vast-ai.md).
 
 ---
