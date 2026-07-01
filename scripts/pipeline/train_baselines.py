@@ -21,7 +21,8 @@ from src.models.registry import MODEL_REGISTRY
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-_DEFAULT_SPLITS_DIR = str(DATASET_ROOT / "splits" / "seed_42")
+_DEFAULT_SPLITS_DIR_FULL = DATASET_ROOT / "splits" / "seed_42"
+_DEFAULT_SPLITS_DIR_BASELINE = DATASET_ROOT / "splits" / "seed_42_baseline"
 _DEFAULT_OUTPUT_DIR = str(DATASET_ROOT / "results" / "baselines")
 
 
@@ -184,9 +185,16 @@ def main() -> None:
     )
     parser.add_argument(
         "--splits-dir",
-        default=_DEFAULT_SPLITS_DIR,
+        default=None,
         dest="splits_dir",
-        help=f"Directorio con train/val/test.csv (default: {_DEFAULT_SPLITS_DIR})",
+        help="Directorio con train/val/test.csv. Si se omite, usa "
+        f"{_DEFAULT_SPLITS_DIR_BASELINE} con --baseline, o {_DEFAULT_SPLITS_DIR_FULL} sin él.",
+    )
+    parser.add_argument(
+        "--baseline",
+        action="store_true",
+        help="Cuando no se pasa --splits-dir, usa el subset de splits/seed_42_baseline "
+        "en vez del dataset completo (splits/seed_42).",
     )
     parser.add_argument(
         "--output-dir",
@@ -208,7 +216,12 @@ def main() -> None:
     set_global_seed(seed)
 
     model_names = _resolve_model_names(args.models)
-    splits_dir = Path(args.splits_dir)
+    if args.splits_dir is not None:
+        splits_dir = Path(args.splits_dir)
+    elif args.baseline:
+        splits_dir = _DEFAULT_SPLITS_DIR_BASELINE
+    else:
+        splits_dir = _DEFAULT_SPLITS_DIR_FULL
     output_dir = Path(args.output_dir)
 
     if not splits_dir.exists():

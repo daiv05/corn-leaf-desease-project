@@ -30,12 +30,10 @@ train:
 	$(PYTHON) scripts/pipeline/train.py
 
 train-baselines:
-	$(PYTHON) scripts/pipeline/train_baselines.py --models $(MODELS) \
-		--splits-dir $${DATASET_ROOT}/splits/seed_42_baseline
+	$(PYTHON) scripts/pipeline/train_baselines.py --models $(MODELS) --baseline
 
 train-baselines-full:
-	$(PYTHON) scripts/pipeline/train_baselines.py --models $(MODELS) \
-		--splits-dir $${DATASET_ROOT}/splits/seed_42
+	$(PYTHON) scripts/pipeline/train_baselines.py --models $(MODELS)
 
 summary:
 	$(PYTHON) src/analysis/dataset_summary.py
