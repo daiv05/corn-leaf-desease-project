@@ -18,7 +18,7 @@ endif
 
 # Modelos: MODELS aplica a los baselines, MAIN_MODELS al pipeline principal.
 MODELS ?= efficientnet_b0 shufflenet_v2_x1_0 efficientnet_lite0
-MAIN_MODELS ?= shufflenet_v2_x1_0
+MAIN_MODELS ?= efficientnet_b0
 
 # Explicabilidad local: directorio raíz de runs. Vacío = default del script
 # (outputs/baselines).
