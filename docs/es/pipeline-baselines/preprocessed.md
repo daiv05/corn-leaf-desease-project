@@ -14,6 +14,8 @@ La clave está en _cuándo_ se aplica ese límite: se recorta sobre el conjunto 
 válidas **antes de dividir** en train/val/test. Por eso el tope de 1 500 es un total por clase
 (sumando los tres cortes), no un tope por corte. El recorte solo afecta a las clases mayoritarias, las minoritarias, que ya están por debajo del límite, quedan **íntegras** (potasio ≈ 266, nitrógeno ≈ 523, fósforo ≈ 612).
 
+> Cifras del split usado en las corridas documentadas (primera etapa). Tras la ampliación de agosto 2026 las minoritarias son potasio ≈ 621, nitrógeno ≈ 846 y fósforo ≈ 938: siguen por debajo del tope de 1 500, así que el comportamiento descrito aquí no cambia.
+
 Cuando una clase se recorta, el muestreo es **proporcional por entorno**: conserva la mezcla
 `lab`/`real` original de esa clase en vez de sesgarla hacia el dominio más abundante.
 

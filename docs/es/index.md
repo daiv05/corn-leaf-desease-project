@@ -60,20 +60,22 @@ El problema es que en zonas rurales el acceso a asistencia técnica es limitado,
 |---|---|---|---|---:|---:|---:|
 | **Roya común** | Common Rust | *Puccinia sorghi* | Pústulas anaranjadas dispersas en ambas caras de la hoja | 2 150 | 106 (pocos datos) | 2 256 |
 | **Tizón foliar del norte (NCLB)** | Northern Corn Leaf Blight | *Exserohilum turcicum* | Lesiones alargadas grisáceas o marrones con bordes difusos | 888 | 5 942 | 6 830 |
-| **Mancha gris de la hoja (GLS)** | Gray Leaf Spot | *Cercospora zeae-maydis* | Lesiones rectangulares grises o marrones delimitadas por nervaduras | 513 | 606 | 1 119 |
+| **Mancha gris de la hoja (GLS)** | Gray Leaf Spot | *Cercospora zeae-maydis* | Lesiones rectangulares grises o marrones delimitadas por nervaduras | 513 | 1 417 | 1 930 |
 | **Necrosis letal del maíz (MLN)** | Lethal Necrosis | *MCMV + SCMV* | Moteado clorótico severo, necrosis y muerte progresiva de la planta | 0 | 6 415 | 6 415 |
 | **Hoja sana** | Healthy | - | Sin síntomas foliares de enfermedad | 0 | 8 744 | 8 744 |
-| **Gusano cogollero** | Fall Armyworm | *Spodoptera frugiperda* | Daño por masticación con excrementos en el cogollo y hojas | 0 | 4 857 | 4 857 |
+| **Gusano cogollero** | Fall Armyworm | *Spodoptera frugiperda* | Daño por masticación con excrementos en el cogollo y hojas | 0 | 4 858 | 4 858 |
 
 #### Deficiencias nutricionales
 
 | Clase | Nombre en inglés | Síntoma visual | Lab | Real | Total |
 |---|---|---|---:|---:|---:|
-| **Deficiencia de nitrógeno** | Nitrogen Deficiency | Amarillamiento en "V" desde la punta de hojas inferiores | 0 | 523 (pocos datos) | 523 |
-| **Deficiencia de fósforo** | Phosphorus Deficiency | Bordes y puntas moradas/rojizas en hojas jóvenes | 0 | 612 (pocos datos) | 612 |
-| **Deficiencia de potasio** | Potassium Deficiency | Necrosis marginal en hojas más viejas | 0 | 266 (pocos datos) | 266 |
+| **Deficiencia de nitrógeno** | Nitrogen Deficiency | Amarillamiento en "V" desde la punta de hojas inferiores | 0 | 846 (pocos datos) | 846 |
+| **Deficiencia de fósforo** | Phosphorus Deficiency | Bordes y puntas moradas/rojizas en hojas jóvenes | 0 | 938 (pocos datos) | 938 |
+| **Deficiencia de potasio** | Potassium Deficiency | Necrosis marginal en hojas más viejas | 0 | 621 (pocos datos) | 621 |
 
-> Conteos post-limpieza y deduplicación en `data/clean/` (junio 2026). Total consolidado: **31 622 imágenes** (3 551 lab + 28 071 campo real). Las marcas "(pocos datos)" señalan las clases con menor cantidad de imágenes disponibles. La clase `aphids_pest` (áfidos del maíz) fue evaluada pero descartada por escasez de datos (~77 imágenes); en su lugar se incorporó `lethal_necrosis`.
+> Conteos post-limpieza y deduplicación en `data/clean/`, **actualizados a agosto 2026**. Total consolidado: **33 438 imágenes** (3 551 lab + 29 887 campo real). Las marcas "(pocos datos)" señalan las clases con menor cantidad de imágenes disponibles. La clase `aphids_pest` (áfidos del maíz) fue evaluada pero descartada por escasez de datos (~77 imágenes); en su lugar se incorporó `lethal_necrosis`.
+
+> **Ampliación posterior a la primera entrega (agosto 2026).** El corpus pasó de **31 622** a **33 438 imágenes** al incorporar cuatro datasets Roboflow dirigidos a las clases más escasas: las tres deficiencias nutricionales y GLS. El desbalance máximo frente a `healthy` bajó de **32.9x** a **14.1x**. Detalle del procesamiento en [Limpieza y ordenado](/es/cleanup-and-ordered/) y análisis actualizado en [EDA](/es/exploratory-data-analysis/).
 
 
 ### Metodología

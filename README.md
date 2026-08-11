@@ -31,7 +31,7 @@ La idea es sencilla: una aplicación móvil que, dada una fotografía de hoja de
 |---|---|---|---:|---:|---:|
 | Roya común *(Common Rust)* | *Puccinia sorghi* | Pústulas anaranjadas en ambas caras | 2 150 | 106 (escasa) | 2 256 |
 | Tizón foliar del norte *(NCLB)* | *Exserohilum turcicum* | Lesiones alargadas grisáceas | 888 | 5 942 | 6 830 |
-| Mancha gris *(GLS)* | *Cercospora zeae-maydis* | Lesiones rectangulares grises | 513 | 606 | 1 119 |
+| Mancha gris *(GLS)* | *Cercospora zeae-maydis* | Lesiones rectangulares grises | 513 | 1 417 | 1 930 |
 | Necrosis letal *(MLN)* | Complejo viral (MCMV + potyvirus) | Rayado clorótico, necrosis progresiva y muerte de la planta | 0 | 6 415 | 6 415 |
 | Hoja sana *(Healthy)* | - | Sin síntomas visibles | 0 | 8 744 | 8 744 |
 | Gusano cogollero *(Fall Armyworm)* | *Spodoptera frugiperda* | Daño por masticación, excrementos en cogollo | 0 | 4 858 | 4 858 |
@@ -42,11 +42,17 @@ La idea es sencilla: una aplicación móvil que, dada una fotografía de hoja de
 
 | Clase | Síntomas | Lab | Real | Total |
 |---|---|---:|---:|---:|
-| Deficiencia de nitrógeno *(Nitrogen)* | Amarillamiento en "V" desde puntas de hojas inferiores | 0 | 523 (escasa) | 523 |
-| Deficiencia de fósforo *(Phosphorus)* | Bordes y puntas moradas/rojizas en hojas jóvenes | 0 | 612 (escasa) | 612 |
-| Deficiencia de potasio *(Potassium)* | Necrosis marginal en hojas más viejas | 0 | 266 (escasa) | 266 |
+| Deficiencia de nitrógeno *(Nitrogen)* | Amarillamiento en "V" desde puntas de hojas inferiores | 0 | 846 (escasa) | 846 |
+| Deficiencia de fósforo *(Phosphorus)* | Bordes y puntas moradas/rojizas en hojas jóvenes | 0 | 938 (escasa) | 938 |
+| Deficiencia de potasio *(Potassium)* | Necrosis marginal en hojas más viejas | 0 | 621 (escasa) | 621 |
 
 > "(escasa)" señala clases con pocas imágenes disponibles, candidatas prioritarias a data augmentation.
+
+> **Actualización agosto 2026 (posterior a la primera entrega).** Los conteos de estas tablas
+> corresponden al corpus ampliado: **33 438 imágenes** (3 551 lab + 29 887 campo real), tras
+> incorporar cuatro datasets Roboflow dirigidos a GLS y a las tres deficiencias nutricionales
+> (+1 815 netas) y deduplicar con PHash. El desbalance máximo bajó de 32.9x a **14.1x**.
+> Las corridas de baselines documentadas en `docs/` son previas a esta ampliación.
 
 
 ---
@@ -132,6 +138,7 @@ Variables comunes: `MODELS` / `MAIN_MODELS` (nombre o "all"), `EPOCHS` / `MAIN_E
 ```bash
 make install                        # pip install -e ".[dev,analysis,xai,cloud]"
 make download-dataset                # clean/ (HF Hub, fallback Google Drive)
+make upload-dataset STAGE_DIR=<dir>  # empaqueta clean/ en shards .tar y publica en HF
 
 make splits                          # splits completos (9 clases) -> outputs/splits/seed_42/
 make splits-baseline [NO_CAP=1 | MAX_PER_CLASS=<n>]   # perfil baseline -> outputs/splits/seed_42_baseline/
@@ -169,6 +176,8 @@ funciona igual en Modal. Detalle completo en [docs/es/deployment/modal.md](docs/
 
 ```bash
 make modal-seed                                            # sube clean/ al Volume (una vez)
+make modal-seed FORCE=1                                     # actualiza el dataset (vacía y re-descarga)
+make modal-splits                                           # regenera splits tras actualizar el dataset
 make modal-clean-outputs                                    # vacía el Volume corn-outputs
 make modal-pull                                             # trae outputs-remote/ con runs + reportes
 

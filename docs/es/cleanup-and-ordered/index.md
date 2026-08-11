@@ -34,6 +34,16 @@ Se exploran los siguientes datasets, y se definen identificadores para cada uno,
 
 `multicrop-disease-maiz-disease-pests-and-disease  ---> multi_desease`
 
+Ampliación de agosto 2026 (cuatro datasets Roboflow adicionales):
+
+`maize-2-roboflow                                  ---> maize_2_roboflow`
+
+`maize-leaf-roboflow                               ---> maize_leaf_roboflow`
+
+`maize-deficiency-scanner-roboflow                 ---> maize_deficiency_scanner_roboflow`
+
+`corn-leaf-diseases-classification-roboflow        ---> corn_leaf_diseases_classification_roboflow`
+
 ## Clases consideradas (junio 2026)
 
 ### Enfermedades foliares
@@ -96,19 +106,37 @@ Tras aplicar las rutinas automatizadas de deduplicación y filtros de exclusión
 | Clase                        | Lab    | Real   | Total  |
 |------------------------------|-------:|-------:|-------:|
 | `common_rust`                |  2 150 |    106 |  2 256 |
-| `fall_armyworm`              |      0 |  4 857 |  4 857 |
-| `gray_leaf_spot`             |    513 |    606 |  1 119 |
+| `fall_armyworm`              |      0 |  4 858 |  4 858 |
+| `gray_leaf_spot`             |    513 |  1 417 |  1 930 |
 | `healthy`                    |      0 |  8 744 |  8 744 |
 | `lethal_necrosis`            |      0 |  6 415 |  6 415 |
-| `nitrogen_deficiency`        |      0 |    523 |    523 |
+| `nitrogen_deficiency`        |      0 |    846 |    846 |
 | `northern_corn_leaf_blight`  |    888 |  5 942 |  6 830 |
-| `phosphorus_deficiency`      |      0 |    612 |    612 |
-| `potassium_deficiency`       |      0 |    266 |    266 |
-| **TOTAL**                    |  **3 551** | **28 071** | **31 622** |
+| `phosphorus_deficiency`      |      0 |    938 |    938 |
+| `potassium_deficiency`       |      0 |    621 |    621 |
+| **TOTAL**                    |  **3 551** | **29 887** | **33 438** |
+
+> Cifras finales tras la ampliación de agosto 2026, **ya deduplicadas**. El total previo (primera etapa) era de 31 622 imágenes.
+
+### Efecto de la ampliación de agosto 2026
+
+| Clase | Antes | Integradas | Duplicados | Después | Factor |
+|---|---:|---:|---:|---:|---:|
+| `gray_leaf_spot` | 1 119 | +836 | -25 | 1 930 | x1.72 |
+| `nitrogen_deficiency` | 523 | +345 | -22 | 846 | x1.62 |
+| `phosphorus_deficiency` | 612 | +327 | -1 | 938 | x1.53 |
+| `potassium_deficiency` | 266 | +368 | -13 | 621 | x2.33 |
+| **TOTAL** | **31 622** | **+1 876** | **-61** | **33 438** | |
+
+El desbalance máximo frente a `healthy` bajó de **32.9x** (potasio, 266 img) a **14.1x** (potasio, 621 img), sin que ninguna otra clase se moviera.
 
 ## Observaciones
 
 > Junio 2026 - Las clases con menor representación son las deficiencias nutricionales (nitrógeno 523, fósforo 612, potasio 266). Se evalúa la posibilidad de incluir datasets adicionales para estas clases. Está pendiente definir un techo de imágenes por clase para evitar sesgos o aplicar técnicas avanzadas para balancear el dataset (oversampling, SMOTE, etc.).
+
+> Agosto 2026 - Se atendió la observación anterior incorporando cuatro datasets Roboflow dirigidos a esas clases. Las deficiencias siguen siendo las clases minoritarias (potasio 621, nitrógeno 846, fósforo 938) pero el desbalance se redujo a menos de la mitad. Las cuatro clases reforzadas **siguen superando** el umbral `max_count/count > 4.0` que activa el pipeline extendido de augmentación y el `WeightedRandomSampler`, así que la composición de clases minoritarias no cambia: potasio 14.08x, nitrógeno 10.34x, fósforo 9.32x y GLS 4.53x. GLS es la que quedó más cerca del límite - si se refuerza un poco más, saldría del grupo minoritario y **cambiaría el comportamiento del entrenamiento**. `common_rust` sigue fuera con 3.88x.
+
+> Agosto 2026 (fuentes) - La ampliación resolvió además el sesgo de **fuente única** que arrastraban las deficiencias: cada una pasó de depender solo de `maize_nutrient` a combinar cuatro fuentes, y `gray_leaf_spot` pasó de una a tres en su porción de campo. Ver el detalle en [EDA - distribución por fuente](/es/exploratory-data-analysis/#distribucion-por-fuente-de-origen).
 
 ## corn-leaf-diseases
 
@@ -356,4 +384,220 @@ A diferencia de las otras clases de este dataset, las imágenes de Lethal Necros
 > **Contenido visual:** las imágenes de cogollero de este dataset son una mezcla de **hoja con daño** y **hoja con daño + gusano** visible, sin separación entre ambos tipos dentro de la carpeta.
 
 ### Healthy | Sana
+
+---
+
+# Ampliación agosto 2026 - datasets Roboflow adicionales
+
+Cuatro datasets nuevos incorporados para reforzar exclusivamente las clases más escasas del corpus: las tres deficiencias nutricionales y GLS. Aportaron **1 815 imágenes netas** de campo real (1 876 integradas menos 61 duplicados), llevando el corpus de **31 622** a **33 438**.
+
+> Esta etapa es **posterior a la primera entrega** del proyecto. El material de esa entrega (paper y notebook de EDA) se conserva congelado en `reports/firts-phase/` y **no refleja estas cifras** a propósito.
+
+## Metodología común
+
+Los cuatro datasets vienen en formato **YOLO de detección/segmentación**, no en carpeta-por-clase. Esto obliga a derivar la clase de cada imagen a partir de sus etiquetas, no de su ruta.
+
+### Regla de asignación de clase
+
+Se leyó el `class_id` (primer token de cada línea del `.txt`, válido tanto para bbox de 5 campos como para polígonos de N campos) y se aplicó:
+
+1. Recolectar el conjunto de clases distintas presentes en la imagen.
+2. **Descartar la clase contenedora genérica `leaf`** (ver el caso de `corn_leaf_diseases_classification_roboflow` más abajo).
+3. Si queda **exactamente una** clase y esa clase es objetivo -> se integra la imagen.
+4. Si quedan **cero o más de una** -> se descarta por ambigua.
+
+El criterio es deliberadamente conservador: en detección una imagen puede contener varias enfermedades, y una imagen con GLS + NCLB no es material de entrenamiento válido para un clasificador de etiqueta única. Se prefirió perder 46 imágenes antes que introducir etiquetas incorrectas.
+
+### Entorno: `real`
+
+Se inspeccionaron muestras de cada clase de cada dataset. Las cuatro fuentes son fotografía de campo (suelo, hierba, manos sosteniendo la hoja, fondo vegetal natural), sin ninguna captura de laboratorio. Todo se integró como `real`, consistente con las demás fuentes Roboflow ya presentes en `clean/`.
+
+### Subcarpeta por origen (temporal)
+
+Durante la ingesta cada dataset escribió en **su propia subcarpeta**, para poder auditar, revertir o deduplicar el aporte de una fuente concreta sin tocar el material anterior:
+
+```
+clean/<clase>/real/<identificador_dataset>/<archivo>.jpg
+```
+
+Una vez verificada la ingesta, esas subcarpetas se aplanaron hacia `clean/<clase>/real/` (ver [Aplanado de subcarpetas](#aplanado-de-subcarpetas)), dejando la estructura homogénea con el resto del corpus.
+
+### Nomenclatura
+
+`<clase>_<identificador_dataset>_real_<hash8>.jpg`
+
+Ejemplo: `potassium_deficiency_maize_2_roboflow_real_00038ceb.jpg`
+
+El sufijo es un **hash de contenido** (primeros 8 caracteres del SHA-256 del archivo) en lugar del número aleatorio usado en incorporaciones anteriores. Es determinista y reproducible entre máquinas - el mismo criterio que ya usa `create_splits.py` para deduplicar -, así que reejecutar la ingesta produce exactamente los mismos nombres. Los 1 876 nombres generados resultaron únicos, sin colisiones.
+
+### Validación de integridad
+
+Cada imagen se verificó con PIL (`verify()` + `convert("RGB")`, el mismo criterio de `create_splits.py`) antes de copiarse. **0 imágenes corruptas** en los cuatro datasets.
+
+### Garantías de no contaminación
+
+- `raw/` quedó **intacto byte a byte** (checksum global antes/después de la ingesta).
+- **0** archivos preexistentes de `clean/` eliminados, renombrados o modificados.
+- Las 1 876 adiciones están **todas** dentro de las subcarpetas nuevas.
+
+## Resultados de extracción
+
+| Dataset | Clase destino | Imágenes |
+|---|---|---:|
+| `maize_2_roboflow` | `potassium_deficiency` | 321 |
+| `maize_2_roboflow` | `phosphorus_deficiency` | 292 |
+| `maize_2_roboflow` | `nitrogen_deficiency` | 269 |
+| `maize_leaf_roboflow` | `gray_leaf_spot` | 336 |
+| `maize_deficiency_scanner_roboflow` | `nitrogen_deficiency` | 76 |
+| `maize_deficiency_scanner_roboflow` | `potassium_deficiency` | 47 |
+| `maize_deficiency_scanner_roboflow` | `phosphorus_deficiency` | 35 |
+| `corn_leaf_diseases_classification_roboflow` | `gray_leaf_spot` | 500 |
+| **TOTAL** | | **1 876** |
+
+Imágenes descartadas por dataset:
+
+| Dataset | Ambiguas | Otras clases (no objetivo) | Corruptas |
+|---|---:|---:|---:|
+| `maize_2_roboflow` | 4 | 433 | 0 |
+| `maize_leaf_roboflow` | 38 | 713 | 0 |
+| `maize_deficiency_scanner_roboflow` | 0 | 118 | 0 |
+| `corn_leaf_diseases_classification_roboflow` | 4 | 499 | 0 |
+
+## maize-2-roboflow
+
+### Identificador
+
+`maize_2_roboflow`
+
+### Mapeo de clases YOLO -> carpetas clean
+
+| Clase YOLO | Carpeta destino | ¿Clase objetivo? |
+|---|---|---|
+| `K_Deficiency` (0) | `potassium_deficiency/real/maize_2_roboflow/` | Sí |
+| `N_Deficiency` (1) | `nitrogen_deficiency/real/maize_2_roboflow/` | Sí |
+| `Nutrient_Sufficiency` (2) | - | No (descartada) |
+| `P_Deficiency` (3) | `phosphorus_deficiency/real/maize_2_roboflow/` | Sí |
+
+### Decisiones y hallazgos
+
+- **Es el mayor aporte de la ampliación**: 882 de las 1 876 imágenes (47 %), y la fuente principal para las tres deficiencias.
+- **`Nutrient_Sufficiency` se descartó deliberadamente** (433 imágenes). Aunque es tentador mapearla a `healthy`, denota *ausencia de deficiencia nutricional*, no *ausencia de enfermedad*: una hoja nutricionalmente suficiente puede presentar roya o tizón. Integrarla habría contaminado `healthy` con posibles hojas enfermas. Además `healthy` ya es la clase mayoritaria (8 744) y no requiere refuerzo.
+- **Solo 4 imágenes ambiguas** de 1 319 (0.3 %): 3 con `Nutrient_Sufficiency` + `P_Deficiency` y 1 con `N_Deficiency` + `P_Deficiency`. Prácticamente es un dataset de clase única.
+- **Resolución no uniforme**: contrario a lo observado en `corn-leaf-roboflow` (que venía todo a 640 x 640), aquí conviven 10 resoluciones - 557 imágenes a 640 x 640 y el resto en resolución nativa de cámara (hasta 4000 x 3000). No se redimensionó nada al integrar; eso lo resuelve el pipeline de carga.
+
+## maize-leaf-roboflow
+
+### Identificador
+
+`maize_leaf_roboflow`
+
+### Mapeo de clases YOLO -> carpetas clean
+
+| Clase YOLO | Carpeta destino | ¿Clase objetivo? |
+|---|---|---|
+| `gls` (0) | `gray_leaf_spot/real/maize_leaf_roboflow/` | Sí |
+| `nlb` (1) | - | No tomada en esta incorporación |
+| `nls` (2) | - | No (Northern Leaf Spot no es clase objetivo) |
+
+### Decisiones y hallazgos
+
+- **La tasa de ambigüedad más alta de los cuatro**: 38 imágenes descartadas (3.5 %), de las cuales 32 combinan `gls` + `nlb`. Es un hallazgo esperable y clínicamente coherente - GLS, NLS y NCLB son confundibles entre sí y pueden coexistir en la misma planta -, pero confirma que la regla de clase única era necesaria aquí.
+- **Ojo con `nls` vs `nlb`.** `nls` es *Northern Leaf Spot* (*Bipolaris zeicola*), que **no** es clase objetivo, y no debe confundirse con `nlb` (*Northern Leaf Blight* / NCLB), que sí lo es. La similitud de los identificadores es una fuente de error real al mapear.
+- **`nlb` no se tomó** pese a ser clase objetivo: el alcance definido para esta ampliación era reforzar solo deficiencias y GLS, y `northern_corn_leaf_blight` ya cuenta con 6 830 imágenes. Quedan ~386 imágenes disponibles si en el futuro se decide ampliarla.
+- **Anotación lesión a lesión**: 4 446 instancias de `gls` sobre 373 imágenes (~12 por imagen). El conteo de instancias no debe leerse como conteo de imágenes.
+- **Solo trae split `train`**, aunque `data.yaml` referencia `valid/` y `test/`. Irrelevante para la ingesta, porque los splits del proyecto se regeneran con `make splits`.
+- Resolución muy alta y homogénea: 1 078 de 1 087 imágenes a 3024 x 3024 px.
+
+## maize-deficiency-scanner-roboflow
+
+### Identificador
+
+`maize_deficiency_scanner_roboflow`
+
+### Mapeo de clases YOLO -> carpetas clean
+
+| Clase YOLO | Carpeta destino | ¿Clase objetivo? |
+|---|---|---|
+| `Healthy` (0) | - | No tomada (clase ya mayoritaria) |
+| `Nitrogen-deficient` (1) | `nitrogen_deficiency/real/maize_deficiency_scanner_roboflow/` | Sí |
+| `Phosphorus-deficient` (2) | `phosphorus_deficiency/real/maize_deficiency_scanner_roboflow/` | Sí |
+| `Potassium-deficient` (3) | `potassium_deficiency/real/maize_deficiency_scanner_roboflow/` | Sí |
+
+### Decisiones y hallazgos
+
+- **Cero imágenes ambiguas**: el único de los cuatro sin ninguna co-ocurrencia de clases. La anotación es hoja a hoja (una hoja segmentada por imagen), no lesión a lesión.
+- **Anotación por polígono exclusivamente** (312 líneas, 0 bbox), con contornos muy densos - algunos superan los 200 pares de coordenadas. Irrelevante para clasificación, pero confirma que el parser debe leer el `class_id` como primer token sin asumir 5 campos por línea.
+- **Aporte modesto**: 158 imágenes útiles de 276. Es el dataset más pequeño de la ampliación.
+- **Los nombres de archivo codifican la clase** (`H-0001`, `N-...`, etc.). Se ignoró esa señal a propósito: la fuente de verdad para clasificar fue siempre la etiqueta YOLO, no el nombre del archivo.
+- Predomina 3024 x 4032 px (orientación retrato, cámara de teléfono).
+
+## corn-leaf-diseases-classification-roboflow
+
+### Identificador
+
+`corn_leaf_diseases_classification_roboflow`
+
+> El slug de Roboflow contiene una errata (`classifcation`); se conserva tal cual para poder resolver el dataset. El identificador local sí usa la grafía correcta.
+
+### Mapeo de clases YOLO -> carpetas clean
+
+| Clase YOLO | Carpeta destino | ¿Clase objetivo? |
+|---|---|---|
+| `gray_leaf_spot` (0) | `gray_leaf_spot/real/corn_leaf_diseases_classification_roboflow/` | Sí |
+| `leaf` (1) | - | No - contenedor genérico, se ignora |
+| `northern_leaf_blight` (2) | - | No tomada en esta incorporación |
+
+### Decisiones y hallazgos
+
+::: warning Hallazgo principal: la clase `leaf` es un contenedor, no un diagnóstico
+`leaf` aparece en **1 001 de las 1 003 imágenes (99.8 %)**: marca el contorno de la hoja, no una condición patológica. Aplicando la regla de clase única sin excepciones, *toda* imagen del dataset tendría 2 clases y sería descartada por ambigua - **el dataset entero se habría perdido**. Por eso la regla incluye el paso explícito de ignorar `leaf` antes de contar clases distintas. Es el hallazgo que más impacto tuvo en el resultado de la ampliación: rescató las 500 imágenes de GLS, el 27 % del total incorporado.
+:::
+
+- **Estructura de anotación en dos niveles**: un polígono `leaf` por hoja más N polígonos de lesión. Con 11 302 instancias de `gray_leaf_spot` sobre ~501 imágenes, el promedio ronda las **22 lesiones anotadas por imagen** - la anotación más densa de los cuatro datasets.
+- **Separación limpia entre enfermedades** una vez ignorada `leaf`: solo 1 imagen combina `gray_leaf_spot` con `northern_leaf_blight`. El dataset está partido casi por mitades (~501 GLS / ~500 NCLB).
+- **`northern_leaf_blight` no se tomó**, por el mismo criterio de alcance aplicado en `maize_leaf_roboflow`. Quedan ~500 imágenes disponibles a futuro.
+- **Resolución extremadamente heterogénea**: 36 resoluciones distintas, de 900 x 600 a 4096 x 3072 px. Sugiere que el dataset agrega material de varias cámaras o fuentes; conviene tenerlo presente si aparecen sesgos de subgrupo en el análisis por entorno.
+
+## Aplanado de subcarpetas
+
+Las subcarpetas temporales por dataset cumplieron su función (auditar el aporte de cada fuente de forma aislada) y se **eliminaron tras la verificación**. Las 1 876 imágenes se movieron a un listado único en `clean/<clase>/real/`, dejando la estructura homogénea con el resto del corpus:
+
+```
+clean/<clase>/{lab,real}/<archivo>.jpg     # sin subcarpetas intermedias
+```
+
+La trazabilidad no se pierde: el identificador del dataset de origen ya va **en el nombre del archivo**, que es de donde lo leen tanto el EDA como el análisis de duplicados. Verificado tras el movimiento: mismo conteo de archivos antes y después, conjunto de nombres idéntico, cero colisiones y cero subcarpetas restantes.
+
+## Deduplicación
+
+Ejecutada con `find_duplicates.py` (PHash, `threshold = 0`) sobre las cuatro clases afectadas. Los CSV quedaron registrados en `src/cleanup/results/` con fecha 2026-08-11.
+
+| Clase | Analizadas | Grupos | Eliminadas |
+|---|---:|---:|---:|
+| `gray_leaf_spot` | 1 955 | 25 | 25 |
+| `nitrogen_deficiency` | 868 | 21 | 22 |
+| `phosphorus_deficiency` | 939 | 1 | 1 |
+| `potassium_deficiency` | 634 | 13 | 13 |
+| **TOTAL** | | **60** | **61** |
+
+**61 imágenes eliminadas de 1 876 incorporadas (3.3 %).**
+
+### Hallazgo: cero contaminación contra el material preexistente
+
+**Todos los grupos de duplicados quedaron contenidos dentro de los datasets nuevos.** No se detectó ni un solo duplicado contra las imágenes que ya estaban en `clean/`, lo que descarta uno de los dos riesgos anticipados: las 606 imágenes de GLS previas no se solapan con las fuentes nuevas.
+
+| Tipo de grupo | Grupos | Detalle |
+|---|---:|---|
+| Interno de `maize_2_roboflow` | 35 | Duplicados dentro del propio dataset |
+| Interno de `corn_leaf_diseases_classification_roboflow` | 20 | Duplicados dentro del propio dataset |
+| Cruzado entre las dos fuentes de GLS | 5 | `maize_leaf_roboflow` ↔ `corn_leaf_diseases_classification_roboflow` |
+
+Sobre los otros dos hallazgos:
+
+- **`maize_2_roboflow` y `maize_deficiency_scanner_roboflow` no se solapan entre sí**, pese a cubrir las mismas tres deficiencias. El riesgo anticipado no se materializó.
+- **Los 5 grupos cruzados de GLS son byte a byte idénticos** (mismo SHA-256): los dos datasets de Roboflow redistribuyen material común.
+
+::: tip Por qué hizo falta PHash y no bastaba el SHA-256
+Solo esos **5** grupos son copias exactas; los **56** restantes son *near-duplicates* - mismo contenido visual pero bytes distintos (reencodings, recortes, recompresión). `create_splits.py` deduplica por SHA-256 al generar los splits, así que habría atrapado los 5 exactos pero **no** los 56 restantes, que habrían provocado *data leakage* entre train y validación.
+:::
 

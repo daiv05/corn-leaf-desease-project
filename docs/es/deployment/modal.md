@@ -11,7 +11,7 @@ El almacenamiento persistente se resuelve con dos Volumes de Modal, que se crean
 - `corn-clean`, montado en `/data`, contiene el dataset limpio.
 - `corn-outputs`, montado en `/outputs`, contiene los artefactos generados: splits, pesos de modelos, métricas y reportes de explicabilidad (LIME, Grad-CAM, SHAP).
 
-El dataset no se sube en cada corrida: se sube una única vez al volumen con `make modal-seed`, que es idempotente (si ya existe, no lo vuelve a descargar). Antes de esa primera vez hace falta autenticar la cuenta y darle a Modal acceso al dataset de Hugging Face:
+El dataset no se sube en cada corrida: se sube una única vez al volumen con `make modal-seed`, que es idempotente (si ya existe, no lo vuelve a descargar; para traer una versión nueva, ver [Actualizar el dataset del volumen](#actualizar-el-dataset-del-volumen)). Antes de esa primera vez hace falta autenticar la cuenta y darle a Modal acceso al dataset de Hugging Face:
 
 ```bash
 pip install -e ".[cloud]"        # incluye el cliente modal
@@ -71,10 +71,22 @@ make modal-explain-global-main MAIN_MODELS=shufflenet_v2_x1_0 SAMPLE_SIZE=30    
 
 Si en algún momento hace falta empezar de cero (splits, runs o reportes viejos que ya no aplican), `make modal-clean-outputs` vacía el volumen de outputs sin tocar el dataset.
 
+### Actualizar el dataset del volumen
+
+Cuando se publica una versión nueva del dataset en Hugging Face, `make modal-seed` a secas no la trae: al haber contenido en `/data/clean` se salta la descarga. Para actualizarlo:
+
+```bash
+make modal-seed FORCE=1   # vacía /data/clean y vuelve a descargar
+make modal-splits         # los splits del volumen quedaron obsoletos
+```
+
+`FORCE=1` borra el directorio antes de descargar, y ese vaciado es la parte importante: los shards se extraen sobre el árbol que ya existe y la descarga no elimina lo que desapareció del repo, así que una imagen renombrada aguas arriba quedaría presente con sus dos nombres. Al regenerar los splits conviene tener presente que el conjunto de test cambia, de modo que las métricas de runs anteriores dejan de ser comparables con las nuevas.
+
 Quien prefiera no pasar por `make` puede invocar los mismos comandos de Modal directamente:
 
 ```bash
 modal run scripts/modal/train.py::seed_dataset
+modal run scripts/modal/train.py::seed_dataset --force
 modal run scripts/modal/train.py --models "efficientnet_b0" --epochs 30
 modal run scripts/modal/train.py::train_main --models "shufflenet_v2_x1_0" --epochs 60
 modal run scripts/modal/explain.py::explain_fidelity --models "efficientnet_b0" --sample-size 50

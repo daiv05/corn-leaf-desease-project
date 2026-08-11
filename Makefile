@@ -70,7 +70,8 @@ STABILITY_RUNS ?=
 .PHONY: help
 help:
 	@echo "Local - setup y datos:"
-	@echo "  install download-dataset splits splits-baseline summary test-loader"
+	@echo "  install download-dataset upload-dataset splits splits-baseline summary test-loader"
+	@echo "    upload-dataset requiere STAGE_DIR=<dir con ~18GB libres> [DRY_RUN=1] [KEEP_STAGE=1]"
 	@echo ""
 	@echo "Local - baselines (runs en outputs/baselines, var MODELS):"
 	@echo "  train-baselines"
@@ -83,6 +84,7 @@ help:
 	@echo ""
 	@echo "Modal - infraestructura:"
 	@echo "  modal-seed modal-splits modal-clean-outputs modal-pull"
+	@echo "    modal-seed FORCE=1 vacía el Volume y re-descarga (para actualizar el dataset)"
 	@echo ""
 	@echo "Modal - baselines (runs en /outputs/baselines, var MODELS):"
 	@echo "  modal-train-baselines"
@@ -102,13 +104,18 @@ help:
 # Local - setup y datos
 # ==============================================================================
 
-.PHONY: install download-dataset splits splits-baseline summary test-loader
+.PHONY: install download-dataset upload-dataset splits splits-baseline summary test-loader
 
 install:
 	$(PIP) install -e ".[dev,analysis,xai,cloud]"
 
 download-dataset:
 	$(PYTHON) scripts/dataset/download_dataset.py
+
+# STAGE_DIR es obligatorio: el empaquetado necesita ~18 GB libres y el volumen del proyecto
+# no siempre los tiene. DRY_RUN=1 reporta el plan de shards sin escribir ni subir.
+upload-dataset:
+	$(PYTHON) scripts/dataset/upload_to_hf.py --stage-dir $(STAGE_DIR) $(if $(DRY_RUN),--dry-run,) $(if $(KEEP_STAGE),--keep-stage,)
 
 splits:
 	$(PYTHON) scripts/pipeline/create_splits.py
@@ -244,8 +251,10 @@ inference:
 
 .PHONY: modal-seed modal-splits modal-clean-outputs modal-pull
 
+# FORCE=1 vacía el Volume corn-clean antes de descargar: necesario para actualizar el dataset,
+# ya que la extracción de shards no elimina archivos renombrados o borrados aguas arriba.
 modal-seed:
-	$(MODAL) run scripts/modal/train.py::seed_dataset
+	$(MODAL) run scripts/modal/train.py::seed_dataset $(if $(FORCE),--force,)
 
 modal-splits:
 	$(MODAL) run scripts/modal/train.py::make_splits \

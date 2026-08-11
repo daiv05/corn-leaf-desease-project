@@ -19,14 +19,15 @@
 
 - **Datos:** `clean/<clase>/{lab,real}/` → `create_splits.py` (valida integridad PIL, deduplica por SHA-256 con escaneo `sorted()` - determinista entre máquinas -, estratifica por `label+environment`) → `outputs/splits/seed_42/` (9 clases) o `outputs/splits/seed_42_baseline/` (`--baseline`, subset de `config/dataset.yaml -> baseline:`).
 - **Baselines (funcional, PyTorch):** `CornDataset` → `WeightedRandomSampler` → `DataLoader` → `MODEL_REGISTRY.build(<efficientnet_b0|efficientnet_lite0|mobilenet_v3_large|fastvit_t8|ghostnetv2_100|shufflenet_v2_x1_0>)` vía `train_baselines.py`. Pese al nombre, no es un pipeline sklearn - es DL completo, pensado para comparar arquitecturas rápido y barato. Cada run también escribe `predictions.csv` (predicción + confianza por imagen de test), usado por los subcomandos `fidelity`/`errors` de `scripts/pipeline/explain.py` para el análisis de errores.
-- **Principal (`train.py`):** comparte toda la infraestructura de datos/modelos con baselines. Entrena una arquitectura (default `shufflenet_v2_x1_0`) sobre el dataset completo (`outputs/splits/seed_42`, 31 623 imágenes) con pérdida ponderada (`sqrt_inverse`) + label smoothing, scheduler cosine con warmup, early stopping y gradient clipping. El `WeightedRandomSampler` va **desactivado**: con desbalance de 32.9x, sampler + pérdida ponderada sobre-compensaría el mismo desbalance por dos vías, y augmenta solo las clases minoritarias. Además de las métricas estándar, escribe `test_calibration.json` (incluye `brier_binary_hit`, un Brier **binario** de acierto - el multiclase no es calculable porque `predictions.csv` guarda `pred_prob` escalar), `test_by_environment.csv` (formato largo: fila agregada `class == "__all__"` con accuracy/macro-F1, más una fila por clase con su `f1` y su `n`) y `test_grouped_metrics.json`. CLAHE es opt-in vía `--clahe` (CLI) / `CLAHE=1` (Makefile). Su explicabilidad incluye SHAP (subcomandos `compare`/`global`), exclusivo de este pipeline.
+- **Principal (`train.py`):** comparte toda la infraestructura de datos/modelos con baselines. Entrena una arquitectura (default `shufflenet_v2_x1_0`) sobre el dataset completo (`outputs/splits/seed_42`, 33 438 imágenes tras la ampliación de agosto 2026; 31 623 antes) con pérdida ponderada (`sqrt_inverse`) + label smoothing, scheduler cosine con warmup, early stopping y gradient clipping. El `WeightedRandomSampler` va **desactivado**: con el desbalance del dataset (32.9x en la primera etapa, 14.1x tras la ampliación), sampler + pérdida ponderada sobre-compensaría el mismo desbalance por dos vías, y augmenta solo las clases minoritarias. Además de las métricas estándar, escribe `test_calibration.json` (incluye `brier_binary_hit`, un Brier **binario** de acierto - el multiclase no es calculable porque `predictions.csv` guarda `pred_prob` escalar), `test_by_environment.csv` (formato largo: fila agregada `class == "__all__"` con accuracy/macro-F1, más una fila por clase con su `f1` y su `n`) y `test_grouped_metrics.json`. CLAHE es opt-in vía `--clahe` (CLI) / `CLAHE=1` (Makefile). Su explicabilidad incluye SHAP (subcomandos `compare`/`global`), exclusivo de este pipeline.
 - **Explicabilidad (post-hoc, no acoplada al entrenamiento):** `scripts/pipeline/explain.py` unifica cinco subcomandos - `visual` (LIME + Grad-CAM por imagen), `fidelity` (agregado por clase), `errors` (dirigido a `label != pred_label`), `compare` (LIME | SHAP | Grad-CAM + acuerdo) y `global` (perfil global por clase con SHAP) -, más `scripts/checks/lime_stability.py` (auditoría manual de estabilidad de LIME). `compare` y `global` son exclusivos del pipeline principal. Ver sección "Explicabilidad" más abajo.
 
 ## Clases del dataset
 
-Definidas en `config/dataset.yaml -> dataset.classes` (orden canónico para `class_to_idx`). Ratios de desbalance vs. `healthy`:
-`common_rust` (3.9x), `gray_leaf_spot` (7.9x), `nitrogen_deficiency` (16.8x), `phosphorus_deficiency` (14.3x), `potassium_deficiency` (32.9x).
+Definidas en `config/dataset.yaml -> dataset.classes` (orden canónico para `class_to_idx`). Ratios de desbalance vs. `healthy` (corpus actual, tras la ampliación de agosto 2026):
+`common_rust` (3.9x), `gray_leaf_spot` (4.5x), `phosphorus_deficiency` (9.3x), `nitrogen_deficiency` (10.3x), `potassium_deficiency` (14.1x).
 El pipeline extendido de augmentación / el `WeightedRandomSampler` se activan con umbral estricto `max_count/count > 4.0`, así que sobre el dataset completo califican `gray_leaf_spot`, `nitrogen_deficiency`, `phosphorus_deficiency` y `potassium_deficiency` (no `common_rust`, que queda en 3.9x).
+Los ratios previos a la ampliación eran 7.9x / 14.3x / 16.8x / 32.9x respectivamente: **la selección de clases minoritarias no cambió**, solo su magnitud. Ojo con `gray_leaf_spot`: con 4.5x quedó cerca del umbral, y reforzarlo más lo sacaría del grupo, cambiando el comportamiento del entrenamiento.
 El perfil `baseline` (`config/dataset.yaml -> baseline:`) usa las 9 clases con un tope de 1500 img/clase (`max_images_per_class`).
 
 ## Explicabilidad
@@ -38,9 +39,25 @@ Post-hoc, no acoplada al entrenamiento: `scripts/pipeline/explain.py` (subcomand
 
 ## Dataset: hosting y descarga
 
-`clean/` (~25k imágenes) vive en Hugging Face Datasets Hub (fuente primaria) con Google Drive de respaldo;
+`clean/` (~33k imágenes, ~19 GB) vive en Hugging Face Datasets Hub (fuente primaria) con Google Drive de respaldo;
 `download_dataset.py --source auto` resuelve cuál usar. `scripts/download_datasets.sh` es un flujo distinto:
 ingesta de fuentes crudas nuevas (Kaggle/Mendeley/Roboflow) hacia `raw/`, no toca `clean/`.
+
+En HF el dataset **no** se publica como archivos sueltos sino en shards `clean-<NNNNN>.tar` de ~800 MB
+que contienen el árbol `<clase>/<entorno>/<archivo>`: 33k blobs individuales implicarían 33k requests
+HTTP por descarga, prohibitivo sobre el Volume remoto de Modal. `download_dataset.py` los extrae y borra
+tras bajarlos, reconstruyendo `clean/<clase>/{lab,real}/` — el resto del pipeline no se entera del formato.
+Se acompañan de metadata ligera (`metadata.csv` con `file_name`/`label`/`environment`, `dataset_infos.json`)
+para que HF reconozca el repo como dataset de clasificación de imágenes; se excluye al descargar. No se
+suben Parquet con imágenes embebidas: duplicarían el tamaño del repo a cambio del Dataset Viewer.
+Subida: `make upload-dataset STAGE_DIR=<dir con ~19 GB libres>` (`DRY_RUN=1` para ver el plan de shards).
+
+Para propagar una actualización a Modal: `make modal-seed FORCE=1` y luego `make modal-splits`.
+`FORCE=1` vacía `/data/clean` antes de descargar - sin eso `seed_dataset` es un no-op (el Volume
+ya tiene contenido), y forzar solo la descarga tampoco basta: los shards se extraen sobre el árbol
+existente y `snapshot_download` no borra lo que desapareció del repo, así que un archivo renombrado
+aguas arriba sobreviviría con sus dos nombres. Los splits del Volume `corn-outputs` quedan obsoletos
+tras cambiar el dataset y hay que regenerarlos.
 
 
 ## Comandos frecuentes
@@ -54,6 +71,7 @@ lista todo agrupado.
 ```bash
 make install                          # pip install -e ".[dev,analysis,xai,cloud]"
 make download-dataset                 # clean/ (HF Hub, fallback Google Drive)
+make upload-dataset STAGE_DIR=<dir>   # empaqueta clean/ en shards .tar y sube a HF [DRY_RUN=1]
 make splits / make splits-baseline    # regenera splits CSV
 make train-baselines [MODELS=<nombre> NO_CAP=1|MAX_PER_CLASS=<n>]
 make train-main [MAIN_MODELS=<nombre> MAIN_EPOCHS=<n> CLAHE=1 CLASS_WEIGHTS=<estrategia>]  # alias: make train

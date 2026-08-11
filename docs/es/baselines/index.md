@@ -20,6 +20,10 @@ Los baselines se entrenan sobre el **perfil `baseline`** de la configuración de
 Se conservan completas las clases minoritarias (potasio 266, nitrógeno 523, fósforo 612) y
 limita solo las mayoritarias (healthy, tizones, gusano cogollero). El cap es configurable para permitir experimentar con diferentes tamaños de dataset, pero el valor por defecto es 1 500 imágenes por clase.
 
+::: warning Corridas de la primera etapa
+Las cifras y métricas de esta sección corresponden a corridas hechas sobre el corpus de **31 622 imágenes**, previo a la ampliación de agosto 2026, y se conservan tal cual como registro de esos experimentos. Sobre el corpus actual (33 438) las minoritarias serían potasio 621, nitrógeno 846 y fósforo 938 - las tres siguen por debajo del tope de 1 500, así que **seguirían quedando íntegras**, pero el total del split baseline y las métricas cambiarían al regenerarlo con `make splits-baseline`.
+:::
+
 ## Modelos seleccionados
 
 A continuación se describe cada uno de los tres modelos a evaluar: qué los distingue, por qué se eligieron y cómo se comportan en este dataset. El orden va de menor a mayor tamaño, empezando por el más ligero del grupo.

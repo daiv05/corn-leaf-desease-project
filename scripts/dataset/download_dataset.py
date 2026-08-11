@@ -15,8 +15,14 @@ logger = logging.getLogger(__name__)
 
 def _clean_dir_has_content(clean_dir: Path) -> bool:
     """True solo si existe al menos un directorio de clase del YAML con archivos
-    (así una descarga interrumpida no bloquea el reintento automático)."""
+    (así una descarga interrumpida no bloquea el reintento automático).
+
+    Un .tar pendiente cuenta como descarga incompleta: el proceso se cortó entre bajar los
+    shards y extraerlos, dejando el árbol a medias. El reintento es idempotente.
+    """
     if not clean_dir.is_dir():
+        return False
+    if any(clean_dir.rglob("*.tar")):
         return False
     with open(PROJECT_ROOT / "config" / "dataset.yaml") as f:
         classes = yaml.safe_load(f)["dataset"]["classes"]
@@ -39,12 +45,19 @@ def _download_from_hf(repo_id: str, clean_dir: Path, token: str | None) -> None:
 
     logger.info(f"Descargando desde Hugging Face Datasets Hub: {repo_id}")
     clean_dir.mkdir(parents=True, exist_ok=True)
+    # La metadata solo existe para que HF reconozca el repo como dataset de imágenes; el
+    # pipeline saca label/environment del árbol extraído, así que no se descarga.
     snapshot_download(
         repo_id=repo_id,
         repo_type="dataset",
         local_dir=str(clean_dir),
         token=token,
-        ignore_patterns=[".gitattributes", "README.md"],
+        ignore_patterns=[
+            ".gitattributes",
+            "README.md",
+            "metadata.csv",
+            "dataset_infos.json",
+        ],
     )
     _extract_and_remove_tars(clean_dir)
     # Elimina los metadatos de descarga que snapshot_download deja en clean/.cache/

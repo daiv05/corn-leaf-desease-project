@@ -44,6 +44,12 @@ El dataset completo que se tiene a la fecha está lejos de ser uniforme, algunas
 | northern_corn_leaf_blight | 4774 | 1.3x |
 | healthy | 6118 | 1.0x |
 
+::: warning Cifras de la primera etapa (31 622 imágenes)
+Esta tabla corresponde al split generado **antes** de la ampliación de agosto 2026, que es el que se usó en las corridas documentadas en esta sección. Sobre el corpus actual (33 438 imágenes) los ratios bajaron a `potassium_deficiency` **14.1x**, `nitrogen_deficiency` **10.3x**, `phosphorus_deficiency` **9.3x** y `gray_leaf_spot` **4.5x**.
+
+**La conclusión operativa no cambia:** son exactamente las mismas cuatro clases las que cruzan el umbral de 4x, y `common_rust` (3.9x) sigue justo por debajo. Al regenerar los splits con `make splits`, la composición de clases minoritarias es idéntica - solo se atenúa la magnitud de la corrección.
+:::
+
 ### Técnicas discutidas
 
 Antes de llegar a la estrategia actual se evaluaron otras alternativas más simples, y se descartaron por razones concretas:
@@ -93,6 +99,8 @@ El ColorJitter es conservador (sin saturación ni hue) porque las deficiencias n
 ### Pipeline extendido de augmentación para clases minoritarias
 
 Sobre el dataset completo (train, con `healthy` = 6 118 como techo de referencia), las clases que cruzan el umbral de 4x son cuatro: `potassium_deficiency` (32.9x), `nitrogen_deficiency` (16.8x), `phosphorus_deficiency` (14.3x) y `gray_leaf_spot` (7.9x). `common_rust` (3.9x) queda justo por debajo y recibe el pipeline estándar. A esas cuatro clases se les aplica en caliente el pipeline extendido:
+
+> Ratios de la primera etapa; tras la ampliación de agosto 2026 son 14.1x / 10.3x / 9.3x / 4.5x respectivamente. **Las cuatro clases seleccionadas siguen siendo las mismas**, así que este pipeline no cambia. Conviene vigilar `gray_leaf_spot`: con 4.5x quedó cerca del umbral, y un refuerzo adicional lo sacaría de este grupo.
 
 ```
 RandomResizedCrop(224x224, scale=(0.7, 1.0))   <--- recortes aleatorios

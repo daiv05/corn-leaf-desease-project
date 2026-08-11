@@ -8,6 +8,7 @@ get_output_root() resuelvan a los Volumes montados.
 
 Uso:
     modal run scripts/modal/train.py::seed_dataset            # 1 vez: dataset -> Volume
+    modal run scripts/modal/train.py::seed_dataset --force    # actualiza (vacía y re-descarga)
     modal run scripts/modal/train.py --models "efficientnet_b0" --epochs 30
     modal run scripts/modal/train.py::clean_outputs            # vacía el Volume corn-outputs
 Requiere: `pip install -e ".[cloud]"`, `modal setup`, y el secret:
@@ -21,7 +22,14 @@ from pathlib import Path
 
 import modal
 
-from scripts.modal._common import DEFAULT_MODELS, REPO_ANCHOR, dataset_vol, image, outputs_vol
+from scripts.modal._common import (
+    DATASET_MOUNT,
+    DEFAULT_MODELS,
+    REPO_ANCHOR,
+    dataset_vol,
+    image,
+    outputs_vol,
+)
 
 app = modal.App("corn-leaf-baselines", image=image)
 
@@ -32,14 +40,26 @@ app = modal.App("corn-leaf-baselines", image=image)
     secrets=[modal.Secret.from_name("hf")],
     timeout=3600,
 )
-def seed_dataset() -> None:
+def seed_dataset(force: bool = False) -> None:
     """Descarga el dataset limpio al Volume corn-clean. Idempotente: download_dataset.py
-    salta si /data/clean ya tiene contenido."""
-    subprocess.run(
-        [sys.executable, "scripts/dataset/download_dataset.py"],
-        check=True,
-        cwd=REPO_ANCHOR,
-    )
+    salta si /data/clean ya tiene contenido.
+
+    `force` borra /data/clean antes de descargar. Es necesario para *actualizar*: los shards
+    se extraen sobre el árbol existente y `snapshot_download` no elimina lo que ya no está en
+    el repo, así que un archivo renombrado aguas arriba sobreviviría con sus dos nombres.
+
+    @param {bool} force Vacía el Volume y vuelve a descargar. Destructivo.
+    """
+    clean_dir = Path(DATASET_MOUNT) / "clean"
+    if force and clean_dir.exists():
+        print(f"--force: eliminando {clean_dir} antes de re-descargar...", flush=True)
+        shutil.rmtree(clean_dir, ignore_errors=True)
+
+    command = [sys.executable, "scripts/dataset/download_dataset.py"]
+    if force:
+        command.append("--force")
+
+    subprocess.run(command, check=True, cwd=REPO_ANCHOR)
     dataset_vol.commit()
 
 
