@@ -16,6 +16,7 @@ from src.explainability.gradcam import GradCAM, build_gradcam_overlay, get_targe
 from src.explainability.kernel_shap import explain_with_kernel_shap
 from src.explainability.segmentation import build_segments
 from src.explainability.visual_report import (
+    ATTRIBUTION_CMAP,
     build_importance_heatmap,
     build_predict_fn,
     build_validation_transform,
@@ -27,6 +28,13 @@ from src.explainability.visual_report import (
 logger = logging.getLogger(__name__)
 
 _TITLE_COLOR = "#2C3E50"
+
+# `_COLORBAR_GAP` es una columna vacia entre ambas barras: width_ratios no reserva ancho
+# para las etiquetas de tick, que invadian la barra vecina.
+_COLORBAR_WIDTH = 0.05
+_COLORBAR_GAP = 0.10
+_COLORBAR_WSPACE = 0.35
+_COLORBAR_EXTRA_WIDTH = 1.6
 
 
 def render_comparison(
@@ -253,8 +261,16 @@ def _save_figure(
     if gradcam_panel is not None:
         panels.append((gradcam_panel, "Grad-CAM", None))
 
-    fig = plt.figure(figsize=(5 * len(panels), 6), facecolor="white")
-    grid = gridspec.GridSpec(1, len(panels) + 2, width_ratios=[1] * len(panels) + [0.06, 0.06])
+    # Las dos barras van separadas por una columna vacia: `width_ratios` solo reserva el
+    # ancho de la barra, no el de sus etiquetas de tick, que se dibujan a la derecha e
+    # invadian la barra vecina cuando ambas celdas eran adyacentes.
+    fig = plt.figure(figsize=(5 * len(panels) + _COLORBAR_EXTRA_WIDTH, 6), facecolor="white")
+    grid = gridspec.GridSpec(
+        1,
+        len(panels) + 3,
+        width_ratios=[1] * len(panels) + [_COLORBAR_WIDTH, _COLORBAR_GAP, _COLORBAR_WIDTH],
+        wspace=_COLORBAR_WSPACE,
+    )
 
     for position, (panel, title, _) in enumerate(panels):
         axis = fig.add_subplot(grid[0, position])
@@ -262,9 +278,13 @@ def _save_figure(
         axis.set_title(title, fontsize=13, fontweight="bold", color=_TITLE_COLOR, pad=12)
         axis.axis("off")
 
-    for offset, (norm, label) in enumerate(((lime_norm, "LIME"), (shap_norm, "SHAP"))):
-        axis = fig.add_subplot(grid[0, len(panels) + offset])
-        fig.colorbar(cm.ScalarMappable(norm=norm, cmap="RdYlGn"), cax=axis, label=label)
+    colorbars = (
+        (len(panels), lime_norm, "LIME (peso local)"),
+        (len(panels) + 2, shap_norm, "SHAP (valor de Shapley)"),
+    )
+    for column, norm, label in colorbars:
+        axis = fig.add_subplot(grid[0, column])
+        fig.colorbar(cm.ScalarMappable(norm=norm, cmap=ATTRIBUTION_CMAP), cax=axis, label=label)
 
     fig.suptitle(
         f"Diagnostico: {predicted_label} - Confianza: {predicted_prob * 100:.1f}%",

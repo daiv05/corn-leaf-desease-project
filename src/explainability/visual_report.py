@@ -25,6 +25,10 @@ _IMAGENET_STD = [0.229, 0.224, 0.225]
 _HIGHLIGHT_COLOR = (0.2, 0.8, 0.3)
 _DIM_FACTOR = 0.45
 
+# Divergente para atribuciones con signo (LIME y SHAP). No RdYlGn: el verde ya significa
+# "tejido sano" en la imagen, y rojo-verde colapsa en daltonismo.
+ATTRIBUTION_CMAP = "RdBu_r"
+
 # Nombres legibles en español para el diagnóstico. Cualquier clase no listada
 # cae al fallback de _humanize_class_name (title-case con espacios).
 _DISPLAY_NAMES: dict[str, str] = {
@@ -147,7 +151,7 @@ def build_importance_heatmap(
 ) -> tuple[np.ndarray, plt.Normalize]:
     """
     Mapa de importancia continuo: cada superpíxel toma el peso LIME que le asignó
-    la regresión local, coloreado con RdYlGn y superpuesto sobre la imagen original.
+    la regresión local, coloreado con `ATTRIBUTION_CMAP` y superpuesto sobre la original.
     """
     weight_map = np.zeros(segments.shape, dtype=float)
     for segment_id, weight in local_exp:
@@ -158,7 +162,7 @@ def build_importance_heatmap(
         max_abs_weight = 1.0
     norm = plt.Normalize(vmin=-max_abs_weight, vmax=max_abs_weight)
 
-    heatmap_rgba = colormaps["RdYlGn"](norm(weight_map))
+    heatmap_rgba = colormaps[ATTRIBUTION_CMAP](norm(weight_map))
     overlay = image_rgb01 * 0.35 + heatmap_rgba[..., :3] * 0.65
     return np.clip(overlay, 0, 1), norm
 
@@ -379,7 +383,7 @@ def _save_figure(
         ax_gradcam.axis("off")
 
     ax_colorbar = fig.add_subplot(grid[0, n_image_panels])
-    mappable = cm.ScalarMappable(norm=heatmap_norm, cmap="RdYlGn")
+    mappable = cm.ScalarMappable(norm=heatmap_norm, cmap=ATTRIBUTION_CMAP)
     fig.colorbar(mappable, cax=ax_colorbar, label="Importancia")
 
     fig.suptitle(

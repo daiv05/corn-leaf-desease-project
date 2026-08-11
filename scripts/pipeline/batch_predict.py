@@ -94,9 +94,11 @@ def main() -> None:
     predictions_csv = output_dir / "predictions.csv"
 
     top_k = min(args.top_k, len(idx_to_class))
-    fieldnames = ["image", "predicted_label", "predicted_prob"] + [
-        f"top{i + 1}_label" for i in range(top_k)
-    ] + [f"top{i + 1}_prob" for i in range(top_k)]
+    fieldnames = (
+        ["image", "predicted_label", "predicted_prob"]
+        + [f"top{i + 1}_label" for i in range(top_k)]
+        + [f"top{i + 1}_prob" for i in range(top_k)]
+    )
 
     logger.info(f"Modelo: {args.model} | Checkpoint: {checkpoint_path}")
     logger.info(f"Imágenes a procesar: {len(image_paths)}")
