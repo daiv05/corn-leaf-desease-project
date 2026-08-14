@@ -77,6 +77,10 @@ Esto corre `pip install -e ".[dev,analysis,xai,cloud]"` dentro del venv (instala
   exploración visual)
 - `xai`: lime, shap, scikit-image, matplotlib (necesario para `make explain-visual`/`fidelity`/`errors`/`compare`/`global`)
 - `cloud`: huggingface_hub, gdown (necesario para descargar/subir el dataset)
+- `export`: onnx, onnxruntime (necesario para `make export-main`/`train --export`; no incluido
+  en `make install` por defecto - instalar con `pip install -e ".[export]"`). TFLite requiere
+  ademas `ai-edge-torch`, que solo soporta Linux - instalar aparte con
+  `pip install ai-edge-torch` en ese entorno (no disponible en Windows/macOS).
 
 Si solo necesitas descargar el dataset sin las herramientas de desarrollo/análisis:
 

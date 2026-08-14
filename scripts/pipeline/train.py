@@ -98,6 +98,14 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--no-pretrained", action="store_true", dest="no_pretrained")
     parser.add_argument("--num-workers", type=int, default=4, dest="num_workers")
+    parser.add_argument(
+        "--export",
+        default=None,
+        dest="export_formats",
+        metavar="FORMATOS",
+        help="Formatos a exportar tras entrenar, CSV (ej: 'onnx,tflite'). "
+        "Vacio/omitido no exporta. Requiere el extra 'export': pip install -e '.[export]'",
+    )
     parser.add_argument("--config", default=str(PROJECT_ROOT / "config" / "dataset.yaml"))
     return parser.parse_args()
 
@@ -286,6 +294,41 @@ def main() -> None:
         )
         update_latest_pointer(output_dir, model_name, run_id)
         logger.info("[%s] Test macro_f1=%.4f", model_name, test_metrics["macro_f1"])
+
+        if args.export_formats:
+            from src.export.common import (
+                export_model,
+                parse_export_formats,
+                write_export_summary,
+            )
+
+            formats = parse_export_formats(args.export_formats)
+            try:
+                report = export_model(
+                    model=model,
+                    run_dir=run_dir,
+                    model_name=model_name,
+                    class_to_idx=class_to_idx,
+                    image_size=target_size,
+                    formats=formats,
+                    test_loader=test_loader,
+                    device=device,
+                )
+                write_export_summary(run_dir, report)
+                if any(
+                    not f.succeeded or (f.parity and not f.parity.passed)
+                    for f in report.formats
+                ):
+                    logger.warning(
+                        "[%s] Exportacion con problemas, ver %s/export/export_summary.json",
+                        model_name,
+                        run_dir,
+                    )
+            except Exception:
+                logger.exception(
+                    "[%s] Exportacion fallo; el entrenamiento SI se completo correctamente.",
+                    model_name,
+                )
 
 
 if __name__ == "__main__":

@@ -1,0 +1,317 @@
+from __future__ import annotations
+
+import json
+import logging
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+
+import torch
+from torch.utils.data import DataLoader
+
+from src.export.parity import ParityResult, validate_onnx_parity, validate_tflite_parity
+from src.models import build_model
+
+logger = logging.getLogger(__name__)
+
+SUPPORTED_FORMATS = ("onnx", "tflite")
+
+_EXPORT_MODULE = {"onnx": "src.export.onnx_export", "tflite": "src.export.tflite_export"}
+_EXPORT_FUNCTION = {"onnx": "export_to_onnx", "tflite": "export_to_tflite"}
+_VALIDATE_PARITY = {"onnx": validate_onnx_parity, "tflite": validate_tflite_parity}
+
+
+class ExportDependencyError(RuntimeError):
+    """Falta una dependencia opcional (onnxruntime / ai-edge-torch) para exportar o validar."""
+
+
+@dataclass
+class ExportFormatResult:
+    format: str
+    output_path: Path | None
+    succeeded: bool
+    parity: ParityResult | None = None
+    error: str | None = None
+
+
+@dataclass
+class ExportReport:
+    run_dir: Path
+    model_name: str
+    formats: list[ExportFormatResult] = field(default_factory=list)
+    exported_at: str = field(default_factory=lambda: datetime.now().isoformat())
+    library_versions: dict[str, str] = field(default_factory=dict)
+
+
+def parse_export_formats(raw: str | list[str] | None) -> list[str]:
+    """
+    Parsea una lista de formatos de exportación separados por coma.
+
+    @param {str|list[str]|None} raw Formatos como CSV ("onnx,tflite") o lista. None/'' -> [].
+    @returns {list[str]} Formatos válidos, sin duplicados, orden de aparición.
+    @throws {SystemExit} Si algún formato no está en SUPPORTED_FORMATS.
+    """
+    if not raw:
+        return []
+    items = raw.split(",") if isinstance(raw, str) else raw
+    formats = [item.strip().lower() for item in items if item.strip()]
+    unknown = [f for f in formats if f not in SUPPORTED_FORMATS]
+    if unknown:
+        raise SystemExit(
+            f"Formato(s) de exportacion desconocidos: {unknown}. "
+            f"Soportados: {list(SUPPORTED_FORMATS)}"
+        )
+    seen: dict[str, None] = {}
+    for f in formats:
+        seen.setdefault(f, None)
+    return list(seen)
+
+
+def _load_state_dict(checkpoint_path: Path, device: torch.device) -> dict[str, torch.Tensor]:
+    checkpoint = torch.load(checkpoint_path, map_location=device)
+    if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
+        checkpoint = checkpoint["model_state_dict"]
+    if not isinstance(checkpoint, dict):
+        raise SystemExit(f"Checkpoint invalido: {checkpoint_path}")
+    return checkpoint
+
+
+def load_checkpoint_for_export(
+    checkpoint_path: Path,
+    model_name: str,
+    class_to_idx: dict[str, int],
+    device: torch.device,
+) -> torch.nn.Module:
+    """
+    Reconstruye un modelo del registry y carga los pesos de un checkpoint, en eval().
+
+    @param {Path} checkpoint_path Ruta al archivo .pth.
+    @param {str} model_name Nombre del modelo registrado en MODEL_REGISTRY.
+    @param {dict[str,int]} class_to_idx Mapeo clase->índice con el que se entrenó.
+    @param {torch.device} device Dispositivo destino del modelo.
+    @returns {torch.nn.Module} Modelo cargado, en modo eval().
+    """
+    if not checkpoint_path.exists():
+        raise SystemExit(f"No existe el checkpoint: {checkpoint_path}")
+    model = build_model(model_name, num_classes=len(class_to_idx), pretrained=False).to(device)
+    model.load_state_dict(_load_state_dict(checkpoint_path, device))
+    model.eval()
+    return model
+
+
+def resolve_export_inputs(
+    run_dir: Path, model_name: str, config_path: Path
+) -> tuple[dict[str, int], dict[int, str], tuple[int, int]]:
+    """
+    Resuelve class_to_idx/idx_to_class/image_size desde summary.json de un run.
+
+    @param {Path} run_dir Directorio del run.
+    @param {str} model_name Nombre del modelo (solo para mensajes de error).
+    @param {Path} config_path Ruta al YAML de configuración (no usado si hay summary.json).
+    @returns {tuple} class_to_idx, idx_to_class, image_size (h, w).
+    @throws {SystemExit} Si no existe summary.json en run_dir.
+    """
+    summary_path = run_dir / "summary.json"
+    if not summary_path.exists():
+        raise SystemExit(
+            f"No existe {summary_path}. La exportacion requiere un run completo "
+            f"con summary.json (modelo '{model_name}')."
+        )
+    summary = json.loads(summary_path.read_text())
+    class_to_idx = {str(name): int(idx) for name, idx in summary["class_to_idx"].items()}
+    idx_to_class = {idx: name for name, idx in class_to_idx.items()}
+    image_size = summary.get("image_size")
+    if not (isinstance(image_size, list) and len(image_size) == 2):
+        raise SystemExit(f"summary.json en {run_dir} no tiene 'image_size' valido.")
+    return class_to_idx, idx_to_class, (int(image_size[0]), int(image_size[1]))
+
+
+def _library_versions(formats: list[str]) -> dict[str, str]:
+    versions = {"torch": torch.__version__}
+    if "onnx" in formats:
+        try:
+            import onnx
+
+            versions["onnx"] = onnx.__version__
+        except ImportError:
+            pass
+        try:
+            import onnxruntime
+
+            versions["onnxruntime"] = onnxruntime.__version__
+        except ImportError:
+            pass
+    if "tflite" in formats:
+        try:
+            import ai_edge_torch
+
+            versions["ai_edge_torch"] = ai_edge_torch.__version__
+        except ImportError:
+            pass
+    return versions
+
+
+def _export_single_format(
+    format_name: str,
+    model: torch.nn.Module,
+    export_dir: Path,
+    image_size: tuple[int, int],
+    device: torch.device,
+    test_loader: DataLoader | None,
+    tolerance: float,
+    parity_sample_size: int,
+    skip_parity: bool,
+) -> ExportFormatResult:
+    output_path = export_dir / f"model.{format_name}"
+    try:
+        import importlib
+
+        export_module = importlib.import_module(_EXPORT_MODULE[format_name])
+        export_fn = getattr(export_module, _EXPORT_FUNCTION[format_name])
+        export_fn(model, output_path, image_size, device)
+    except ExportDependencyError as e:
+        logger.error("Exportacion a %s fallo: %s", format_name, e)
+        return ExportFormatResult(
+            format=format_name, output_path=None, succeeded=False, error=str(e)
+        )
+    except Exception as e:
+        logger.exception("Exportacion a %s fallo con un error inesperado.", format_name)
+        return ExportFormatResult(
+            format=format_name, output_path=None, succeeded=False, error=str(e)
+        )
+
+    if skip_parity or test_loader is None:
+        reason = "skip_parity=True" if skip_parity else "no se proveyo test_loader"
+        logger.warning(
+            "Paridad numerica omitida para %s (%s). No exportar a produccion sin validar.",
+            format_name,
+            reason,
+        )
+        return ExportFormatResult(format=format_name, output_path=output_path, succeeded=True)
+
+    try:
+        parity = _VALIDATE_PARITY[format_name](
+            model, output_path, test_loader, device, parity_sample_size, tolerance
+        )
+    except ExportDependencyError as e:
+        logger.error("Validacion de paridad %s fallo: %s", format_name, e)
+        return ExportFormatResult(
+            format=format_name, output_path=output_path, succeeded=True, error=str(e)
+        )
+
+    if not parity.passed:
+        logger.error(
+            "Paridad %s NO paso: max_abs_prob_diff=%.6f (tolerancia=%.6f), "
+            "agreement_rate=%.4f",
+            format_name,
+            parity.max_abs_prob_diff,
+            parity.tolerance,
+            parity.agreement_rate,
+        )
+
+    return ExportFormatResult(
+        format=format_name, output_path=output_path, succeeded=True, parity=parity
+    )
+
+
+def export_model(
+    model: torch.nn.Module,
+    run_dir: Path,
+    model_name: str,
+    class_to_idx: dict[str, int],
+    image_size: tuple[int, int],
+    formats: list[str],
+    *,
+    test_loader: DataLoader | None = None,
+    device: torch.device | None = None,
+    tolerance: float = 1e-3,
+    parity_sample_size: int = 30,
+    skip_parity: bool = False,
+) -> ExportReport:
+    """
+    Exporta `model` a cada formato de `formats` bajo <run_dir>/export/ y valida paridad.
+
+    @param {torch.nn.Module} model Modelo ya construido (se fuerza a eval() internamente).
+    @param {Path} run_dir Directorio del run de entrenamiento.
+    @param {str} model_name Nombre del modelo (para el reporte).
+    @param {dict[str,int]} class_to_idx Mapeo clase->índice del run.
+    @param {tuple[int,int]} image_size Alto y ancho de entrada (h, w).
+    @param {list[str]} formats Formatos a exportar ("onnx", "tflite").
+    @param {DataLoader|None} test_loader Loader de test para validar paridad; None la omite.
+    @param {torch.device|None} device Dispositivo; por defecto el de `model`.
+    @param {float} tolerance Tolerancia máxima de diferencia absoluta de probabilidad.
+    @param {int} parity_sample_size Número de muestras a usar en la validación de paridad.
+    @param {bool} skip_parity Omite la validación de paridad aunque haya test_loader.
+    @returns {ExportReport} Resultado de la exportación, un ExportFormatResult por formato.
+    """
+    model.eval()
+    resolved_device = device or next(model.parameters()).device
+    export_dir = run_dir / "export"
+    export_dir.mkdir(parents=True, exist_ok=True)
+
+    results = [
+        _export_single_format(
+            fmt,
+            model,
+            export_dir,
+            image_size,
+            resolved_device,
+            test_loader,
+            tolerance,
+            parity_sample_size,
+            skip_parity,
+        )
+        for fmt in formats
+    ]
+
+    return ExportReport(
+        run_dir=run_dir,
+        model_name=model_name,
+        formats=results,
+        library_versions=_library_versions(formats),
+    )
+
+
+def write_export_summary(run_dir: Path, report: ExportReport) -> None:
+    """
+    Persiste <run_dir>/export/export_summary.json.
+
+    @param {Path} run_dir Directorio del run.
+    @param {ExportReport} report Reporte de exportación a serializar.
+    """
+    export_dir = run_dir / "export"
+    export_dir.mkdir(parents=True, exist_ok=True)
+
+    payload = {
+        "run_id": run_dir.name,
+        "model": report.model_name,
+        "exported_at": report.exported_at,
+        "library_versions": report.library_versions,
+        "formats": [
+            {
+                "format": f.format,
+                "output_path": (
+                    str(f.output_path.relative_to(run_dir)) if f.output_path else None
+                ),
+                "succeeded": f.succeeded,
+                "error": f.error,
+                "parity": (
+                    None
+                    if f.parity is None
+                    else {
+                        "n_samples": f.parity.n_samples,
+                        "torch_top1_accuracy": f.parity.torch_top1_accuracy,
+                        "exported_top1_accuracy": f.parity.exported_top1_accuracy,
+                        "agreement_rate": f.parity.agreement_rate,
+                        "max_abs_prob_diff": f.parity.max_abs_prob_diff,
+                        "mean_abs_prob_diff": f.parity.mean_abs_prob_diff,
+                        "tolerance": f.parity.tolerance,
+                        "passed": f.parity.passed,
+                        "warnings": f.parity.warnings,
+                    }
+                ),
+            }
+            for f in report.formats
+        ],
+    }
+    (export_dir / "export_summary.json").write_text(json.dumps(payload, indent=2))

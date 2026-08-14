@@ -49,6 +49,12 @@ NUM_WORKERS ?=
 NO_PRETRAINED ?=
 LIME ?=
 
+# Exportacion (ONNX/TFLite). Vacia por defecto: opt-in via EXPORT_FORMATS=onnx[,tflite].
+EXPORT_FORMATS ?=
+NO_PARITY ?=
+TOLERANCE ?=
+PARITY_SAMPLE_SIZE ?=
+
 # Explicabilidad e inferencia
 NUM_SAMPLES ?=
 SAMPLE_SIZE ?=
@@ -78,7 +84,8 @@ help:
 	@echo "  explain-visual-baselines explain-fidelity-baselines explain-errors-baselines"
 	@echo ""
 	@echo "Local - pipeline principal (runs en $(MAIN_OUTPUT_DIR), var MAIN_MODELS):"
-	@echo "  train-main (alias: train)"
+	@echo "  train-main (alias: train)   [EXPORT_FORMATS=onnx,tflite para exportar al terminar]"
+	@echo "  export-main   (MODEL=<nombre>, EXPORT_FORMATS=onnx,tflite)"
 	@echo "  explain-visual-main explain-fidelity-main explain-errors-main"
 	@echo "  explain-compare-main explain-global-main   (SHAP: solo pipeline principal)"
 	@echo ""
@@ -92,6 +99,7 @@ help:
 	@echo ""
 	@echo "Modal - pipeline principal (runs en /outputs/main, var MAIN_MODELS):"
 	@echo "  modal-train-main (alias: modal-train)"
+	@echo "  modal-export-main   (EXPORT_FORMATS=onnx,tflite)"
 	@echo "  modal-explain-visual-main modal-explain-fidelity-main modal-explain-errors-main"
 	@echo "  modal-explain-compare-main modal-explain-global-main"
 	@echo ""
@@ -160,9 +168,28 @@ train:
 		$(if $(NUM_WORKERS),--num-workers $(NUM_WORKERS),) \
 		$(if $(CLASS_WEIGHTS),--class-weights $(CLASS_WEIGHTS),) \
 		$(if $(CLAHE),--clahe,) \
-		$(if $(NO_PRETRAINED),--no-pretrained,)
+		$(if $(NO_PRETRAINED),--no-pretrained,) \
+		$(if $(EXPORT_FORMATS),--export $(EXPORT_FORMATS),)
 
 train-main: train
+
+# ==============================================================================
+# Local - exportacion (ONNX/TFLite)
+# ==============================================================================
+# Convierte un checkpoint ya entrenado del pipeline principal. Espeja el flag
+# --export de train.py; usa EXPORT_FORMATS=onnx[,tflite] (default: onnx).
+
+.PHONY: export-main
+
+export-main:
+	$(PYTHON) scripts/pipeline/export.py --model $(MODEL) \
+		$(if $(RUN),--run $(RUN),) $(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),) \
+		--output-dir $(MAIN_OUTPUT_DIR) \
+		--formats $(if $(EXPORT_FORMATS),$(EXPORT_FORMATS),onnx) \
+		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
+		$(if $(TOLERANCE),--tolerance $(TOLERANCE),) \
+		$(if $(PARITY_SAMPLE_SIZE),--parity-sample-size $(PARITY_SAMPLE_SIZE),) \
+		$(if $(NO_PARITY),--no-parity,)
 
 # ==============================================================================
 # Local - explicabilidad (post-hoc)
@@ -299,6 +326,21 @@ modal-train:
 		$(if $(NO_PRETRAINED),--no-pretrained,)
 
 modal-train-main: modal-train
+
+# ==============================================================================
+# Modal - exportacion (ONNX/TFLite)
+# ==============================================================================
+
+.PHONY: modal-export-main
+
+modal-export-main:
+	$(MODAL) run scripts/modal/export.py::export_main --models "$(MAIN_MODELS)" \
+		$(if $(RUN),--run $(RUN),) $(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),) \
+		--formats "$(if $(EXPORT_FORMATS),$(EXPORT_FORMATS),onnx)" \
+		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
+		$(if $(TOLERANCE),--tolerance $(TOLERANCE),) \
+		$(if $(PARITY_SAMPLE_SIZE),--parity-sample-size $(PARITY_SAMPLE_SIZE),) \
+		$(if $(NO_PARITY),--no-parity,)
 
 # ==============================================================================
 # Modal - explicabilidad (post-hoc)

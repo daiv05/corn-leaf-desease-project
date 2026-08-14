@@ -21,6 +21,7 @@
 - **Baselines (funcional, PyTorch):** `CornDataset` → `WeightedRandomSampler` → `DataLoader` → `MODEL_REGISTRY.build(<efficientnet_b0|efficientnet_lite0|mobilenet_v3_large|fastvit_t8|ghostnetv2_100|shufflenet_v2_x1_0>)` vía `train_baselines.py`. Pese al nombre, no es un pipeline sklearn - es DL completo, pensado para comparar arquitecturas rápido y barato. Cada run también escribe `predictions.csv` (predicción + confianza por imagen de test), usado por los subcomandos `fidelity`/`errors` de `scripts/pipeline/explain.py` para el análisis de errores.
 - **Principal (`train.py`):** comparte toda la infraestructura de datos/modelos con baselines. Entrena una arquitectura (default `shufflenet_v2_x1_0`) sobre el dataset completo (`outputs/splits/seed_42`, 33 438 imágenes tras la ampliación de agosto 2026; 31 623 antes) con pérdida ponderada (`sqrt_inverse`) + label smoothing, scheduler cosine con warmup, early stopping y gradient clipping. El `WeightedRandomSampler` va **desactivado**: con el desbalance del dataset (32.9x en la primera etapa, 14.1x tras la ampliación), sampler + pérdida ponderada sobre-compensaría el mismo desbalance por dos vías, y augmenta solo las clases minoritarias. Además de las métricas estándar, escribe `test_calibration.json` (incluye `brier_binary_hit`, un Brier **binario** de acierto - el multiclase no es calculable porque `predictions.csv` guarda `pred_prob` escalar), `test_by_environment.csv` (formato largo: fila agregada `class == "__all__"` con accuracy/macro-F1, más una fila por clase con su `f1` y su `n`) y `test_grouped_metrics.json`. CLAHE es opt-in vía `--clahe` (CLI) / `CLAHE=1` (Makefile). Su explicabilidad incluye SHAP (subcomandos `compare`/`global`), exclusivo de este pipeline.
 - **Explicabilidad (post-hoc, no acoplada al entrenamiento):** `scripts/pipeline/explain.py` unifica cinco subcomandos - `visual` (LIME + Grad-CAM por imagen), `fidelity` (agregado por clase), `errors` (dirigido a `label != pred_label`), `compare` (LIME | SHAP | Grad-CAM + acuerdo) y `global` (perfil global por clase con SHAP) -, más `scripts/checks/lime_stability.py` (auditoría manual de estabilidad de LIME). `compare` y `global` son exclusivos del pipeline principal. Ver sección "Explicabilidad" más abajo.
+- **Exportación (ONNX/TFLite, solo pipeline principal):** `scripts/pipeline/export.py` convierte un checkpoint ya entrenado (`outputs/main/<modelo>/<run_id>/best.pth`) a `export/model.onnx`/`export/model.tflite`, validando paridad numérica contra una muestra del split de test (`ParityResult.passed`, ver `export/export_summary.json`). `train.py --export onnx,tflite` exporta automáticamente al terminar un run (reutiliza el modelo y el `test_loader` ya en memoria, no bloquea el entrenamiento si falla). Lógica compartida en `src/export/` (`export_model()` es el punto de entrada único). TFLite requiere además `ai-edge-torch` (`pip install ai-edge-torch`), que solo soporta Linux - no disponible en Windows/macOS.
 
 ## Clases del dataset
 
@@ -70,6 +71,7 @@ lista todo agrupado.
 
 ```bash
 make install                          # pip install -e ".[dev,analysis,xai,cloud]"
+                                       # + ",export" si necesitas exportar a ONNX/TFLite
 make download-dataset                 # clean/ (HF Hub, fallback Google Drive)
 make upload-dataset STAGE_DIR=<dir>   # empaqueta clean/ en shards .tar y sube a HF [DRY_RUN=1]
 make splits / make splits-baseline    # regenera splits CSV
@@ -86,6 +88,8 @@ make explain-global-main [MAIN_MODELS=<nombre>]    # perfil global por clase con
 make modal-explain-visual-baselines / modal-explain-fidelity-baselines / modal-explain-errors-baselines
 make modal-explain-visual-main / modal-explain-fidelity-main / modal-explain-errors-main
 make modal-explain-compare-main / modal-explain-global-main
+make export-main MODEL=<nombre> [EXPORT_FORMATS=onnx,tflite RUN=<run_id>]  # ONNX/TFLite (solo main)
+make modal-export-main [MAIN_MODELS=<nombre> EXPORT_FORMATS=onnx,tflite]  # export en Modal
 make summary                          # conteo de imágenes por clase/entorno
 make test-loader                      # smoke check del pipeline de carga
 make lint / make fmt                  # ruff check / ruff format

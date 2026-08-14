@@ -25,7 +25,8 @@ image = (
         "torchvision==0.27.1",
         index_url="https://download.pytorch.org/whl/cu126",
     )
-    .pip_install_from_pyproject("pyproject.toml", optional_dependencies=["cloud", "xai"])
+    .pip_install_from_pyproject("pyproject.toml", optional_dependencies=["cloud", "xai", "export"])
+    .pip_install("ai-edge-torch>=0.6,<0.8")  # TFLite: solo Linux, disponible en el contenedor
     .env(
         {
             "DATASET_ROOT": DATASET_MOUNT,
