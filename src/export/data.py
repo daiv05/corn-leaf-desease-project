@@ -23,26 +23,47 @@ logger = logging.getLogger(__name__)
 
 def resolve_test_csv(run_dir: Path, splits_dir: str | None) -> Path:
     """
-    Resuelve la ruta de test.csv: --splits-dir si se pasó, si no el de summary.json.
+    Resuelve la ruta de test.csv, tolerando runs movidos entre Modal y local.
+
+    `summary.json` guarda `splits_dir` como ruta **absoluta** del entorno donde se entrenó.
+    Un run entrenado en Modal lo deja como `/outputs/splits/seed_42`, que no existe al
+    bajarlo con `make modal-pull`. Por eso, si la ruta registrada no existe, se reintenta
+    el mismo nombre de split bajo el `OUTPUT_ROOT` actual antes de rendirse.
+
+    Orden de resolución: `--splits-dir` > `splits_dir` de summary.json > remapeo al
+    OUTPUT_ROOT local.
 
     @param {Path} run_dir Directorio del run.
     @param {str|None} splits_dir Override explícito del directorio de splits.
     @returns {Path} Ruta a test.csv.
-    @throws {SystemExit} Si el archivo no existe.
+    @throws {SystemExit} Si no se encuentra en ninguna de las rutas candidatas.
     """
     if splits_dir:
-        resolved = Path(splits_dir)
+        candidates = [Path(splits_dir)]
     else:
         summary = json.loads((run_dir / "summary.json").read_text())
-        resolved = Path(
-            summary.get("splits_dir", get_output_root() / "splits" / "seed_42")
-        )
-    test_csv = resolved / "test.csv"
-    if not test_csv.exists():
-        raise SystemExit(
-            f"No existe {test_csv}. Pasa --splits-dir con el directorio correcto."
-        )
-    return test_csv
+        default_dir = get_output_root() / "splits" / "seed_42"
+        recorded = Path(summary.get("splits_dir", default_dir))
+        # Mismo nombre de split (seed_42, seed_42_baseline, ...) bajo el OUTPUT_ROOT local.
+        remapped = get_output_root() / "splits" / recorded.name
+        candidates = [recorded] if recorded == remapped else [recorded, remapped]
+
+    for candidate in candidates:
+        test_csv = candidate / "test.csv"
+        if test_csv.exists():
+            if candidate != candidates[0]:
+                logger.warning(
+                    "El splits_dir del run (%s) no existe en esta maquina; usando %s.",
+                    candidates[0],
+                    candidate,
+                )
+            return test_csv
+
+    intentadas = "\n  ".join(str(c / "test.csv") for c in candidates)
+    raise SystemExit(
+        f"No se encontro test.csv. Rutas intentadas:\n  {intentadas}\n"
+        "Pasa --splits-dir con el directorio correcto, o genera los splits con: make splits"
+    )
 
 
 def build_test_loader(
