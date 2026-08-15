@@ -15,14 +15,23 @@ from src.models import build_model
 logger = logging.getLogger(__name__)
 
 SUPPORTED_FORMATS = ("onnx", "tflite")
+SUPPORTED_QUANTIZATIONS = ("int8",)
 
 _EXPORT_MODULE = {"onnx": "src.export.onnx_export", "tflite": "src.export.tflite_export"}
 _EXPORT_FUNCTION = {"onnx": "export_to_onnx", "tflite": "export_to_tflite"}
 _VALIDATE_PARITY = {"onnx": validate_onnx_parity, "tflite": validate_tflite_parity}
 
+# La cuantización cambia los números a propósito, así que exigirle la tolerancia de FP32
+# la reprobaría siempre. Estos son los umbrales por defecto según el modo; el CLI los
+# puede sobrescribir con --tolerance / --min-agreement-rate.
+_PARITY_DEFAULTS = {
+    None: {"tolerance": 1e-3, "min_agreement_rate": 1.0},
+    "int8": {"tolerance": 0.15, "min_agreement_rate": 0.95},
+}
+
 
 class ExportDependencyError(RuntimeError):
-    """Falta una dependencia opcional (onnxruntime / ai-edge-torch) para exportar o validar."""
+    """Falta una dependencia opcional (onnxruntime / litert-torch) para exportar o validar."""
 
 
 @dataclass
@@ -41,6 +50,26 @@ class ExportReport:
     formats: list[ExportFormatResult] = field(default_factory=list)
     exported_at: str = field(default_factory=lambda: datetime.now().isoformat())
     library_versions: dict[str, str] = field(default_factory=dict)
+    quantize: str | None = None
+
+
+def parse_quantize(raw: str | None) -> str | None:
+    """
+    Normaliza el modo de cuantización pedido por CLI.
+
+    @param {str|None} raw "int8", "none"/"" o None.
+    @returns {str|None} El modo válido, o None para FP32.
+    @throws {SystemExit} Si el modo no está soportado.
+    """
+    if not raw or raw.strip().lower() in {"none", "fp32", "float32"}:
+        return None
+    mode = raw.strip().lower()
+    if mode not in SUPPORTED_QUANTIZATIONS:
+        raise SystemExit(
+            f"Cuantizacion desconocida: '{mode}'. "
+            f"Soportadas: {list(SUPPORTED_QUANTIZATIONS)} (o 'none')."
+        )
+    return mode
 
 
 def parse_export_formats(raw: str | list[str] | None) -> list[str]:
@@ -143,12 +172,35 @@ def _library_versions(formats: list[str]) -> dict[str, str]:
             pass
     if "tflite" in formats:
         try:
-            import ai_edge_torch
+            import litert_torch
 
-            versions["ai_edge_torch"] = ai_edge_torch.__version__
+            versions["litert_torch"] = getattr(
+                litert_torch, "__version__", None
+            ) or getattr(litert_torch.version, "__version__", "desconocida")
+        except (ImportError, AttributeError):
+            pass
+        try:
+            import ai_edge_litert
+
+            versions["ai_edge_litert"] = getattr(ai_edge_litert, "__version__", "desconocida")
         except ImportError:
             pass
     return versions
+
+
+def export_artifact_name(format_name: str, quantize: str | None) -> str:
+    """
+    Nombre del archivo exportado: `model.<fmt>` en FP32, `model_<quant>.<fmt>` cuantizado.
+
+    Se separan para que un run pueda tener ambas variantes a la vez y se puedan comparar
+    sin re-exportar.
+
+    @param {str} format_name "onnx" o "tflite".
+    @param {str|None} quantize Modo de cuantización, o None para FP32.
+    @returns {str} Nombre del archivo.
+    """
+    stem = "model" if quantize is None else f"model_{quantize}"
+    return f"{stem}.{format_name}"
 
 
 def _export_single_format(
@@ -161,14 +213,16 @@ def _export_single_format(
     tolerance: float,
     parity_sample_size: int,
     skip_parity: bool,
+    quantize: str | None,
+    min_agreement_rate: float,
 ) -> ExportFormatResult:
-    output_path = export_dir / f"model.{format_name}"
+    output_path = export_dir / export_artifact_name(format_name, quantize)
     try:
         import importlib
 
         export_module = importlib.import_module(_EXPORT_MODULE[format_name])
         export_fn = getattr(export_module, _EXPORT_FUNCTION[format_name])
-        export_fn(model, output_path, image_size, device)
+        export_fn(model, output_path, image_size, device, quantize=quantize)
     except ExportDependencyError as e:
         logger.error("Exportacion a %s fallo: %s", format_name, e)
         return ExportFormatResult(
@@ -191,7 +245,13 @@ def _export_single_format(
 
     try:
         parity = _VALIDATE_PARITY[format_name](
-            model, output_path, test_loader, device, parity_sample_size, tolerance
+            model,
+            output_path,
+            test_loader,
+            device,
+            parity_sample_size,
+            tolerance,
+            min_agreement_rate,
         )
     except ExportDependencyError as e:
         logger.error("Validacion de paridad %s fallo: %s", format_name, e)
@@ -202,11 +262,12 @@ def _export_single_format(
     if not parity.passed:
         logger.error(
             "Paridad %s NO paso: max_abs_prob_diff=%.6f (tolerancia=%.6f), "
-            "agreement_rate=%.4f",
+            "agreement_rate=%.4f (minimo=%.4f)",
             format_name,
             parity.max_abs_prob_diff,
             parity.tolerance,
             parity.agreement_rate,
+            parity.min_agreement_rate,
         )
 
     return ExportFormatResult(
@@ -224,9 +285,11 @@ def export_model(
     *,
     test_loader: DataLoader | None = None,
     device: torch.device | None = None,
-    tolerance: float = 1e-3,
+    tolerance: float | None = None,
     parity_sample_size: int = 30,
     skip_parity: bool = False,
+    quantize: str | None = None,
+    min_agreement_rate: float | None = None,
 ) -> ExportReport:
     """
     Exporta `model` a cada formato de `formats` bajo <run_dir>/export/ y valida paridad.
@@ -239,15 +302,24 @@ def export_model(
     @param {list[str]} formats Formatos a exportar ("onnx", "tflite").
     @param {DataLoader|None} test_loader Loader de test para validar paridad; None la omite.
     @param {torch.device|None} device Dispositivo; por defecto el de `model`.
-    @param {float} tolerance Tolerancia máxima de diferencia absoluta de probabilidad.
+    @param {float|None} tolerance Tolerancia de diferencia de probabilidad; None usa el
+        default del modo de cuantización.
     @param {int} parity_sample_size Número de muestras a usar en la validación de paridad.
     @param {bool} skip_parity Omite la validación de paridad aunque haya test_loader.
+    @param {str|None} quantize "int8" para cuantizar; None exporta en FP32.
+    @param {float|None} min_agreement_rate Acuerdo top-1 mínimo; None usa el default del modo.
     @returns {ExportReport} Resultado de la exportación, un ExportFormatResult por formato.
     """
     model.eval()
     resolved_device = device or next(model.parameters()).device
     export_dir = run_dir / "export"
     export_dir.mkdir(parents=True, exist_ok=True)
+
+    defaults = _PARITY_DEFAULTS[quantize]
+    resolved_tolerance = defaults["tolerance"] if tolerance is None else tolerance
+    resolved_min_agreement = (
+        defaults["min_agreement_rate"] if min_agreement_rate is None else min_agreement_rate
+    )
 
     results = [
         _export_single_format(
@@ -257,9 +329,11 @@ def export_model(
             image_size,
             resolved_device,
             test_loader,
-            tolerance,
+            resolved_tolerance,
             parity_sample_size,
             skip_parity,
+            quantize,
+            resolved_min_agreement,
         )
         for fmt in formats
     ]
@@ -269,15 +343,19 @@ def export_model(
         model_name=model_name,
         formats=results,
         library_versions=_library_versions(formats),
+        quantize=quantize,
     )
 
 
-def write_export_summary(run_dir: Path, report: ExportReport) -> None:
+def write_export_summary(run_dir: Path, report: ExportReport) -> Path:
     """
-    Persiste <run_dir>/export/export_summary.json.
+    Persiste <run_dir>/export/export_summary.json (o ..._<quant>.json si se cuantizó).
+
+    Se separa por modo para que exportar int8 no pise el reporte de la variante FP32.
 
     @param {Path} run_dir Directorio del run.
     @param {ExportReport} report Reporte de exportación a serializar.
+    @returns {Path} Ruta del archivo escrito.
     """
     export_dir = run_dir / "export"
     export_dir.mkdir(parents=True, exist_ok=True)
@@ -286,6 +364,7 @@ def write_export_summary(run_dir: Path, report: ExportReport) -> None:
         "run_id": run_dir.name,
         "model": report.model_name,
         "exported_at": report.exported_at,
+        "quantize": report.quantize,
         "library_versions": report.library_versions,
         "formats": [
             {
@@ -306,6 +385,7 @@ def write_export_summary(run_dir: Path, report: ExportReport) -> None:
                         "max_abs_prob_diff": f.parity.max_abs_prob_diff,
                         "mean_abs_prob_diff": f.parity.mean_abs_prob_diff,
                         "tolerance": f.parity.tolerance,
+                        "min_agreement_rate": f.parity.min_agreement_rate,
                         "passed": f.parity.passed,
                         "warnings": f.parity.warnings,
                     }
@@ -314,4 +394,11 @@ def write_export_summary(run_dir: Path, report: ExportReport) -> None:
             for f in report.formats
         ],
     }
-    (export_dir / "export_summary.json").write_text(json.dumps(payload, indent=2))
+    name = (
+        "export_summary.json"
+        if report.quantize is None
+        else f"export_summary_{report.quantize}.json"
+    )
+    summary_path = export_dir / name
+    summary_path.write_text(json.dumps(payload, indent=2))
+    return summary_path

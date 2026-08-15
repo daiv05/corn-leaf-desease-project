@@ -26,7 +26,10 @@ image = (
         index_url="https://download.pytorch.org/whl/cu126",
     )
     .pip_install_from_pyproject("pyproject.toml", optional_dependencies=["cloud", "xai", "export"])
-    .pip_install("ai-edge-torch>=0.6,<0.8")  # TFLite: solo Linux, disponible en el contenedor
+    # Explicito ademas del extra 'export': alli van con marcador sys_platform == 'linux'
+    # (litert-torch no existe para Windows/macOS) y no queremos depender de como Modal
+    # resuelva ese marcador al construir la imagen. El contenedor siempre es Linux.
+    .pip_install("litert-torch>=0.9,<0.10", "ai-edge-litert>=2.1,<3")
     .env(
         {
             "DATASET_ROOT": DATASET_MOUNT,

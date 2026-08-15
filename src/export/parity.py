@@ -24,6 +24,7 @@ class ParityResult:
     mean_abs_prob_diff: float
     tolerance: float
     passed: bool
+    min_agreement_rate: float = 1.0
     warnings: list[str] = field(default_factory=list)
 
 
@@ -59,6 +60,7 @@ def _build_parity_result(
     exported_probs: np.ndarray,
     labels: np.ndarray,
     tolerance: float,
+    min_agreement_rate: float = 1.0,
 ) -> ParityResult:
     torch_preds = torch_probs.argmax(axis=1)
     exported_preds = exported_probs.argmax(axis=1)
@@ -78,7 +80,7 @@ def _build_parity_result(
             f"n_samples={n_samples} < {_MIN_RELIABLE_SAMPLES}, resultado poco confiable"
         )
 
-    passed = max_abs_prob_diff <= tolerance and agreement_rate == 1.0
+    passed = max_abs_prob_diff <= tolerance and agreement_rate >= min_agreement_rate
 
     return ParityResult(
         format=format_name,
@@ -90,6 +92,7 @@ def _build_parity_result(
         mean_abs_prob_diff=mean_abs_prob_diff,
         tolerance=tolerance,
         passed=passed,
+        min_agreement_rate=min_agreement_rate,
         warnings=warnings,
     )
 
@@ -101,6 +104,7 @@ def validate_onnx_parity(
     device: torch.device,
     sample_size: int = 30,
     tolerance: float = 1e-3,
+    min_agreement_rate: float = 1.0,
 ) -> ParityResult:
     """
     Compara probabilidades del modelo PyTorch contra el modelo ONNX exportado.
@@ -111,6 +115,7 @@ def validate_onnx_parity(
     @param {torch.device} device Dispositivo para correr el modelo PyTorch.
     @param {int} sample_size Número de muestras a comparar.
     @param {float} tolerance Tolerancia máxima de diferencia absoluta de probabilidad.
+    @param {float} min_agreement_rate Acuerdo top-1 mínimo exigido (1.0 = exacto).
     @returns {ParityResult} Resultado de la comparación.
     @throws {ExportDependencyError} Si onnxruntime no está instalado.
     """
@@ -136,7 +141,7 @@ def validate_onnx_parity(
     exported_probs = torch.from_numpy(onnx_logits).softmax(dim=1).numpy()
 
     return _build_parity_result(
-        "onnx", torch_probs, exported_probs, labels.numpy(), tolerance
+        "onnx", torch_probs, exported_probs, labels.numpy(), tolerance, min_agreement_rate
     )
 
 
@@ -147,6 +152,7 @@ def validate_tflite_parity(
     device: torch.device,
     sample_size: int = 30,
     tolerance: float = 1e-3,
+    min_agreement_rate: float = 1.0,
 ) -> ParityResult:
     """
     Compara probabilidades del modelo PyTorch contra el modelo TFLite exportado.
@@ -157,6 +163,7 @@ def validate_tflite_parity(
     @param {torch.device} device Dispositivo para correr el modelo PyTorch.
     @param {int} sample_size Número de muestras a comparar.
     @param {float} tolerance Tolerancia máxima de diferencia absoluta de probabilidad.
+    @param {float} min_agreement_rate Acuerdo top-1 mínimo exigido (1.0 = exacto).
     @returns {ParityResult} Resultado de la comparación.
     @throws {ExportDependencyError} Si no hay un intérprete TFLite disponible.
     """
@@ -200,5 +207,5 @@ def validate_tflite_parity(
     exported_probs = torch.from_numpy(exported_logits).softmax(dim=1).numpy()
 
     return _build_parity_result(
-        "tflite", torch_probs, exported_probs, labels.numpy(), tolerance
+        "tflite", torch_probs, exported_probs, labels.numpy(), tolerance, min_agreement_rate
     )

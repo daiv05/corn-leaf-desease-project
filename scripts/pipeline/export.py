@@ -1,20 +1,27 @@
+"""Exporta checkpoints del pipeline principal a ONNX/TFLite.
+
+Opera sobre uno o varios modelos (`--models`), cada uno resuelto a su run más reciente
+(o el que indique `--run`). Valida paridad numérica contra una muestra del split de test
+y escribe `<run>/export/export_summary[_<quant>].json`.
+
+Para medir el artefacto exportado sobre el split de test **completo**, usar después
+`scripts/pipeline/evaluate_export.py` (`make eval-export-main`).
+"""
+
 import argparse
-import json
 import logging
 from pathlib import Path
 
-from torch.utils.data import DataLoader
-
 from src.config import PROJECT_ROOT, get_output_root
-from src.data.dataset import CornDataset
-from src.data.transforms import CornTransformFactory
 from src.export.common import (
     export_model,
     load_checkpoint_for_export,
     parse_export_formats,
+    parse_quantize,
     resolve_export_inputs,
     write_export_summary,
 )
+from src.export.data import build_test_loader, resolve_test_csv
 from src.models import list_models
 from src.training.common import resolve_run_dir, select_device
 
@@ -24,14 +31,20 @@ logger = logging.getLogger(__name__)
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Exporta un checkpoint del pipeline principal a ONNX/TFLite."
+        description="Exporta checkpoints del pipeline principal a ONNX/TFLite."
     )
-    parser.add_argument("--model", required=True, choices=list_models())
+    parser.add_argument(
+        "--models",
+        nargs="+",
+        required=True,
+        choices=list_models(),
+        help="Uno o varios modelos a exportar.",
+    )
     parser.add_argument("--run", default=None, help="run_id; por defecto usa latest.json.")
     parser.add_argument(
         "--checkpoint",
         default=None,
-        help="Ruta explicita a un checkpoint .pth (ignora --run si se pasa).",
+        help="Ruta explicita a un checkpoint .pth (solo valido con un unico modelo).",
     )
     parser.add_argument(
         "--output-dir",
@@ -43,6 +56,11 @@ def _parse_args() -> argparse.Namespace:
         "--formats", default="onnx", help="Formatos a exportar, CSV (ej: 'onnx,tflite')."
     )
     parser.add_argument(
+        "--quantize",
+        default=None,
+        help="Cuantizacion a aplicar: 'int8' o 'none' (default: none / FP32).",
+    )
+    parser.add_argument(
         "--splits-dir",
         default=None,
         dest="splits_dir",
@@ -52,7 +70,19 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--parity-sample-size", type=int, default=30, dest="parity_sample_size"
     )
-    parser.add_argument("--tolerance", type=float, default=1e-3)
+    parser.add_argument(
+        "--tolerance",
+        type=float,
+        default=None,
+        help="Tolerancia de paridad; por defecto depende de --quantize.",
+    )
+    parser.add_argument(
+        "--min-agreement-rate",
+        type=float,
+        default=None,
+        dest="min_agreement_rate",
+        help="Acuerdo top-1 minimo; por defecto depende de --quantize.",
+    )
     parser.add_argument(
         "--no-parity",
         action="store_true",
@@ -63,55 +93,41 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main() -> None:
-    args = _parse_args()
+def _export_one(args: argparse.Namespace, model_name: str, output_dir: Path) -> bool:
+    """
+    Exporta un modelo y reporta por stdout. Devuelve True si algo falló.
+
+    @param {argparse.Namespace} args Argumentos ya parseados.
+    @param {str} model_name Modelo a exportar.
+    @param {Path} output_dir Directorio de runs del pipeline principal.
+    @returns {bool} True si hubo un fallo de exportacion o de paridad.
+    """
     config_path = Path(args.config)
-    output_root = get_output_root()
-    output_dir = Path(args.output_dir) if args.output_dir else output_root / "main"
+    formats = parse_export_formats(args.formats)
+    quantize = parse_quantize(args.quantize)
 
     if args.checkpoint:
         checkpoint_path = Path(args.checkpoint)
         run_dir = checkpoint_path.parent
     else:
-        run_dir = resolve_run_dir(output_dir, args.model, args.run)
+        run_dir = resolve_run_dir(output_dir, model_name, args.run)
         checkpoint_path = run_dir / "best.pth"
 
-    formats = parse_export_formats(args.formats)
-    if not formats:
-        raise SystemExit("Debes indicar al menos un formato en --formats.")
-
-    class_to_idx, _, image_size = resolve_export_inputs(run_dir, args.model, config_path)
+    class_to_idx, _, image_size = resolve_export_inputs(run_dir, model_name, config_path)
     device = select_device()
-    model = load_checkpoint_for_export(checkpoint_path, args.model, class_to_idx, device)
+    model = load_checkpoint_for_export(checkpoint_path, model_name, class_to_idx, device)
 
     test_loader = None
     if not args.no_parity:
-        summary = json.loads((run_dir / "summary.json").read_text())
-        splits_dir = (
-            Path(args.splits_dir)
-            if args.splits_dir
-            else Path(summary.get("splits_dir", output_root / "splits" / "seed_42"))
-        )
-        test_csv = splits_dir / "test.csv"
-        if not test_csv.exists():
-            raise SystemExit(
-                f"No existe {test_csv}. Pasa --splits-dir o usa --no-parity."
-            )
-        factory = CornTransformFactory(config_path=str(config_path), target_size=image_size)
-        test_dataset = CornDataset(
-            csv_path=str(test_csv),
-            config_path=str(config_path),
-            transform=factory.get_pipeline("test"),
-            class_to_idx=class_to_idx,
-        )
-        test_loader = DataLoader(
-            test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0
+        test_csv = resolve_test_csv(run_dir, args.splits_dir)
+        test_loader, _ = build_test_loader(
+            test_csv, config_path, class_to_idx, image_size, args.batch_size
         )
 
     report = export_model(
         model=model,
         run_dir=run_dir,
-        model_name=args.model,
+        model_name=model_name,
         class_to_idx=class_to_idx,
         image_size=image_size,
         formats=formats,
@@ -120,10 +136,12 @@ def main() -> None:
         tolerance=args.tolerance,
         parity_sample_size=args.parity_sample_size,
         skip_parity=args.no_parity,
+        quantize=quantize,
+        min_agreement_rate=args.min_agreement_rate,
     )
-    write_export_summary(run_dir, report)
+    summary_path = write_export_summary(run_dir, report)
 
-    print(f"Modelo: {args.model}")
+    print(f"\nModelo: {model_name}  (cuantizacion: {quantize or 'none'})")
     print(f"Run: {run_dir}")
     failed = False
     for result in report.formats:
@@ -141,8 +159,28 @@ def main() -> None:
             )
         if not result.succeeded or (result.parity is not None and not result.parity.passed):
             failed = True
+    print(f"  resumen: {summary_path}")
+    return failed
 
-    if failed:
+
+def main() -> None:
+    args = _parse_args()
+    output_root = get_output_root()
+    output_dir = Path(args.output_dir) if args.output_dir else output_root / "main"
+
+    if not parse_export_formats(args.formats):
+        raise SystemExit("Debes indicar al menos un formato en --formats.")
+    if args.checkpoint and len(args.models) > 1:
+        raise SystemExit(
+            "--checkpoint apunta a un unico archivo; no se puede usar con varios --models."
+        )
+
+    failures = [
+        model_name for model_name in args.models if _export_one(args, model_name, output_dir)
+    ]
+
+    if failures:
+        print(f"\nModelos con problemas: {', '.join(failures)}")
         raise SystemExit(1)
 
 

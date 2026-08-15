@@ -18,7 +18,7 @@ endif
 
 # Modelos: MODELS aplica a los baselines, MAIN_MODELS al pipeline principal.
 MODELS ?= efficientnet_b0 shufflenet_v2_x1_0 efficientnet_lite0
-MAIN_MODELS ?= efficientnet_b0
+MAIN_MODELS ?= efficientnet_b0 shufflenet_v2_x1_0 efficientnet_lite0
 
 # Explicabilidad local: directorio raíz de runs. Vacío = default del script
 # (outputs/baselines).
@@ -50,10 +50,15 @@ NO_PRETRAINED ?=
 LIME ?=
 
 # Exportacion (ONNX/TFLite). Vacia por defecto: opt-in via EXPORT_FORMATS=onnx[,tflite].
+# QUANTIZE=int8 produce model_int8.<fmt> junto al FP32, sin pisarlo.
 EXPORT_FORMATS ?=
+QUANTIZE ?=
 NO_PARITY ?=
 TOLERANCE ?=
+MIN_AGREEMENT_RATE ?=
 PARITY_SAMPLE_SIZE ?=
+NO_TORCH_BASELINE ?=
+MAX_MACRO_F1_DROP ?=
 
 # Explicabilidad e inferencia
 NUM_SAMPLES ?=
@@ -85,7 +90,8 @@ help:
 	@echo ""
 	@echo "Local - pipeline principal (runs en $(MAIN_OUTPUT_DIR), var MAIN_MODELS):"
 	@echo "  train-main (alias: train)   [EXPORT_FORMATS=onnx,tflite para exportar al terminar]"
-	@echo "  export-main   (MODEL=<nombre>, EXPORT_FORMATS=onnx,tflite)"
+	@echo "  export-main       (EXPORT_FORMATS=onnx,tflite [QUANTIZE=int8])"
+	@echo "  eval-export-main  (mide el .onnx/.tflite sobre el split de test completo)"
 	@echo "  explain-visual-main explain-fidelity-main explain-errors-main"
 	@echo "  explain-compare-main explain-global-main   (SHAP: solo pipeline principal)"
 	@echo ""
@@ -99,7 +105,8 @@ help:
 	@echo ""
 	@echo "Modal - pipeline principal (runs en /outputs/main, var MAIN_MODELS):"
 	@echo "  modal-train-main (alias: modal-train)"
-	@echo "  modal-export-main   (EXPORT_FORMATS=onnx,tflite)"
+	@echo "  modal-export-main       (EXPORT_FORMATS=onnx,tflite [QUANTIZE=int8])"
+	@echo "  modal-eval-export-main  (mide el exportado sobre el split de test completo)"
 	@echo "  modal-explain-visual-main modal-explain-fidelity-main modal-explain-errors-main"
 	@echo "  modal-explain-compare-main modal-explain-global-main"
 	@echo ""
@@ -179,17 +186,36 @@ train-main: train
 # Convierte un checkpoint ya entrenado del pipeline principal. Espeja el flag
 # --export de train.py; usa EXPORT_FORMATS=onnx[,tflite] (default: onnx).
 
-.PHONY: export-main
+.PHONY: export-main eval-export-main
 
+# Exporta los modelos de MAIN_MODELS. Para uno solo: MAIN_MODELS=<nombre>.
+# (No usa MODEL: esa variable tiene default propio para inference_report.)
 export-main:
-	$(PYTHON) scripts/pipeline/export.py --model $(MODEL) \
+	$(PYTHON) scripts/pipeline/export.py \
+		--models $(MAIN_MODELS) \
 		$(if $(RUN),--run $(RUN),) $(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),) \
 		--output-dir $(MAIN_OUTPUT_DIR) \
 		--formats $(if $(EXPORT_FORMATS),$(EXPORT_FORMATS),onnx) \
+		$(if $(QUANTIZE),--quantize $(QUANTIZE),) \
 		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
 		$(if $(TOLERANCE),--tolerance $(TOLERANCE),) \
+		$(if $(MIN_AGREEMENT_RATE),--min-agreement-rate $(MIN_AGREEMENT_RATE),) \
 		$(if $(PARITY_SAMPLE_SIZE),--parity-sample-size $(PARITY_SAMPLE_SIZE),) \
 		$(if $(NO_PARITY),--no-parity,)
+
+# Mide el archivo exportado sobre el split de test completo (accuracy/macro-F1 reales),
+# no solo la paridad numerica de una muestra que valida export-main.
+eval-export-main:
+	$(PYTHON) scripts/pipeline/evaluate_export.py \
+		--models $(MAIN_MODELS) \
+		$(if $(RUN),--run $(RUN),) \
+		--output-dir $(MAIN_OUTPUT_DIR) \
+		--formats $(if $(EXPORT_FORMATS),$(EXPORT_FORMATS),onnx) \
+		$(if $(QUANTIZE),--quantize $(QUANTIZE),) \
+		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
+		$(if $(BATCH_SIZE),--batch-size $(BATCH_SIZE),) \
+		$(if $(NO_TORCH_BASELINE),--no-torch-baseline,) \
+		$(if $(MAX_MACRO_F1_DROP),--max-macro-f1-drop $(MAX_MACRO_F1_DROP),)
 
 # ==============================================================================
 # Local - explicabilidad (post-hoc)
@@ -331,16 +357,28 @@ modal-train-main: modal-train
 # Modal - exportacion (ONNX/TFLite)
 # ==============================================================================
 
-.PHONY: modal-export-main
+.PHONY: modal-export-main modal-eval-export-main
 
 modal-export-main:
 	$(MODAL) run scripts/modal/export.py::export_main --models "$(MAIN_MODELS)" \
 		$(if $(RUN),--run $(RUN),) $(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),) \
 		--formats "$(if $(EXPORT_FORMATS),$(EXPORT_FORMATS),onnx)" \
+		$(if $(QUANTIZE),--quantize "$(QUANTIZE)",) \
 		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
 		$(if $(TOLERANCE),--tolerance $(TOLERANCE),) \
+		$(if $(MIN_AGREEMENT_RATE),--min-agreement-rate $(MIN_AGREEMENT_RATE),) \
 		$(if $(PARITY_SAMPLE_SIZE),--parity-sample-size $(PARITY_SAMPLE_SIZE),) \
 		$(if $(NO_PARITY),--no-parity,)
+
+modal-eval-export-main:
+	$(MODAL) run scripts/modal/export.py::evaluate_export_main --models "$(MAIN_MODELS)" \
+		$(if $(RUN),--run $(RUN),) \
+		--formats "$(if $(EXPORT_FORMATS),$(EXPORT_FORMATS),onnx)" \
+		$(if $(QUANTIZE),--quantize "$(QUANTIZE)",) \
+		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
+		$(if $(BATCH_SIZE),--batch-size $(BATCH_SIZE),) \
+		$(if $(NO_TORCH_BASELINE),--no-torch-baseline,) \
+		$(if $(MAX_MACRO_F1_DROP),--max-macro-f1-drop $(MAX_MACRO_F1_DROP),)
 
 # ==============================================================================
 # Modal - explicabilidad (post-hoc)

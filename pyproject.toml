@@ -21,9 +21,15 @@ analysis = ["imagededup", "fiftyone", "imageio", "mongoengine", "motor"]
 cloud    = ["huggingface_hub>=0.24,<1.22", "gdown>=5.1,<6.2", "modal>=0.64"]
 xai      = ["lime>=0.2", "scikit-image>=0.22", "matplotlib>=3.8", "shap>=0.44"]
 experiments = ["matplotlib>=3.8"]
-export = ["onnx>=1.15,<1.23", "onnxruntime>=1.17,<1.29", "onnxscript>=0.5,<0.8"]
-# TFLite (ai_edge_torch) requiere Linux; instalar aparte solo en ese entorno:
-#   pip install ai-edge-torch>=0.6,<0.8
+export = [
+    "onnx>=1.15,<1.23",
+    "onnxruntime>=1.17,<1.29",
+    "onnxscript>=0.5,<0.8",
+    # TFLite via el ecosistema LiteRT. 'ai-edge-torch' quedo deprecado: sus versiones
+    # >=0.7 son un stub sin API. Solo soporta Linux, de ahi el marcador de plataforma.
+    "litert-torch>=0.9,<0.10 ; sys_platform == 'linux'",
+    "ai-edge-litert>=2.1,<3 ; sys_platform == 'linux'",
+]
 
 [build-system]
 requires = ["hatchling"]

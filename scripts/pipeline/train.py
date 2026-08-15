@@ -106,6 +106,13 @@ def _parse_args() -> argparse.Namespace:
         help="Formatos a exportar tras entrenar, CSV (ej: 'onnx,tflite'). "
         "Vacio/omitido no exporta. Requiere el extra 'export': pip install -e '.[export]'",
     )
+    parser.add_argument(
+        "--export-quantize",
+        default=None,
+        dest="export_quantize",
+        metavar="MODO",
+        help="Cuantizacion al exportar: 'int8' o 'none' (default: none / FP32).",
+    )
     parser.add_argument("--config", default=str(PROJECT_ROOT / "config" / "dataset.yaml"))
     return parser.parse_args()
 
@@ -299,10 +306,12 @@ def main() -> None:
             from src.export.common import (
                 export_model,
                 parse_export_formats,
+                parse_quantize,
                 write_export_summary,
             )
 
             formats = parse_export_formats(args.export_formats)
+            quantize = parse_quantize(args.export_quantize)
             try:
                 report = export_model(
                     model=model,
@@ -313,16 +322,15 @@ def main() -> None:
                     formats=formats,
                     test_loader=test_loader,
                     device=device,
+                    quantize=quantize,
                 )
-                write_export_summary(run_dir, report)
+                summary_path = write_export_summary(run_dir, report)
                 if any(
                     not f.succeeded or (f.parity and not f.parity.passed)
                     for f in report.formats
                 ):
                     logger.warning(
-                        "[%s] Exportacion con problemas, ver %s/export/export_summary.json",
-                        model_name,
-                        run_dir,
+                        "[%s] Exportacion con problemas, ver %s", model_name, summary_path
                     )
             except Exception:
                 logger.exception(

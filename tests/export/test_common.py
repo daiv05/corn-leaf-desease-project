@@ -98,11 +98,11 @@ def test_write_export_summary_crea_export_dir(tmp_path):
 def test_export_to_tflite_sin_dependencia_levanta_error_claro(monkeypatch):
     from src.export import tflite_export
 
-    monkeypatch.setitem(sys.modules, "ai_edge_torch", None)
+    monkeypatch.setitem(sys.modules, "litert_torch", None)
     real_import = builtins.__import__
 
     def _fake_import(name, *args, **kwargs):
-        if name == "ai_edge_torch":
+        if name == "litert_torch":
             raise ImportError("simulado")
         return real_import(name, *args, **kwargs)
 
