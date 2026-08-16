@@ -20,7 +20,6 @@ from src.export.common import (
     parse_quantize,
     resolve_export_inputs,
     write_export_summary,
-    write_labels_json,
 )
 from src.export.data import build_test_loader, resolve_test_csv
 from src.models import list_models
@@ -115,7 +114,6 @@ def _export_one(args: argparse.Namespace, model_name: str, output_dir: Path) -> 
         checkpoint_path = run_dir / "best.pth"
 
     class_to_idx, _, image_size = resolve_export_inputs(run_dir, model_name, config_path)
-    write_labels_json(run_dir, class_to_idx, model_name, image_size)
     device = select_device()
     model = load_checkpoint_for_export(checkpoint_path, model_name, class_to_idx, device)
 

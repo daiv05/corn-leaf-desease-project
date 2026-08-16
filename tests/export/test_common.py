@@ -125,3 +125,10 @@ def test_write_labels_json_ordena_por_indice(tmp_path):
     assert payload["model"] == "shufflenet_v2_x1_0"
     assert payload["image_size"] == [224, 224]
     assert payload["labels"] == ["common_rust", "fall_armyworm", "healthy"]
+
+
+def test_write_labels_json_indice_no_contiguo_levanta_error(tmp_path):
+    class_to_idx = {"healthy": 0, "common_rust": 0, "fall_armyworm": 1}
+
+    with pytest.raises(ValueError, match="no es contiguo"):
+        write_labels_json(tmp_path, class_to_idx, "shufflenet_v2_x1_0", (224, 224))

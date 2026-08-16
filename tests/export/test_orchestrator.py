@@ -55,11 +55,16 @@ def test_export_model_onnx_escribe_artefactos_y_pasa_paridad(
     write_export_summary(run_dir, report)
 
     assert (run_dir / "export" / "model.onnx").exists()
+    assert (run_dir / "export" / "labels.json").exists()
     assert report.formats[0].succeeded
     assert report.formats[0].parity.passed
 
     payload = json.loads((run_dir / "export" / "export_summary.json").read_text())
     assert payload["formats"][0]["parity"]["passed"] is True
+
+    labels_payload = json.loads((run_dir / "export" / "labels.json").read_text())
+    idx_to_class = {idx: name for name, idx in test_dataset.class_to_idx.items()}
+    assert labels_payload["labels"] == [idx_to_class[i] for i in range(len(idx_to_class))]
 
 
 def test_export_model_formato_desconocido_no_bloquea_los_demas(
