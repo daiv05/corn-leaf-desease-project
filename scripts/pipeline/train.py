@@ -308,11 +308,13 @@ def main() -> None:
                 parse_export_formats,
                 parse_quantize,
                 write_export_summary,
+                write_labels_json,
             )
 
             formats = parse_export_formats(args.export_formats)
             quantize = parse_quantize(args.export_quantize)
             try:
+                write_labels_json(run_dir, class_to_idx, model_name, target_size)
                 report = export_model(
                     model=model,
                     run_dir=run_dir,
