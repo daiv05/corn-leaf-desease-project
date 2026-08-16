@@ -11,6 +11,7 @@ from src.export.common import (
     parse_quantize,
     resolve_export_inputs,
     write_export_summary,
+    write_labels_json,
 )
 from src.export.evaluate import (
     ExportEvaluation,
@@ -36,4 +37,5 @@ __all__ = [
     "resolve_export_inputs",
     "write_evaluation",
     "write_export_summary",
+    "write_labels_json",
 ]

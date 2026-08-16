@@ -402,3 +402,34 @@ def write_export_summary(run_dir: Path, report: ExportReport) -> Path:
     summary_path = export_dir / name
     summary_path.write_text(json.dumps(payload, indent=2))
     return summary_path
+
+
+def write_labels_json(
+    run_dir: Path,
+    class_to_idx: dict[str, int],
+    model_name: str,
+    image_size: tuple[int, int],
+) -> Path:
+    """
+    Persiste <run_dir>/export/labels.json con el orden de clases del modelo.
+
+    Existe para que ningun consumidor del modelo exportado (la app movil, un script de
+    evaluacion externo) tenga que re-derivar o hardcodear el orden de clases: lo lee de
+    aqui. Un desajuste de orden entre este archivo y el modelo real es indetectable en
+    runtime (el modelo igual devuelve 9 logits validos), asi que la unica fuente de verdad
+    aceptable es `class_to_idx` de `summary.json`, nunca una lista transcrita a mano.
+
+    @param {Path} run_dir Directorio del run.
+    @param {dict[str,int]} class_to_idx Mapeo clase->indice con el que se entreno/exporto.
+    @param {str} model_name Nombre del modelo (metadata informativa).
+    @param {tuple[int,int]} image_size Alto y ancho de entrada esperado (h, w).
+    @returns {Path} Ruta del archivo escrito.
+    """
+    export_dir = run_dir / "export"
+    export_dir.mkdir(parents=True, exist_ok=True)
+    idx_to_class = {idx: name for name, idx in class_to_idx.items()}
+    labels = [idx_to_class[i] for i in range(len(idx_to_class))]
+    payload = {"model": model_name, "image_size": list(image_size), "labels": labels}
+    output_path = export_dir / "labels.json"
+    output_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False))
+    return output_path

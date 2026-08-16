@@ -13,6 +13,7 @@ from src.export.common import (
     parse_export_formats,
     resolve_export_inputs,
     write_export_summary,
+    write_labels_json,
 )
 from src.export.parity import ParityResult
 
@@ -112,3 +113,15 @@ def test_export_to_tflite_sin_dependencia_levanta_error_claro(monkeypatch):
         tflite_export.export_to_tflite(
             torch.nn.Linear(1, 1), Path("unused.tflite"), (32, 32), torch.device("cpu")
         )
+
+
+def test_write_labels_json_ordena_por_indice(tmp_path):
+    class_to_idx = {"healthy": 2, "common_rust": 0, "fall_armyworm": 1}
+
+    output_path = write_labels_json(tmp_path, class_to_idx, "shufflenet_v2_x1_0", (224, 224))
+
+    assert output_path == tmp_path / "export" / "labels.json"
+    payload = json.loads(output_path.read_text())
+    assert payload["model"] == "shufflenet_v2_x1_0"
+    assert payload["image_size"] == [224, 224]
+    assert payload["labels"] == ["common_rust", "fall_armyworm", "healthy"]
