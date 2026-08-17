@@ -14,9 +14,9 @@ El principio que ordena todo lo demás: el archivo `.tflite` o `.onnx` no es un 
 | `model.tflite` | TFLite FP32 |
 | `model_int8.onnx` | ONNX cuantizado a int8 |
 | `model_int8.tflite` | TFLite cuantizado a int8 |
-| `export_summary.json` | Resultado de la conversión y la paridad numérica |
+| `export_summary.json` | Resultado de la conversión y la paridad numérica. Cada entrada de `formats[]` incluye `sha256` del archivo exportado — usarlo para verificar que una copia (por ejemplo, la que se empaqueta en la app) no se corrompió ni quedó desactualizada |
 | `eval_<formato>.json` | Métricas del artefacto sobre el split de test completo |
-| `labels.json` | Orden de clases del modelo: `{"model": str, "image_size": [h, w], "labels": list[str]}`, donde `labels[i]` es el nombre de clase del índice de salida `i`. Se escribe una sola vez por run, no por formato ni por variante de cuantización — el orden de clases no cambia entre ellos |
+| `labels.json` | Orden de clases del modelo: `{"schema_version": int, "model": str, "image_size": [h, w], "labels": list[str]}`, donde `labels[i]` es el nombre de clase del índice de salida `i`. Se escribe una sola vez por run, no por formato ni por variante de cuantización — el orden de clases no cambia entre ellos |
 
 Tamaños de los artefactos reales del pipeline (9 clases, 224×224):
 
@@ -43,10 +43,12 @@ Esto es lo que no se puede cambiar sin romper la equivalencia con el entrenamien
   - `std  = [0.229, 0.224, 0.225]`
   - es decir `valor = (pixel/255 - mean[c]) / std[c]`.
 - El nombre del tensor de entrada en ONNX es `input`; en TFLite se accede por índice.
+- **Esto aplica igual a la variante `int8`.** La cuantización de este pipeline es solo de pesos (dynamic per-channel PTQ), no de activaciones: los tensores de entrada/salida del grafo siguen siendo `float32` en ambas variantes, nunca `uint8`/`int8`. Si al cargar `model_int8.tflite` el runtime reporta un tensor de entrada no-float32, es un bug de exportación, no el comportamiento esperado.
 
 **Salida**
 
 - Tensor `float32` de forma `[1, 9]` con **logits**, no probabilidades. La app debe aplicar softmax si quiere mostrar confianza.
+- La salida también es `float32` en la variante `int8` por el mismo motivo (cuantización solo de pesos).
 - El nombre del tensor de salida en ONNX es `output`.
 - El índice de cada clase es su posición en `config/dataset.yaml`, en este orden exacto:
 

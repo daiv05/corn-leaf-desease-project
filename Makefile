@@ -217,6 +217,16 @@ eval-export-main:
 		$(if $(NO_TORCH_BASELINE),--no-torch-baseline,) \
 		$(if $(MAX_MACRO_F1_DROP),--max-macro-f1-drop $(MAX_MACRO_F1_DROP),)
 
+.PHONY: sync-mobile-model
+# Copia el modelo exportado + labels.json a maize-doctor-app/assets/model, con
+# verificacion de hash. RUN_DIR y DEST son obligatorios.
+sync-mobile-model:
+	$(PYTHON) -m scripts.pipeline.sync_mobile_model \
+		--run-dir $(RUN_DIR) \
+		--dest $(DEST) \
+		$(if $(FORMAT),--format $(FORMAT),) \
+		$(if $(QUANTIZE),--quantize $(QUANTIZE),)
+
 # ==============================================================================
 # Local - explicabilidad (post-hoc)
 # ==============================================================================
