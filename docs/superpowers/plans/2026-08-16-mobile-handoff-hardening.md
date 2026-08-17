@@ -1,4 +1,4 @@
-# Mobile Handoff Hardening Implementation Plan
+﻿# Mobile Handoff Hardening Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -27,7 +27,7 @@
 **Interfaces:**
 - None (documentation-only).
 
-- [ ] **Step 1: Edit the doc**
+- [x] **Step 1: Edit the doc**
 
 In `docs/es/deployment/react-native.md`, immediately after line 45 (`- El nombre del tensor de entrada en ONNX es \`input\`; en TFLite se accede por índice.`), insert:
 
@@ -41,12 +41,12 @@ And immediately after line 49 (`- Tensor \`float32\` de forma \`[1, 9]\` con **l
 - La salida también es `float32` en la variante `int8` por el mismo motivo (cuantización solo de pesos).
 ```
 
-- [ ] **Step 2: Verify the doc still builds**
+- [x] **Step 2: Verify the doc still builds**
 
 Run: `npm run docs:build`
 Expected: build succeeds (exit 0), no VitePress dead-link/parse errors. This repo's docs build fails on broken links/markdown, so a clean exit is the acceptance check for a docs-only change.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add docs/es/deployment/react-native.md
@@ -63,7 +63,7 @@ git commit -m "docs(export): clarify int8 variant keeps float32 model I/O"
 **Interfaces:**
 - None (documentation-only).
 
-- [ ] **Step 1: Edit the doc**
+- [x] **Step 1: Edit the doc**
 
 In `CLAUDE.md`, in the `## Pipelines` section, locate the bullet starting `- **Principal (\`train.py\`):** comparte toda la infraestructura de datos/modelos con baselines. Entrena una arquitectura (default \`shufflenet_v2_x1_0\`)...`. Immediately after that sentence's closing parenthesis for the dataset image count (`...31 623 antes)`), insert this clarifying sentence before the rest of the bullet continues:
 
@@ -71,12 +71,12 @@ In `CLAUDE.md`, in the `## Pipelines` section, locate the bullet starting `- **P
  Ojo: ese default de `shufflenet_v2_x1_0` es el de `train.py --models` cuando se omite el flag; `make train`/`make train-main` siempre pasan `--models $(MAIN_MODELS)` explícitamente, y `MAIN_MODELS` por defecto son **tres** modelos (`efficientnet_b0 shufflenet_v2_x1_0 efficientnet_lite0`, ver `Makefile`). Para entrenar solo `shufflenet_v2_x1_0` vía `make`, pasar `MAIN_MODELS=shufflenet_v2_x1_0` explícitamente.
 ```
 
-- [ ] **Step 2: Verify the sentence landed correctly**
+- [x] **Step 2: Verify the sentence landed correctly**
 
 Run: `grep -n "MAIN_MODELS por defecto son" CLAUDE.md`
 Expected: one match, inside the "Principal (`train.py`)" bullet.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add CLAUDE.md
@@ -97,7 +97,7 @@ git commit -m "docs: clarify train.py single-model default vs MAIN_MODELS Makefi
 - Produces: `write_export_summary(...)` payload's `formats[i]` dict gains a `"sha256": str | None` key (SHA-256 hex digest of `output_path`'s file contents, or `None` when `output_path` is `None`/the format failed).
 - Consumes (Task 4 of this plan reads both): the new `sha256` field in `export_summary[_<quantize>].json` and the presence of `labels.json` alongside it.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add to `tests/export/test_common.py`, right after `test_write_labels_json_ordena_por_indice`:
 
@@ -165,12 +165,12 @@ def test_write_export_summary_sha256_none_si_no_hay_output_path(tmp_path):
 
 Add `import hashlib` to the top of `tests/export/test_common.py` alongside the existing `import json`.
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `venv\Scripts\pytest tests/export/test_common.py -v -k "schema_version or sha256"`
 Expected: 3 failures — `KeyError: 'schema_version'` / `KeyError: 'sha256'`.
 
-- [ ] **Step 3: Implement `schema_version` in `write_labels_json`**
+- [x] **Step 3: Implement `schema_version` in `write_labels_json`**
 
 In `src/export/common.py`, inside `write_labels_json` (around line 307), change:
 
@@ -189,7 +189,7 @@ to:
     }
 ```
 
-- [ ] **Step 4: Implement `sha256` in `write_export_summary`**
+- [x] **Step 4: Implement `sha256` in `write_export_summary`**
 
 In `src/export/common.py`, add `import hashlib` to the top-level imports (alongside `import json`). Then add this helper just above `write_export_summary` (after the closing of `_export_single_format`, before line 392):
 
@@ -224,12 +224,12 @@ Then, inside `write_export_summary`'s `payload["formats"]` list comprehension, a
 ```
 (leave the rest of the `parity` block exactly as-is)
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `venv\Scripts\pytest tests/export/test_common.py -v`
 Expected: all tests in the file PASS, including the 3 new ones and the pre-existing ones (no regressions).
 
-- [ ] **Step 6: Update the mobile handoff doc's artifact table**
+- [x] **Step 6: Update the mobile handoff doc's artifact table**
 
 In `docs/es/deployment/react-native.md`, update line 19 (the `labels.json` row) to:
 
@@ -243,12 +243,12 @@ And update line 17 (the `export_summary.json` row) to:
 | `export_summary.json` | Resultado de la conversión y la paridad numérica. Cada entrada de `formats[]` incluye `sha256` del archivo exportado — usarlo para verificar que una copia (por ejemplo, la que se empaqueta en la app) no se corrompió ni quedó desactualizada |
 ```
 
-- [ ] **Step 7: Verify the doc still builds**
+- [x] **Step 7: Verify the doc still builds**
 
 Run: `npm run docs:build`
 Expected: build succeeds (exit 0).
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/export/common.py tests/export/test_common.py docs/es/deployment/react-native.md
@@ -268,7 +268,7 @@ git commit -m "feat(export): add schema_version to labels.json and sha256 to exp
 - Consumes: `export_summary.json`/`export_summary_<quantize>.json`'s `formats[i].sha256` field and `output_path`, and the `_sha256_file(path: Path) -> str` helper (both from Task 3 of this plan — imported from `src.export.common`, not redefined).
 - Produces: `sync_mobile_model(run_dir: Path, dest_dir: Path, *, fmt: str = "tflite", quantize: str | None = "int8") -> Path` — copies `run_dir/export/model[_<quantize>].<fmt>` and `run_dir/export/labels.json` into `dest_dir`, verifies the copied model file's SHA-256 against the value recorded in the matching `export_summary*.json`, writes `dest_dir/manifest.json`, and returns its path. Raises `ValueError` if the recorded and copied hashes don't match (corrupt copy) or if the expected format entry is missing from the summary.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/pipeline/test_sync_mobile_model.py`:
 
@@ -356,12 +356,12 @@ def test_sync_mobile_model_formato_ausente_en_summary(tmp_path):
 
 Create `tests/pipeline/__init__.py` (empty file) if the directory doesn't already have one.
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `venv\Scripts\pytest tests/pipeline/test_sync_mobile_model.py -v`
 Expected: `ModuleNotFoundError: No module named 'scripts.pipeline.sync_mobile_model'`.
 
-- [ ] **Step 3: Implement `sync_mobile_model`**
+- [x] **Step 3: Implement `sync_mobile_model`**
 
 Create `scripts/pipeline/sync_mobile_model.py`:
 
@@ -472,12 +472,12 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `venv\Scripts\pytest tests/pipeline/test_sync_mobile_model.py -v`
 Expected: all 3 tests PASS.
 
-- [ ] **Step 5: Add a Makefile target**
+- [x] **Step 5: Add a Makefile target**
 
 In `Makefile`, in the export section (near the `export-main`/`eval-export-main` targets), add:
 
@@ -493,12 +493,12 @@ sync-mobile-model:
 		$(if $(QUANTIZE),--quantize $(QUANTIZE),)
 ```
 
-- [ ] **Step 6: Run the full export test suite to check for regressions**
+- [x] **Step 6: Run the full export test suite to check for regressions**
 
 Run: `venv\Scripts\pytest tests/export/ tests/pipeline/ -v`
 Expected: all PASS, no regressions from Task 3's changes.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add scripts/pipeline/sync_mobile_model.py tests/pipeline/test_sync_mobile_model.py Makefile
