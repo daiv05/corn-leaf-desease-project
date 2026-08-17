@@ -126,6 +126,7 @@ def evaluate_export_main(
     outputs_vol.reload()
     args = [
         sys.executable,
+        "-u",
         "scripts/pipeline/evaluate_export.py",
         "--models",
         *models.split(),
