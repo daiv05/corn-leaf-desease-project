@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 from dataclasses import dataclass, field
@@ -304,7 +305,12 @@ def write_labels_json(
     export_dir.mkdir(parents=True, exist_ok=True)
     idx_to_class = {idx: name for name, idx in class_to_idx.items()}
     labels = [idx_to_class[i] for i in range(len(idx_to_class))]
-    payload = {"model": model_name, "image_size": list(image_size), "labels": labels}
+    payload = {
+        "schema_version": 1,
+        "model": model_name,
+        "image_size": list(image_size),
+        "labels": labels,
+    }
     output_path = export_dir / "labels.json"
     output_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False))
     return output_path
@@ -389,6 +395,20 @@ def export_model(
     )
 
 
+def _sha256_file(path: Path) -> str:
+    """
+    Calcula el digest SHA-256 de un archivo, leyendo en bloques para no cargarlo entero en memoria.
+
+    @param {Path} path Archivo a hashear.
+    @returns {str} Digest hexadecimal.
+    """
+    digest = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def write_export_summary(run_dir: Path, report: ExportReport) -> Path:
     """
     Persiste <run_dir>/export/export_summary.json (o ..._<quant>.json si se cuantizó).
@@ -416,6 +436,7 @@ def write_export_summary(run_dir: Path, report: ExportReport) -> Path:
                 ),
                 "succeeded": f.succeeded,
                 "error": f.error,
+                "sha256": _sha256_file(f.output_path) if f.output_path else None,
                 "parity": (
                     None
                     if f.parity is None

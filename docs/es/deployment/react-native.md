@@ -14,9 +14,9 @@ El principio que ordena todo lo demás: el archivo `.tflite` o `.onnx` no es un 
 | `model.tflite` | TFLite FP32 |
 | `model_int8.onnx` | ONNX cuantizado a int8 |
 | `model_int8.tflite` | TFLite cuantizado a int8 |
-| `export_summary.json` | Resultado de la conversión y la paridad numérica |
+| `export_summary.json` | Resultado de la conversión y la paridad numérica. Cada entrada de `formats[]` incluye `sha256` del archivo exportado — usarlo para verificar que una copia (por ejemplo, la que se empaqueta en la app) no se corrompió ni quedó desactualizada |
 | `eval_<formato>.json` | Métricas del artefacto sobre el split de test completo |
-| `labels.json` | Orden de clases del modelo: `{"model": str, "image_size": [h, w], "labels": list[str]}`, donde `labels[i]` es el nombre de clase del índice de salida `i`. Se escribe una sola vez por run, no por formato ni por variante de cuantización — el orden de clases no cambia entre ellos |
+| `labels.json` | Orden de clases del modelo: `{"schema_version": int, "model": str, "image_size": [h, w], "labels": list[str]}`, donde `labels[i]` es el nombre de clase del índice de salida `i`. Se escribe una sola vez por run, no por formato ni por variante de cuantización — el orden de clases no cambia entre ellos |
 
 Tamaños de los artefactos reales del pipeline (9 clases, 224×224):
 
