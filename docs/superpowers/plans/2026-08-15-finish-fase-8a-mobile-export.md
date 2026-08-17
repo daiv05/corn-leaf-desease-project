@@ -1,4 +1,4 @@
-# Finish Fase 8a — Mobile Export Handoff Implementation Plan
+﻿# Finish Fase 8a — Mobile Export Handoff Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -32,7 +32,7 @@
 **Interfaces:**
 - Produces: `write_labels_json(run_dir: Path, class_to_idx: dict[str, int], model_name: str, image_size: tuple[int, int]) -> Path` — writes `<run_dir>/export/labels.json` with `{"model": str, "image_size": [h, w], "labels": list[str]}`, where `labels[i]` is the class name whose `class_to_idx` value is `i`. Later tasks (and the app repo) read this file directly instead of re-deriving class order.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add to `tests/export/test_common.py` (alongside the existing `write_export_summary` tests, using the same `tmp_path`-based style already in that file):
 
@@ -51,12 +51,12 @@ def test_write_labels_json_ordena_por_indice(tmp_path):
     assert payload["labels"] == ["common_rust", "fall_armyworm", "healthy"]
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python -m pytest tests/export/test_common.py::test_write_labels_json_ordena_por_indice -v`
 Expected: FAIL with `ImportError: cannot import name 'write_labels_json'`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 In `src/export/common.py`, add after `write_export_summary` (reuses the same `export_dir` pattern already used there):
 
@@ -102,12 +102,12 @@ In `scripts/pipeline/export.py`, import `write_labels_json` alongside the existi
     device = select_device()
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python -m pytest tests/export/test_common.py -v`
 Expected: PASS, including the new test and all pre-existing tests in that file (no regressions).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/export/common.py src/export/__init__.py scripts/pipeline/export.py tests/export/test_common.py
@@ -124,19 +124,19 @@ git commit -m "feat(export): write labels.json with class order alongside export
 - Consumes: `write_labels_json` from Task 1 (runs automatically as part of `export.py`).
 - Produces: for each of `efficientnet_b0`, `efficientnet_lite0`, `shufflenet_v2_x1_0`, on the Modal volume under `outputs/main/<model>/<run_id>/export/`: `model.tflite`, `model_int8.tflite`, `labels.json`, `export_summary.json`, `export_summary_int8.json`.
 
-- [ ] **Step 1: Push the Task 1 code change and export FP32 TFLite for all three models**
+- [x] **Step 1: Push the Task 1 code change and export FP32 TFLite for all three models**
 
 Run: `make modal-export-main MAIN_MODELS="efficientnet_b0 efficientnet_lite0 shufflenet_v2_x1_0" EXPORT_FORMATS=tflite`
 
 Expected: for each of the 3 models, stdout ends with `[OK] tflite -> export/model.tflite` and a parity line reading `paridad: paso (... tolerance=0.001000 ...)`. If `[FALLO]` appears for any model, stop and read the printed `error:` line before continuing — do not proceed to Int8 export for a model whose FP32 export failed.
 
-- [ ] **Step 2: Export Int8 TFLite for all three models**
+- [x] **Step 2: Export Int8 TFLite for all three models**
 
 Run: `make modal-export-main MAIN_MODELS="efficientnet_b0 efficientnet_lite0 shufflenet_v2_x1_0" EXPORT_FORMATS=tflite QUANTIZE=int8`
 
 Expected: same as Step 1, but tolerance in the printed parity line reads `tolerance=0.150000` (the relaxed Int8 default from `_PARITY_DEFAULTS`) and writes to `export/model_int8.tflite` / `export/export_summary_int8.json`.
 
-- [ ] **Step 3: Pull the artifacts locally**
+- [x] **Step 3: Pull the artifacts locally**
 
 Run: `make modal-pull`
 
@@ -150,7 +150,7 @@ done
 
 Expected: 9 lines (3 files × 3 models), all present.
 
-- [ ] **Step 4: Sanity-check `labels.json` matches the documented contract**
+- [x] **Step 4: Sanity-check `labels.json` matches the documented contract**
 
 Run: `cat outputs-remote/main/efficientnet_b0/*/export/labels.json`
 
@@ -175,6 +175,8 @@ Expected output (order must match exactly — this is the file the app repo's Fa
 **Interfaces:**
 - Consumes: `model_int8.tflite` from Task 2.
 - Produces: `outputs-remote/main/<model>/<run_id>/export/eval_tflite_int8.json` (+ per-image CSV) for each of the 3 models — real macro-F1 and per-class breakdown of the quantized artifact, as opposed to the ~30-sample numeric parity check from Task 2.
+
+> **Estado (2026-08-17): BLOQUEADA.** Requiere Modal (`litert-torch` es Linux-only) y el paquete `modal` no esta instalado en el venv local — quedo fuera tras la reinstalacion del entorno del 2026-08-17. Las credenciales (`~/.modal.toml`) si existen. No hay `eval_tflite_int8.json` en ningun run. Las Tasks 1, 2 y 4 no dependen de esta y ya estan completas.
 
 - [ ] **Step 1: Run the evaluation for all three Int8 TFLite artifacts**
 
@@ -209,7 +211,7 @@ Expected: each JSON contains the exported artifact's real accuracy/macro-F1 over
 
 Why three candidates instead of picking one now: `model-ml.md`'s hard latency constraint (≤300 ms) can only be measured on the Snapdragon 6xx-class reference device, not from this desktop pipeline — Task 3's macro-F1 numbers are necessary but not sufficient to choose. Bundling all three behind a dev-only picker lets the app repo's benchmark task (see companion plan) measure real on-device latency/size before permanently committing to one, then delete the other two before release.
 
-- [ ] **Step 1: Copy the three Int8 artifacts and one `labels.json` into the app repo**
+- [x] **Step 1: Copy the three Int8 artifacts and one `labels.json` into the app repo**
 
 ```bash
 mkdir -p ../maize-doctor-app/assets/model/candidates/efficientnet_b0
@@ -223,7 +225,7 @@ cp outputs-remote/main/efficientnet_b0/*/export/labels.json ../maize-doctor-app/
 
 Expected: `ls -la ../maize-doctor-app/assets/model/candidates/*/model_int8.tflite` shows 3 files sized approximately 4.4 MB (`efficientnet_b0`), 3.6 MB (`efficientnet_lite0`), 1.4 MB (`shufflenet_v2_x1_0`) — matching the sizes documented in `docs/es/deployment/react-native.md`'s artifact table. All three are individually ≤ 20 MB.
 
-- [ ] **Step 2: Write the model-selection comparison for the app team**
+- [x] **Step 2: Write the model-selection comparison for the app team**
 
 Print this table (fill in the actual `macro_f1`/delta values read in Task 3, Step 2) so whoever runs the app-side benchmark task has the desktop-side half of the decision already in hand:
 
@@ -235,7 +237,7 @@ Print this table (fill in the actual `macro_f1`/delta values read in Task 3, Ste
 
 This does not get committed as a new doc file — hand it to whoever executes the app-side plan's benchmark task (Task 5 there) as the missing half of its acceptance criteria table.
 
-- [ ] **Step 3: Do NOT commit `assets/model/` yet**
+- [x] **Step 3: Do NOT commit `assets/model/` yet**
 
 The app repo's own Task 1 (companion plan) fixes that repo's `.gitignore`/Git LFS setup before anything under `assets/model/` is committed — this task only stages files on disk so that work can proceed. Confirm you're on the app repo's working tree and these files show as untracked (`git -C ../maize-doctor-app status --short assets/model` should show `??` lines, not `A ` or `M `), then stop.
 
