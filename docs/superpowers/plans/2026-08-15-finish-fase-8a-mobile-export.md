@@ -176,15 +176,15 @@ Expected output (order must match exactly — this is the file the app repo's Fa
 - Consumes: `model_int8.tflite` from Task 2.
 - Produces: `outputs-remote/main/<model>/<run_id>/export/eval_tflite_int8.json` (+ per-image CSV) for each of the 3 models — real macro-F1 and per-class breakdown of the quantized artifact, as opposed to the ~30-sample numeric parity check from Task 2.
 
-> **Estado (2026-08-17): BLOQUEADA.** Requiere Modal (`litert-torch` es Linux-only) y el paquete `modal` no esta instalado en el venv local — quedo fuera tras la reinstalacion del entorno del 2026-08-17. Las credenciales (`~/.modal.toml`) si existen. No hay `eval_tflite_int8.json` en ningun run. Las Tasks 1, 2 y 4 no dependen de esta y ya estan completas.
+> **Estado (2026-08-17): COMPLETADA.** Evaluacion corrida en Modal sobre el test set completo (5 015 imagenes). `efficientnet_b0` supera el umbral de `--max-macro-f1-drop` (cae 0.0186 vs 0.01 permitido) y quedo registrado con warning; los otros dos pasan sin observaciones. Resultados en la tabla de la Task 4, Step 2.
 
-- [ ] **Step 1: Run the evaluation for all three Int8 TFLite artifacts**
+- [x] **Step 1: Run the evaluation for all three Int8 TFLite artifacts**
 
 Run: `make modal-eval-export-main MAIN_MODELS="efficientnet_b0 efficientnet_lite0 shufflenet_v2_x1_0" EXPORT_FORMATS=tflite QUANTIZE=int8`
 
 Expected: completes without raising (default `--max-macro-f1-drop` is `0.01`; a model whose Int8 macro-F1 drops more than that from its own PyTorch baseline will make this command exit non-zero — if that happens, note which model failed and by how much, but do not attempt to fix quantization in this task, just record it for the model-selection comparison in Task 4).
 
-- [ ] **Step 2: Pull results and read the macro-F1 delta per model**
+- [x] **Step 2: Pull results and read the macro-F1 delta per model**
 
 Run: `make modal-pull`, then for each model:
 
@@ -229,11 +229,19 @@ Expected: `ls -la ../maize-doctor-app/assets/model/candidates/*/model_int8.tflit
 
 Print this table (fill in the actual `macro_f1`/delta values read in Task 3, Step 2) so whoever runs the app-side benchmark task has the desktop-side half of the decision already in hand:
 
-| Model | Int8 TFLite size | Test macro-F1 (Int8, full test set) | Δ vs PyTorch FP32 |
-|---|---|---|---|
-| `efficientnet_b0` | ~4.4 MB | *(from Task 3)* | *(from Task 3)* |
-| `efficientnet_lite0` | ~3.6 MB | *(from Task 3)* | *(from Task 3)* |
-| `shufflenet_v2_x1_0` | ~1.4 MB | *(from Task 3)* | *(from Task 3)* |
+| Model | Int8 TFLite size | Test macro-F1 (Int8, full test set) | Δ vs PyTorch FP32 | Acuerdo vs PyTorch |
+|---|---|---|---|---|
+| `efficientnet_b0` | 4.44 MB | 0.9241 | **-0.0186** (supera el umbral de 0.01) | 97.61 % |
+| `efficientnet_lite0` | 3.57 MB | **0.9477** | +0.0011 | 99.58 % |
+| `shufflenet_v2_x1_0` | 1.43 MB | 0.9229 | -0.0008 | 99.70 % |
+
+Evaluacion sobre las 5 015 imagenes del split de test (`eval_tflite_int8.json` por run). Los tres siguen ≥ 0.85 de macro-F1 y ≤ 20 MB, asi que los tres son candidatos validos para el benchmark on-device; la latencia sigue sin medirse aqui.
+
+Lectura para la seleccion: `efficientnet_lite0` es el unico que no pierde macro-F1 al cuantizar (+0.0011) y es el mas fiel al modelo FP32 (99.58 % de acuerdo), a 3.57 MB. `shufflenet_v2_x1_0` es 2.5x mas chico con practicamente la misma macro-F1 (0.9229 vs 0.9241) y el acuerdo mas alto (99.70 %), asi que es el candidato fuerte si la latencia manda. `efficientnet_b0` es el peor de los tres en esta etapa: pesa mas que `lite0`, rinde menos, y es el unico que degrada de forma apreciable al cuantizar.
+
+Clases minoritarias a vigilar en el benchmark: `potassium_deficiency` (n=93) y `nitrogen_deficiency` (n=127) son las de peor F1 en los tres modelos. En `efficientnet_b0` caen a 0.7636 y 0.8365 respectivamente — ahi se concentra su perdida de macro-F1.
+
+> **No leer `by_environment.lab.macro_f1` de `eval_tflite_int8.json` como calidad del modelo.** El split `lab` solo contiene 3 de las 9 clases (`common_rust` n=322, `northern_corn_leaf_blight` n=133, `gray_leaf_spot` n=77), pero la macro-F1 se promedia sobre las 9, asi que las 6 ausentes entran como F1=0 y hunden el promedio. Por eso `efficientnet_b0` aparece con `lab.macro_f1` 0.5625: recalculada solo sobre las 3 clases presentes es **0.9376**, la mejor de las tres (lite0 0.9350, shufflenet 0.9061). Para comparar por entorno usar `accuracy` (0.9624 / 0.9643 / 0.9492), que no sufre esta distorsion.
 
 This does not get committed as a new doc file — hand it to whoever executes the app-side plan's benchmark task (Task 5 there) as the missing half of its acceptance criteria table.
 
