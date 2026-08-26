@@ -1,0 +1,171 @@
+"""Metricas post-hoc calculadas sobre predictions.csv, sin GPU.
+
+Cubren los tres huecos que dejo la primera fase: calibracion (el reporte documenta que
+el modelo se equivoca con 0.914 de confianza media), desglose lab/real (common_rust es
+95% lab, lo que abre la sospecha de shortcut learning) y la metrica agrupada N/P/K
+(el 97% de los errores de deficiencia se quedan dentro del propio bloque).
+"""
+
+from __future__ import annotations
+
+import numpy as np
+import pandas as pd
+from sklearn.metrics import accuracy_score, f1_score
+
+AGGREGATE_ROW_LABEL = "__all__"
+
+
+def expected_calibration_error(
+    confidences: list[float],
+    correct: list[bool],
+    num_bins: int = 15,
+) -> float:
+    """
+    Calcula el Expected Calibration Error con bins uniformes.
+
+    @param {list[float]} confidences Confianza de la clase predicha por muestra.
+    @param {list[bool]} correct True si la prediccion fue correcta.
+    @param {int} num_bins Numero de bins uniformes sobre [0, 1].
+    @returns {float} Promedio ponderado de |accuracy - confianza| por bin.
+    """
+    confidence_array = np.asarray(confidences, dtype=float)
+    correct_array = np.asarray(correct, dtype=bool)
+    if confidence_array.size == 0:
+        return 0.0
+
+    edges = np.linspace(0.0, 1.0, num_bins + 1)
+    error = 0.0
+    for bin_index, (lower, upper) in enumerate(zip(edges[:-1], edges[1:])):
+        if bin_index == 0:
+            in_bin = (confidence_array >= lower) & (confidence_array <= upper)
+        else:
+            in_bin = (confidence_array > lower) & (confidence_array <= upper)
+        if not in_bin.any():
+            continue
+        weight = in_bin.mean()
+        error += weight * abs(correct_array[in_bin].mean() - confidence_array[in_bin].mean())
+    return float(error)
+
+
+def compute_calibration_metrics(
+    predictions_df: pd.DataFrame,
+    class_to_idx: dict[str, int],
+) -> dict:
+    """
+    Resume calibracion: ECE, Brier binario de acierto y confianza media de aciertos vs. fallos.
+
+    `brier_binary_hit` NO es el Brier score multiclase: `predictions.csv` solo guarda
+    `pred_prob` como escalar (la probabilidad de la clase predicha), no el vector
+    completo de probabilidades por clase, asi que no se puede calcular el Brier
+    multiclase real (que requiere comparar ese vector contra el one-hot de la clase
+    verdadera). Lo que se calcula es el Brier score del evento binario "acerto/no
+    acerto": `mean((pred_prob - acierto)^2)`.
+
+    @param {pd.DataFrame} predictions_df Columnas label, pred_label y pred_prob.
+    @param {dict[str,int]} class_to_idx Mapeo canonico clase->indice.
+    @returns {dict} Metricas de calibracion del run.
+    """
+    correct = (predictions_df["label"] == predictions_df["pred_label"]).tolist()
+    confidences = predictions_df["pred_prob"].tolist()
+
+    is_correct = predictions_df["label"] == predictions_df["pred_label"]
+    hits = predictions_df.loc[is_correct, "pred_prob"]
+    misses = predictions_df.loc[~is_correct, "pred_prob"]
+
+    confidence_array = np.asarray(confidences, dtype=float)
+    correct_array = np.asarray(correct, dtype=float)
+    brier_binary_hit = float(np.mean((confidence_array - correct_array) ** 2))
+
+    return {
+        "ece": expected_calibration_error(confidences, correct),
+        "brier_binary_hit": brier_binary_hit,
+        "mean_confidence_hits": float(hits.mean()) if len(hits) else 0.0,
+        "mean_confidence_misses": float(misses.mean()) if len(misses) else 0.0,
+        "n_hits": int(len(hits)),
+        "n_misses": int(len(misses)),
+        "num_classes": len(class_to_idx),
+    }
+
+
+def compute_environment_metrics(predictions_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Desglosa accuracy, macro-F1 y F1 por clase por entorno de captura.
+
+    Formato largo: por cada entorno se emite una fila agregada (`class == "__all__"`,
+    con accuracy y macro_f1) y una fila por clase presente en ese entorno (con su F1
+    y su propia n). El desglose por clase es lo que permite aislar `common_rust` en
+    `real` para evaluar el riesgo de shortcut learning; la n por combinacion queda
+    visible porque algunas son muy pequenas (~16 imagenes reales de `common_rust`)
+    y su F1 es indicativo, no concluyente.
+
+    @param {pd.DataFrame} predictions_df Debe incluir la columna environment.
+    @returns {pd.DataFrame} Filas (environment, class) con n, accuracy, macro_f1 y f1.
+    """
+    rows = []
+    for environment, group in predictions_df.groupby("environment"):
+        rows.append(
+            {
+                "environment": environment,
+                "class": AGGREGATE_ROW_LABEL,
+                "n": len(group),
+                "accuracy": accuracy_score(group["label"], group["pred_label"]),
+                "macro_f1": f1_score(
+                    group["label"], group["pred_label"], average="macro", zero_division=0
+                ),
+                "f1": float("nan"),
+            }
+        )
+
+        class_names = sorted(set(group["label"]) | set(group["pred_label"]))
+        per_class_f1 = f1_score(
+            group["label"],
+            group["pred_label"],
+            labels=class_names,
+            average=None,
+            zero_division=0,
+        )
+        for class_name, class_f1 in zip(class_names, per_class_f1):
+            support = group["label"] == class_name
+            rows.append(
+                {
+                    "environment": environment,
+                    "class": class_name,
+                    "n": int(support.sum()),
+                    "accuracy": float("nan"),
+                    "macro_f1": float("nan"),
+                    "f1": float(class_f1),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def compute_grouped_metrics(predictions_df: pd.DataFrame, groups: dict[str, str]) -> dict:
+    """
+    Recalcula las metricas colapsando las clases indicadas en una sola categoria.
+
+    Las clases que no aparecen como key en `groups` quedan intactas. El mapeo se
+    aplica con `.map()` en vez de `.replace()` para evitar el encadenamiento
+    implicito de `Series.replace()` (si el valor destino de una key coincide con
+    otra key del propio mapeo, `.replace()` la sustituiria de nuevo).
+
+    @param {pd.DataFrame} predictions_df Columnas label y pred_label.
+    @param {dict[str,str]} groups Mapeo clase original -> nombre de la clase agrupada.
+    @returns {dict} Metricas antes y despues de agrupar.
+    """
+    grouped_labels = predictions_df["label"].map(lambda value: groups.get(value, value))
+    grouped_predictions = predictions_df["pred_label"].map(lambda value: groups.get(value, value))
+
+    return {
+        "groups": groups,
+        "ungrouped_accuracy": accuracy_score(predictions_df["label"], predictions_df["pred_label"]),
+        "ungrouped_macro_f1": f1_score(
+            predictions_df["label"],
+            predictions_df["pred_label"],
+            average="macro",
+            zero_division=0,
+        ),
+        "grouped_accuracy": accuracy_score(grouped_labels, grouped_predictions),
+        "grouped_macro_f1": f1_score(
+            grouped_labels, grouped_predictions, average="macro", zero_division=0
+        ),
+    }

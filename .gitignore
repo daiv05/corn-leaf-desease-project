@@ -3,6 +3,8 @@
 .env.*.local
 .envrc
 
+.worktrees/
+
 **.local**
 
 .temp/

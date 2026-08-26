@@ -96,8 +96,8 @@ def build_gradcam_overlay(
 ) -> np.ndarray:
     """
     Upsample bilinear del heatmap Grad-CAM a target_size y blend con la imagen original.
-    Usa colormap 'jet' (distinto del RdYlGn que usa el panel de importancia LIME) para
-    diferenciar visualmente ambas técnicas y evitar que se confundan como la misma.
+    Usa 'jet': la magnitud de Grad-CAM es no-negativa, a diferencia de las atribuciones
+    con signo de LIME/SHAP que usan un divergente (`ATTRIBUTION_CMAP`).
     """
     upsampled = (
         F.interpolate(cam[None, None, :, :], size=target_size, mode="bilinear", align_corners=False)

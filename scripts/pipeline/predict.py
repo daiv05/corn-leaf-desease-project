@@ -135,11 +135,14 @@ def main() -> None:
     if args.checkpoint:
         checkpoint_path = Path(args.checkpoint)
     else:
-        checkpoint_path = resolve_run_dir(
-            output_root / "baselines",
-            args.model,
-            args.run,
-        ) / "best.pth"
+        checkpoint_path = (
+            resolve_run_dir(
+                output_root / "baselines",
+                args.model,
+                args.run,
+            )
+            / "best.pth"
+        )
     if not checkpoint_path.exists():
         raise SystemExit(f"No existe el checkpoint: {checkpoint_path}")
 

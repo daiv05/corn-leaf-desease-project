@@ -50,9 +50,7 @@ def _save_class_grid(
         axes[i + 1].set_title(f"Aug {i + 1}", fontsize=10)
         axes[i + 1].axis("off")
 
-    fig.suptitle(
-        f"{class_name}  (pipeline: {pipeline_name})", fontsize=12, fontweight="bold"
-    )
+    fig.suptitle(f"{class_name}  (pipeline: {pipeline_name})", fontsize=12, fontweight="bold")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path, dpi=130, bbox_inches="tight", facecolor="white")
     plt.close(fig)

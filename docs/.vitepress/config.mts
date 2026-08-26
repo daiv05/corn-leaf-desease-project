@@ -37,6 +37,22 @@ const esDatasetSidebar = [
         text: "Corn Leaf - Roboflow",
         link: "/es/datasets/corn-leaf-roboflow",
       },
+      {
+        text: "Maize 2 - Roboflow",
+        link: "/es/datasets/maize-2-roboflow",
+      },
+      {
+        text: "Maize Leaf - Roboflow",
+        link: "/es/datasets/maize-leaf-roboflow",
+      },
+      {
+        text: "Maize Deficiency Scanner - Roboflow",
+        link: "/es/datasets/maize-deficiency-scanner-roboflow",
+      },
+      {
+        text: "Corn Leaf Diseases Classification - Roboflow",
+        link: "/es/datasets/corn-leaf-diseases-classification-roboflow",
+      },
     ],
   },
   {
@@ -100,6 +116,7 @@ const esDatasetSidebar = [
     text: "Deployment",
     items: [
       { text: "GPU en Modal", link: "/es/deployment/modal" },
+      { text: "App React Native", link: "/es/deployment/react-native" },
     ],
   },
 ];
@@ -203,6 +220,7 @@ export default defineConfig({
             text: "Deployment",
             items: [
               { text: "GPU en Modal", link: "/es/deployment/modal" },
+              { text: "App React Native", link: "/es/deployment/react-native" },
             ],
           },
         ],

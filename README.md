@@ -31,7 +31,7 @@ La idea es sencilla: una aplicación móvil que, dada una fotografía de hoja de
 |---|---|---|---:|---:|---:|
 | Roya común *(Common Rust)* | *Puccinia sorghi* | Pústulas anaranjadas en ambas caras | 2 150 | 106 (escasa) | 2 256 |
 | Tizón foliar del norte *(NCLB)* | *Exserohilum turcicum* | Lesiones alargadas grisáceas | 888 | 5 942 | 6 830 |
-| Mancha gris *(GLS)* | *Cercospora zeae-maydis* | Lesiones rectangulares grises | 513 | 606 | 1 119 |
+| Mancha gris *(GLS)* | *Cercospora zeae-maydis* | Lesiones rectangulares grises | 513 | 1 417 | 1 930 |
 | Necrosis letal *(MLN)* | Complejo viral (MCMV + potyvirus) | Rayado clorótico, necrosis progresiva y muerte de la planta | 0 | 6 415 | 6 415 |
 | Hoja sana *(Healthy)* | - | Sin síntomas visibles | 0 | 8 744 | 8 744 |
 | Gusano cogollero *(Fall Armyworm)* | *Spodoptera frugiperda* | Daño por masticación, excrementos en cogollo | 0 | 4 858 | 4 858 |
@@ -42,11 +42,17 @@ La idea es sencilla: una aplicación móvil que, dada una fotografía de hoja de
 
 | Clase | Síntomas | Lab | Real | Total |
 |---|---|---:|---:|---:|
-| Deficiencia de nitrógeno *(Nitrogen)* | Amarillamiento en "V" desde puntas de hojas inferiores | 0 | 523 (escasa) | 523 |
-| Deficiencia de fósforo *(Phosphorus)* | Bordes y puntas moradas/rojizas en hojas jóvenes | 0 | 612 (escasa) | 612 |
-| Deficiencia de potasio *(Potassium)* | Necrosis marginal en hojas más viejas | 0 | 266 (escasa) | 266 |
+| Deficiencia de nitrógeno *(Nitrogen)* | Amarillamiento en "V" desde puntas de hojas inferiores | 0 | 846 (escasa) | 846 |
+| Deficiencia de fósforo *(Phosphorus)* | Bordes y puntas moradas/rojizas en hojas jóvenes | 0 | 938 (escasa) | 938 |
+| Deficiencia de potasio *(Potassium)* | Necrosis marginal en hojas más viejas | 0 | 621 (escasa) | 621 |
 
 > "(escasa)" señala clases con pocas imágenes disponibles, candidatas prioritarias a data augmentation.
+
+> **Actualización agosto 2026 (posterior a la primera entrega).** Los conteos de estas tablas
+> corresponden al corpus ampliado: **33 438 imágenes** (3 551 lab + 29 887 campo real), tras
+> incorporar cuatro datasets Roboflow dirigidos a GLS y a las tres deficiencias nutricionales
+> (+1 815 netas) y deduplicar con PHash. El desbalance máximo bajó de 32.9x a **14.1x**.
+> Las corridas de baselines documentadas en `docs/` son previas a esta ampliación.
 
 
 ---
@@ -118,28 +124,49 @@ Guía de instalación local (venv, `.env`, dataset) en [LOCAL.md](LOCAL.md).
 
 ## Comandos
 
-Todos los comandos usan `make` (detecta Windows/Linux automáticamente). Variables comunes:
-`MODELS` (nombre o "all"), `EPOCHS`, `NO_CAP=1` / `MAX_PER_CLASS=<n>` (override del tope de
-imágenes por clase del perfil baseline), `RUN` (run_id específico), `SAMPLE_SIZE`.
+Todos los comandos usan `make` (detecta Windows/Linux automáticamente). El nombre del target
+dice dónde corre y sobre qué pipeline: prefijo `modal-` = GPU en la nube (sin prefijo = local),
+sufijo `-baselines` = runs de baselines (variable `MODELS`), sufijo `-main` = runs del pipeline
+principal (variable `MAIN_MODELS`). `make help` los lista agrupados.
 
-### Locales
+Variables comunes: `MODELS` / `MAIN_MODELS` (nombre o "all"), `EPOCHS` / `MAIN_EPOCHS`,
+`NO_CAP=1` / `MAX_PER_CLASS=<n>` (override del tope de imágenes por clase del perfil baseline),
+`RUN` (run_id específico), `SAMPLE_SIZE`.
+
+### Locales: setup y datos
 
 ```bash
 make install                        # pip install -e ".[dev,analysis,xai,cloud]"
 make download-dataset                # clean/ (HF Hub, fallback Google Drive)
+make upload-dataset STAGE_DIR=<dir>  # empaqueta clean/ en shards .tar y publica en HF
 
 make splits                          # splits completos (9 clases) -> outputs/splits/seed_42/
 make splits-baseline [NO_CAP=1 | MAX_PER_CLASS=<n>]   # perfil baseline -> outputs/splits/seed_42_baseline/
 
-make train-baselines [MODELS=<nombre>] [NO_CAP=1 | MAX_PER_CLASS=<n>]   # genera splits (lazy) y entrena
-make train                           # pipeline principal (loop de entrenamiento pendiente)
-
-make explain-lime [MODELS=<nombre> RUN=<id> IMAGE=<ruta> OUTPUT=<ruta>]   # reporte visual LIME+Grad-CAM
-make explain-report [MODELS=<nombre> RUN=<id> SAMPLE_SIZE=<n> NUM_SAMPLES=<n>]  # fidelidad agregada
-make explain-errors [MODELS=<nombre> RUN=<id> NUM_SAMPLES=<n>]   # LIME dirigido a errores
-
 make clean-outputs                   # borra outputs/ (splits, runs, reportes - todo regenerable)
 make summary / make test-loader / make lint / make fmt
+```
+
+### Locales: baselines (`outputs/baselines/`)
+
+```bash
+make train-baselines [MODELS=<nombre>] [NO_CAP=1 | MAX_PER_CLASS=<n>]   # genera splits (lazy) y entrena
+
+make explain-visual-baselines [MODELS=<nombre> RUN=<id> IMAGE=<ruta> OUTPUT=<ruta>]   # visual LIME+Grad-CAM
+make explain-fidelity-baselines [MODELS=<nombre> RUN=<id> SAMPLE_SIZE=<n> NUM_SAMPLES=<n>]  # fidelidad agregada
+make explain-errors-baselines [MODELS=<nombre> RUN=<id> NUM_SAMPLES=<n>]   # LIME dirigido a errores
+```
+
+### Locales: pipeline principal (`outputs/main/`)
+
+```bash
+make train-main [MAIN_MODELS=<nombre> MAIN_EPOCHS=<n> CLAHE=1 CLASS_WEIGHTS=<estrategia>]  # alias: make train
+
+make explain-visual-main [MAIN_MODELS=<nombre> RUN=<id>]
+make explain-fidelity-main [MAIN_MODELS=<nombre> RUN=<id> SAMPLE_SIZE=<n>]
+make explain-errors-main [MAIN_MODELS=<nombre> RUN=<id> NUM_SAMPLES=<n>]
+make explain-compare-main [MAIN_MODELS=<nombre> RUN=<id> SAMPLE_SIZE=<n>]   # panel LIME | SHAP | Grad-CAM (solo main)
+make explain-global-main [MAIN_MODELS=<nombre> RUN=<id> SAMPLE_SIZE=<n>]    # perfil global con SHAP (solo main)
 ```
 
 ### Modal (GPU en la nube)
@@ -149,10 +176,19 @@ funciona igual en Modal. Detalle completo en [docs/es/deployment/modal.md](docs/
 
 ```bash
 make modal-seed                                            # sube clean/ al Volume (una vez)
-make modal-train-baselines [MODELS=<nombre>] [NO_CAP=1 | MAX_PER_CLASS=<n>]
-make modal-explain-lime / modal-explain-report / modal-explain-errors [MODELS=<nombre> RUN=<id>]
+make modal-seed FORCE=1                                     # actualiza el dataset (vacía y re-descarga)
+make modal-splits                                           # regenera splits tras actualizar el dataset
 make modal-clean-outputs                                    # vacía el Volume corn-outputs
 make modal-pull                                             # trae outputs-remote/ con runs + reportes
+
+# baselines (/outputs/baselines)
+make modal-train-baselines [MODELS=<nombre>] [NO_CAP=1 | MAX_PER_CLASS=<n>]
+make modal-explain-visual-baselines / modal-explain-fidelity-baselines / modal-explain-errors-baselines [MODELS=<nombre> RUN=<id>]
+
+# pipeline principal (/outputs/main)
+make modal-train-main [MAIN_MODELS=<nombre> MAIN_EPOCHS=<n> CLAHE=1]        # alias: modal-train
+make modal-explain-visual-main / modal-explain-fidelity-main / modal-explain-errors-main [MAIN_MODELS=<nombre> RUN=<id>]
+make modal-explain-compare-main / modal-explain-global-main [MAIN_MODELS=<nombre> RUN=<id>]   # SHAP: solo pipeline principal
 ```
 
 ---
@@ -176,11 +212,11 @@ maize-doctor-classifier/
 ├── notebooks/            # Análisis exploratorio
 ├── scripts/
 │   ├── dataset/          # Subida/descarga de clean/ (Hugging Face Hub, Google Drive)
-│   ├── pipeline/         # create_splits.py, train_baselines.py, train.py, explain_lime.py, explain_report.py
+│   ├── pipeline/         # create_splits.py, train_baselines.py, train.py, explain.py
 │   └── modal/            # Entrenamiento/explicabilidad en GPU de Modal
 ├── src/                  # Librería principal (pip install -e .)
 │   ├── data/             # CornDataset, loader, splitter, transforms
-│   ├── explainability/   # LIME + Grad-CAM (post-hoc, no acoplado al entrenamiento)
+│   ├── explainability/   # LIME + Grad-CAM + SHAP (post-hoc, no acoplado al entrenamiento)
 │   └── models/           # Registro de modelos + 8 arquitecturas registradas (3 baselines)
 ├── Makefile
 └── pyproject.toml

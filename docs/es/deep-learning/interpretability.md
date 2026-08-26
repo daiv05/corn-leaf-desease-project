@@ -26,7 +26,7 @@ LIME explica una predicción individual aproximando localmente el modelo complej
 
 Para imágenes, LIME no trabaja con píxeles sueltos sino con superpíxeles, que son regiones contiguas de píxeles parecidos obtenidas por segmentación. El proceso segmenta la imagen en esos superpíxeles, genera muchas variantes perturbadas de la imagen original apagando algunos superpíxeles, le pregunta al modelo la probabilidad de la clase de interés para cada variante, y con esas respuestas ajusta un modelo lineal cuyos coeficientes son la importancia de cada superpíxel. En este proyecto se plantea usar mil perturbaciones por imagen y reportar los cinco superpíxeles más influyentes.
 
-El resultado que se busca es un mapa donde los superpíxeles que sostienen la predicción se resaltan, típicamente en verde, y los que la contradicen en rojo. Una explicación sana muestra la importancia concentrada sobre el tejido con síntomas, y una señal de alerta es que se disperse hacia el fondo o hacia el borde de la foto.
+El resultado que se busca es un mapa donde los superpíxeles que sostienen la predicción se resaltan en un extremo del colormap divergente y los que la contradicen en el otro (aquí, rojo a favor y azul en contra: se evita el eje rojo-verde porque el verde ya significa tejido sano en la propia imagen y ese eje colapsa en daltonismo). Una explicación sana muestra la importancia concentrada sobre el tejido con síntomas, y una señal de alerta es que se disperse hacia el fondo o hacia el borde de la foto.
 
 Entre las ventajas de usar LIME está que es agnóstico al modelo, muy intuitivo visualmente, y que produce importancias con signo, distinguiendo lo que va a favor de lo que va en contra. 
 

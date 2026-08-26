@@ -29,6 +29,10 @@ DATASET_NAMES=(
   "Mendeley Corn Leaf Diseases"
   "Maize Nutrient Deficiency"
   "Corn Leaf (Roboflow)"
+  "Maize 2 (Roboflow)"
+  "Maize Leaf (Roboflow)"
+  "Maize Deficiency Scanner (Roboflow)"
+  "Corn Leaf Diseases Classification (Roboflow)"
 )
 DATASET_TYPES=(
   "kaggle"
@@ -38,6 +42,10 @@ DATASET_TYPES=(
   "kaggle"
   "direct"
   "direct"
+  "roboflow"
+  "roboflow"
+  "roboflow"
+  "roboflow"
   "roboflow"
 )
 DATASET_SOURCES=(
@@ -49,6 +57,10 @@ DATASET_SOURCES=(
   "https://data.mendeley.com/public-api/zip/6w6gsvghfw/download/1"
   "https://data.mendeley.com/public-api/zip/34gb2gr7p2/download/1"
   "labonis-workspace/corn-leaf-hd9iy/4"
+  "david-deras/maize-2-qag1o-76kth"
+  "david-deras/maize-leaf-7zwoi-he5vd"
+  "david-deras/maize-deficiency-scanner-z2whz"
+  "david-deras/corn-leaf-diseases-classifcation-nwmtk"
 )
 
 print_menu() {
@@ -104,8 +116,21 @@ download_direct() {
   echo "$LOG_PREFIX Done: $RAW_DIR/$out_name"
 }
 
+# Resolves the latest version number for a workspace/project slug.
+roboflow_latest_version() {
+  local project_slug="$1"   # workspace/project
+  # Version ids look like "workspace/project/<n>"; matching that shape avoids
+  # depending on array bracket matching, which nested arrays would truncate.
+  curl -s "https://api.roboflow.com/${project_slug}?api_key=${ROBOFLOW_API_KEY}" \
+    | grep -o '"id":"[^"]*/[0-9]\+"' \
+    | cut -d'"' -f4 \
+    | awk -F/ '{print $NF}' \
+    | sort -n \
+    | tail -1
+}
+
 download_roboflow() {
-  local slug="$1"   # workspace/project/version
+  local slug="$1"   # workspace/project[/version]
   local out_name="$2"
 
   if [[ -z "${ROBOFLOW_API_KEY:-}" ]]; then
@@ -116,19 +141,39 @@ download_roboflow() {
     return 1
   fi
 
+  # Slugs without an explicit version resolve to the project's latest version.
+  if [[ "$(echo "$slug" | tr -cd '/' | wc -c)" -lt 2 ]]; then
+    echo "$LOG_PREFIX Resolving latest version for $slug"
+    local version
+    version="$(roboflow_latest_version "$slug")"
+    if [[ -z "$version" ]]; then
+      echo "$LOG_PREFIX Could not resolve a version for $slug (check the slug and your API key)."
+      return 1
+    fi
+    slug="${slug}/${version}"
+    echo "$LOG_PREFIX Using version $version"
+  fi
+
   ensure_raw_dir
   local out_dir="$RAW_DIR/$out_name"
   mkdir -p "$out_dir"
 
-  echo "$LOG_PREFIX Requesting download link for $slug"
-  local api_response
-  api_response="$(curl -s "https://api.roboflow.com/${slug}/yolov8?api_key=${ROBOFLOW_API_KEY}")"
+  # Classification projects only export folder-per-class; detection projects use yolov8.
+  local formats=("${ROBOFLOW_FORMAT:-}" "folder" "yolov8")
+  local api_response=""
+  local download_url=""
+  local fmt
 
-  local download_url
-  download_url="$(echo "$api_response" | grep -o '"link":"[^"]*"' | cut -d'"' -f4)"
+  for fmt in "${formats[@]}"; do
+    [[ -z "$fmt" ]] && continue
+    echo "$LOG_PREFIX Requesting download link for $slug (format: $fmt)"
+    api_response="$(curl -s "https://api.roboflow.com/${slug}/${fmt}?api_key=${ROBOFLOW_API_KEY}")"
+    download_url="$(echo "$api_response" | grep -o '"link":"[^"]*"' | cut -d'"' -f4)"
+    [[ -n "$download_url" ]] && break
+  done
 
   if [[ -z "$download_url" ]]; then
-    echo "$LOG_PREFIX Failed to get download URL. API response:"
+    echo "$LOG_PREFIX Failed to get download URL. Last API response:"
     echo "$api_response"
     return 1
   fi

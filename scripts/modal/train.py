@@ -8,6 +8,7 @@ get_output_root() resuelvan a los Volumes montados.
 
 Uso:
     modal run scripts/modal/train.py::seed_dataset            # 1 vez: dataset -> Volume
+    modal run scripts/modal/train.py::seed_dataset --force    # actualiza (vacía y re-descarga)
     modal run scripts/modal/train.py --models "efficientnet_b0" --epochs 30
     modal run scripts/modal/train.py::clean_outputs            # vacía el Volume corn-outputs
 Requiere: `pip install -e ".[cloud]"`, `modal setup`, y el secret:
@@ -21,7 +22,14 @@ from pathlib import Path
 
 import modal
 
-from scripts.modal._common import DEFAULT_MODELS, REPO_ANCHOR, dataset_vol, image, outputs_vol
+from scripts.modal._common import (
+    DATASET_MOUNT,
+    DEFAULT_MODELS,
+    REPO_ANCHOR,
+    dataset_vol,
+    image,
+    outputs_vol,
+)
 
 app = modal.App("corn-leaf-baselines", image=image)
 
@@ -32,15 +40,59 @@ app = modal.App("corn-leaf-baselines", image=image)
     secrets=[modal.Secret.from_name("hf")],
     timeout=3600,
 )
-def seed_dataset() -> None:
+def seed_dataset(force: bool = False) -> None:
     """Descarga el dataset limpio al Volume corn-clean. Idempotente: download_dataset.py
-    salta si /data/clean ya tiene contenido."""
-    subprocess.run(
-        [sys.executable, "scripts/dataset/download_dataset.py"],
-        check=True,
-        cwd=REPO_ANCHOR,
-    )
+    salta si /data/clean ya tiene contenido.
+
+    `force` borra /data/clean antes de descargar. Es necesario para *actualizar*: los shards
+    se extraen sobre el árbol existente y `snapshot_download` no elimina lo que ya no está en
+    el repo, así que un archivo renombrado aguas arriba sobreviviría con sus dos nombres.
+
+    @param {bool} force Vacía el Volume y vuelve a descargar. Destructivo.
+    """
+    clean_dir = Path(DATASET_MOUNT) / "clean"
+    if force and clean_dir.exists():
+        print(f"--force: eliminando {clean_dir} antes de re-descargar...", flush=True)
+        shutil.rmtree(clean_dir, ignore_errors=True)
+
+    command = [sys.executable, "scripts/dataset/download_dataset.py"]
+    if force:
+        command.append("--force")
+
+    subprocess.run(command, check=True, cwd=REPO_ANCHOR)
     dataset_vol.commit()
+
+
+@app.function(
+    # Indexado y hashing SHA-256 de ~31k imagenes: I/O-bound y paralelizable, sin GPU.
+    cpu=8.0,
+    volumes={"/data": dataset_vol, "/outputs": outputs_vol},
+    secrets=[modal.Secret.from_name("hf")],
+    timeout=2 * 3600,
+)
+def make_splits(baseline: bool = False, no_cap: bool = False, max_per_class: int = 0) -> None:
+    """
+    Genera los splits CSV en el Volume corn-outputs.
+
+    El pipeline principal (train_main) requiere outputs/splits/seed_42 y falla si no
+    existe: a diferencia de train_baselines, no los genera de forma lazy. Regenerar es
+    idempotente porque create_splits.py fija la semilla (42) y escanea con sorted().
+
+    @param {bool} baseline Genera seed_42_baseline (perfil capado) en vez de seed_42.
+    @param {bool} no_cap Sin tope por clase; solo aplica junto con baseline.
+    @param {int} max_per_class Tope por clase; 0 usa el default del YAML. Solo con baseline.
+    """
+    dataset_vol.reload()
+    command = [sys.executable, "scripts/pipeline/create_splits.py"]
+    if baseline:
+        command.append("--baseline")
+        if no_cap:
+            command.append("--no-cap")
+        elif max_per_class:
+            command += ["--max-per-class", str(max_per_class)]
+
+    subprocess.run(command, check=True, cwd=REPO_ANCHOR)
+    outputs_vol.commit()
 
 
 @app.function(
@@ -108,6 +160,72 @@ def train_baselines(
     if lime:
         train_args.append("--lime")
     subprocess.run(train_args, check=True, cwd=REPO_ANCHOR)
+    outputs_vol.commit()
+
+
+@app.function(
+    gpu="A10",
+    cpu=4.0,
+    volumes={"/data": dataset_vol, "/outputs": outputs_vol},
+    secrets=[modal.Secret.from_name("hf")],
+    # El pipeline principal corre sobre las 31 623 imagenes (3.2x el perfil capado) con
+    # hasta 60 epocas: ~2-4 h por corrida. El techo de 8 h deja margen para la variante
+    # con CLAHE sin arriesgar una muerte por timeout a mitad de entrenamiento.
+    timeout=8 * 3600,
+)
+def train_main(
+    models: str = "shufflenet_v2_x1_0",
+    epochs: int = 60,
+    batch_size: int = 0,
+    learning_rate: float = 0.0,
+    class_weights: str = "",
+    label_smoothing: float = -1.0,
+    patience: int = 0,
+    clahe: bool = False,
+    no_pretrained: bool = False,
+    num_workers: int = 0,
+) -> None:
+    """
+    Entrena el pipeline principal en GPU, persistiendo en el Volume corn-outputs.
+
+    @param {str} models Modelos separados por espacio.
+    @param {int} epochs Techo de epocas; el early stopping puede cortar antes.
+    @param {int} batch_size 0 usa el default del script.
+    @param {float} learning_rate 0.0 usa el default del script.
+    @param {str} class_weights Estrategia de pesos; "" usa el default (sqrt_inverse).
+    @param {float} label_smoothing Negativo usa el default del script.
+    @param {int} patience 0 usa el default del script.
+    @param {bool} clahe Activa CLAHE como preprocesamiento.
+    @param {bool} no_pretrained Entrena desde cero.
+    @param {int} num_workers 0 usa el default del script.
+    """
+    dataset_vol.reload()
+    command = [
+        sys.executable,
+        "scripts/pipeline/train.py",
+        "--models",
+        *models.split(),
+        "--epochs",
+        str(epochs),
+    ]
+    if batch_size:
+        command += ["--batch-size", str(batch_size)]
+    if learning_rate:
+        command += ["--learning-rate", str(learning_rate)]
+    if class_weights:
+        command += ["--class-weights", class_weights]
+    if label_smoothing >= 0:
+        command += ["--label-smoothing", str(label_smoothing)]
+    if patience:
+        command += ["--patience", str(patience)]
+    if num_workers:
+        command += ["--num-workers", str(num_workers)]
+    if clahe:
+        command.append("--clahe")
+    if no_pretrained:
+        command.append("--no-pretrained")
+
+    subprocess.run(command, check=True, cwd=REPO_ANCHOR)
     outputs_vol.commit()
 
 

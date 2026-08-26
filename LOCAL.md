@@ -75,8 +75,12 @@ Esto corre `pip install -e ".[dev,analysis,xai,cloud]"` dentro del venv (instala
 - `dev`: ipykernel, jupyterlab, matplotlib, seaborn, ruff, pyright
 - `analysis`: imagededup, fiftyone, imageio, mongoengine, motor (necesario para deduplicación y
   exploración visual)
-- `xai`: lime, scikit-image, matplotlib (necesario para `make explain-lime`/`explain-report`/`explain-errors`)
+- `xai`: lime, shap, scikit-image, matplotlib (necesario para `make explain-visual`/`fidelity`/`errors`/`compare`/`global`)
 - `cloud`: huggingface_hub, gdown (necesario para descargar/subir el dataset)
+- `export`: onnx, onnxruntime (necesario para `make export-main`/`train --export`; no incluido
+  en `make install` por defecto - instalar con `pip install -e ".[export]"`). TFLite requiere
+  ademas `ai-edge-torch`, que solo soporta Linux - instalar aparte con
+  `pip install ai-edge-torch` en ese entorno (no disponible en Windows/macOS).
 
 Si solo necesitas descargar el dataset sin las herramientas de desarrollo/análisis:
 
@@ -95,6 +99,20 @@ make download-dataset
 
 Esto ejecuta `scripts/dataset/download_dataset.py`, que descarga `clean/` hacia
 `$DATASET_ROOT/clean/`, intentando primero Hugging Face Hub (`HF_DATASET_REPO`) y usando Google Drive (`GDRIVE_DATASET_ID`) como respaldo si falla. Si `$DATASET_ROOT/clean/` ya tiene contenido, el script no vuelve a descargar (usa `--force` para forzarlo).
+
+Desde HF el dataset llega en shards `clean-<NNNNN>.tar` (~800 MB cada uno, ~19 GB en total); el script
+los extrae y elimina automáticamente, dejando el árbol `clean/<clase>/{lab,real}/`. Un `.tar` sin extraer
+se considera descarga incompleta y dispara el reintento.
+
+Para **publicar** una versión nueva del dataset (empaqueta los shards y los sube):
+
+```bash
+make upload-dataset STAGE_DIR=/ruta/con/espacio DRY_RUN=1   # plan de shards, sin escribir nada
+make upload-dataset STAGE_DIR=/ruta/con/espacio             # empaqueta y sube
+```
+
+`STAGE_DIR` es obligatorio y necesita ~19 GB libres: ahí se materializan los `.tar` antes de subirlos
+(se borra al terminar, salvo con `KEEP_STAGE=1`). Requiere `HF_TOKEN` con permiso de escritura.
 
 **Nunca coloques ni modifiques nada manualmente en `raw/`** - esa carpeta es inmutable y no forma parte de este flujo de descarga; `clean/` es la única fuente de verdad para el pipeline.
 
