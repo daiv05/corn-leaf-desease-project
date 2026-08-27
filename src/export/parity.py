@@ -13,6 +13,17 @@ logger = logging.getLogger(__name__)
 _MIN_RELIABLE_SAMPLES = 20
 
 
+def _extract_logits(model_output: torch.Tensor | tuple[torch.Tensor, ...]) -> torch.Tensor:
+    """
+    Extrae el tensor de logits de la salida de un modelo, sea de un solo output
+    (Tensor) o de un `FeatureExposedModel` (tupla `(logits, features)`).
+
+    @param {torch.Tensor|tuple[torch.Tensor, ...]} model_output Salida de `model(images)`.
+    @returns {torch.Tensor} El tensor de logits (primer elemento si es tupla).
+    """
+    return model_output[0] if isinstance(model_output, tuple) else model_output
+
+
 @dataclass
 class ParityResult:
     format: str
@@ -133,7 +144,8 @@ def validate_onnx_parity(
 
     torch_model.eval()
     with torch.no_grad():
-        torch_probs = torch_model(images).softmax(dim=1).cpu().numpy()
+        torch_logits = _extract_logits(torch_model(images))
+        torch_probs = torch_logits.softmax(dim=1).cpu().numpy()
 
     session = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
     input_name = session.get_inputs()[0].name
@@ -188,7 +200,8 @@ def validate_tflite_parity(
 
     torch_model.eval()
     with torch.no_grad():
-        torch_probs = torch_model(images).softmax(dim=1).cpu().numpy()
+        torch_logits = _extract_logits(torch_model(images))
+        torch_probs = torch_logits.softmax(dim=1).cpu().numpy()
 
     interpreter = interpreter_cls(model_path=str(tflite_path))
     interpreter.allocate_tensors()

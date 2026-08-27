@@ -24,6 +24,7 @@ from src.export.common import (
 )
 from src.export.data import build_test_loader, resolve_test_csv
 from src.models import list_models
+from src.models.feature_exposed import FeatureExposedModel
 from src.training.common import resolve_run_dir, select_device
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -118,6 +119,10 @@ def _export_one(args: argparse.Namespace, model_name: str, output_dir: Path) -> 
     write_labels_json(run_dir, class_to_idx, model_name, image_size)
     device = select_device()
     model = load_checkpoint_for_export(checkpoint_path, model_name, class_to_idx, device)
+    # El segundo output (features pooled pre-head) alimenta el detector OOD por
+    # distancia de Mahalanobis en la app; no cambia el output[0] (logits), que
+    # sigue siendo lo único que valida la paridad numérica.
+    model = FeatureExposedModel(model, model_name)
 
     test_loader = None
     if not args.no_parity:
