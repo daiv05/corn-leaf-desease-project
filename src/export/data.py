@@ -21,9 +21,9 @@ from src.data.transforms import CornTransformFactory
 logger = logging.getLogger(__name__)
 
 
-def resolve_test_csv(run_dir: Path, splits_dir: str | None) -> Path:
+def resolve_split_csv(run_dir: Path, splits_dir: str | None, split_name: str) -> Path:
     """
-    Resuelve la ruta de test.csv, tolerando runs movidos entre Modal y local.
+    Resuelve la ruta de `<split_name>.csv`, tolerando runs movidos entre Modal y local.
 
     `summary.json` guarda `splits_dir` como ruta **absoluta** del entorno donde se entrenó.
     Un run entrenado en Modal lo deja como `/outputs/splits/seed_42`, que no existe al
@@ -35,7 +35,8 @@ def resolve_test_csv(run_dir: Path, splits_dir: str | None) -> Path:
 
     @param {Path} run_dir Directorio del run.
     @param {str|None} splits_dir Override explícito del directorio de splits.
-    @returns {Path} Ruta a test.csv.
+    @param {str} split_name Nombre del split ("train", "val" o "test").
+    @returns {Path} Ruta a `<split_name>.csv`.
     @throws {SystemExit} Si no se encuentra en ninguna de las rutas candidatas.
     """
     if splits_dir:
@@ -49,21 +50,26 @@ def resolve_test_csv(run_dir: Path, splits_dir: str | None) -> Path:
         candidates = [recorded] if recorded == remapped else [recorded, remapped]
 
     for candidate in candidates:
-        test_csv = candidate / "test.csv"
-        if test_csv.exists():
+        split_csv = candidate / f"{split_name}.csv"
+        if split_csv.exists():
             if candidate != candidates[0]:
                 logger.warning(
                     "El splits_dir del run (%s) no existe en esta maquina; usando %s.",
                     candidates[0],
                     candidate,
                 )
-            return test_csv
+            return split_csv
 
-    intentadas = "\n  ".join(str(c / "test.csv") for c in candidates)
+    intentadas = "\n  ".join(str(c / f"{split_name}.csv") for c in candidates)
     raise SystemExit(
-        f"No se encontro test.csv. Rutas intentadas:\n  {intentadas}\n"
+        f"No se encontro {split_name}.csv. Rutas intentadas:\n  {intentadas}\n"
         "Pasa --splits-dir con el directorio correcto, o genera los splits con: make splits"
     )
+
+
+def resolve_test_csv(run_dir: Path, splits_dir: str | None) -> Path:
+    """Resuelve la ruta de test.csv. Ver `resolve_split_csv`."""
+    return resolve_split_csv(run_dir, splits_dir, "test")
 
 
 def build_test_loader(
