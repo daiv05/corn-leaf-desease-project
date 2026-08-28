@@ -60,8 +60,13 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--percentile",
         type=float,
-        default=99.0,
-        help="Percentil de calibracion del umbral sobre las distancias de val (default: 99).",
+        default=95.0,
+        # p99 resulto inestable en la practica: la cola de distancias de val puede
+        # tener outliers extremos (imagenes atipicas/mal etiquetadas) que inflan el
+        # percentil 99 muy por encima de donde vive la mayoria de los datos legitimos
+        # (visto en efficientnet_lite0: p95=8814 pero p99=74821, 9x mas), dejando
+        # pasar imagenes OOD reales. p95 calibra sobre la distribucion "normal".
+        help="Percentil de calibracion del umbral sobre las distancias de val (default: 95).",
     )
     parser.add_argument("--config", default=str(PROJECT_ROOT / "config" / "dataset.yaml"))
     return parser.parse_args()
