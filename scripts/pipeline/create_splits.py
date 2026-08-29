@@ -148,7 +148,7 @@ def run_data_preparation_pipeline(
             for img_name in sorted(os.listdir(env_path)):
                 if img_name.lower().endswith((".png", ".jpg", ".jpeg")):
                     abs_path = env_path / img_name
-                    rel_path = str(abs_path.relative_to(dataset_root))
+                    rel_path = abs_path.relative_to(dataset_root).as_posix()
                     raw_image_paths.append((class_name, environment, abs_path, rel_path))
 
     if not raw_image_paths:

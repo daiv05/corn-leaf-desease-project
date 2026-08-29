@@ -39,7 +39,8 @@ class FeatureExposedModel(nn.Module):
         self.model.eval()
         try:
             with torch.no_grad():
-                dummy = torch.zeros(1, 3, 224, 224)
+                device = next(self.model.parameters()).device
+                dummy = torch.zeros(1, 3, 224, 224, device=device)
                 _, features = self._forward_timm(dummy)
             return int(features.shape[1])
         finally:

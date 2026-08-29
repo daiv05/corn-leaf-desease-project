@@ -79,8 +79,10 @@ Esto corre `pip install -e ".[dev,analysis,xai,cloud]"` dentro del venv (instala
 - `cloud`: huggingface_hub, gdown (necesario para descargar/subir el dataset)
 - `export`: onnx, onnxruntime (necesario para `make export-main`/`train --export`; no incluido
   en `make install` por defecto - instalar con `pip install -e ".[export]"`). TFLite requiere
-  ademas `ai-edge-torch`, que solo soporta Linux - instalar aparte con
-  `pip install ai-edge-torch` en ese entorno (no disponible en Windows/macOS).
+  ademas `litert-torch` (renombrado desde `ai-edge-torch`, deprecado) y `ai-edge-litert`, que
+  solo soportan Linux - ya declarados como dependencia condicional (`sys_platform == 'linux'`)
+  dentro del extra `export`, asi que `pip install -e ".[export]"` en un entorno Linux (WSL
+  incluido) los instala automaticamente; no hace falta instalarlos aparte.
 
 Si solo necesitas descargar el dataset sin las herramientas de desarrollo/análisis:
 

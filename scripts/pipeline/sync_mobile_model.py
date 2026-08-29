@@ -1,10 +1,12 @@
-"""Copia el modelo exportado y labels.json al repo de la app, con verificacion de hash.
+"""Copia el modelo exportado, labels.json y ood_stats.json al repo de la app, con
+verificacion de hash.
 
 Lee `<run_dir>/export/export_summary[_<quantize>].json` para obtener el sha256
 registrado del artefacto (ver `src/export/common.py::write_export_summary`), copia
-`model[_<quantize>].<fmt>` y `labels.json` a `dest_dir`, re-calcula el hash de la copia
-y aborta si no coincide. Deja `dest_dir/manifest.json` como registro de procedencia,
-para que quede trazable de que run/hash viene el modelo que trae la app empaquetado.
+`model[_<quantize>].<fmt>`, `labels.json` y (si existe) `ood_stats.json` a `dest_dir`,
+re-calcula el hash de la copia del modelo y aborta si no coincide. Deja
+`dest_dir/manifest.json` como registro de procedencia, para que quede trazable de que
+run/hash viene el modelo que trae la app empaquetado.
 """
 
 import argparse
@@ -50,6 +52,7 @@ def sync_mobile_model(
     model_filename = model_filename or Path(match["output_path"]).name
     source_model = export_dir / model_filename
     source_labels = export_dir / "labels.json"
+    source_ood_stats = export_dir / "ood_stats.json"
 
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest_model = dest_dir / model_filename
@@ -64,12 +67,18 @@ def sync_mobile_model(
             f"{summary_path} ({match['sha256']})"
         )
 
+    ood_stats_synced = False
+    if source_ood_stats.exists():
+        shutil.copy2(source_ood_stats, dest_dir / "ood_stats.json")
+        ood_stats_synced = True
+
     manifest = {
         "run_id": summary["run_id"],
         "model": summary["model"],
         "format": fmt,
         "quantize": quantize,
         "sha256": copied_sha256,
+        "ood_stats_synced": ood_stats_synced,
         "source_run_dir": str(run_dir),
         "synced_at": datetime.now(timezone.utc).isoformat(),
     }
@@ -97,7 +106,14 @@ def main() -> None:
     manifest_path = sync_mobile_model(
         Path(args.run_dir), Path(args.dest), fmt=args.format, quantize=quantize
     )
+    manifest = json.loads(manifest_path.read_text())
     print(f"Sincronizado. Manifest: {manifest_path}")
+    if not manifest["ood_stats_synced"]:
+        print(
+            "ADVERTENCIA: no se encontro ood_stats.json en el run exportado; la app "
+            "espera ese archivo (TFLiteInferenceEngine.ts) y no debe recibir este "
+            "modelo hasta correr compute_ood_stats.py sobre el mismo checkpoint."
+        )
 
 
 if __name__ == "__main__":

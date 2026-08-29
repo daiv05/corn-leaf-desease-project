@@ -203,6 +203,19 @@ export-main:
 		$(if $(PARITY_SAMPLE_SIZE),--parity-sample-size $(PARITY_SAMPLE_SIZE),) \
 		$(if $(NO_PARITY),--no-parity,)
 
+# Calcula ood_stats.json (centroides + covarianza + umbral Mahalanobis) para
+# MAIN_MODELS, a partir del mismo checkpoint que export-main. Requiere haber
+# exportado antes con FORMATS que incluya el modelo de dos salidas (export-main
+# ya envuelve el checkpoint en FeatureExposedModel).
+compute-ood-stats:
+	$(PYTHON) scripts/pipeline/compute_ood_stats.py \
+		--models $(MAIN_MODELS) \
+		$(if $(RUN),--run $(RUN),) $(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),) \
+		--output-dir $(MAIN_OUTPUT_DIR) \
+		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
+		$(if $(BATCH_SIZE),--batch-size $(BATCH_SIZE),) \
+		$(if $(PERCENTILE),--percentile $(PERCENTILE),)
+
 # Mide el archivo exportado sobre el split de test completo (accuracy/macro-F1 reales),
 # no solo la paridad numerica de una muestra que valida export-main.
 eval-export-main:
