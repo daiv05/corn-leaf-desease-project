@@ -1,10 +1,10 @@
-"""Valida el detector OOD (Mahalanobis) calibrado en compute_ood_stats.py.
+"""Valida el detector OOD (Relative Mahalanobis Distance) calibrado en compute_ood_stats.py.
 
 Corre el detector sobre (a) una muestra de imagenes de test legitimas -esperado:
 por debajo del umbral- y (b) imagenes fuera de dominio -esperado: por encima del
 umbral- (fotos negras/ruido/color solido, sustitutas de fotos de escritorio/objetos
 random). Reporta la tasa de falsos positivos sobre datos legitimos y si las OOD
-sinteticas quedan claramente separadas.
+sinteticas quedan claramente separadas. Metodologia: docs/es/deep-learning/ood-detection.md.
 
 Uso: python scripts/checks/validate_ood_detector.py --model shufflenet_v2_x1_0
      --checkpoint <run_dir>/best.pth --ood-stats <run_dir>/export/ood_stats.json
@@ -18,6 +18,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from scripts.pipeline.compute_ood_stats import _apply_pca, _l2_normalize, _mahalanobis_to_mean
 from src.config import PROJECT_ROOT
 from src.data.transforms import CornTransformFactory
 from src.export.common import load_checkpoint_for_export, resolve_export_inputs
@@ -29,24 +30,55 @@ def _load_ood_stats(path: Path) -> dict:
     data = json.loads(path.read_text())
     num_classes = data["num_classes"]
     feature_dim = data["feature_dim"]
+    pca_dim = data["pca_dim"]
     means = np.frombuffer(
         base64.b64decode(data["mean_per_class_b64"]), dtype=np.float32
-    ).reshape(num_classes, feature_dim)
+    ).reshape(num_classes, pca_dim)
     inv_covariance = np.frombuffer(
         base64.b64decode(data["inv_covariance_b64"]), dtype=np.float32
-    ).reshape(feature_dim, feature_dim)
+    ).reshape(pca_dim, pca_dim)
+    background_mean = np.frombuffer(
+        base64.b64decode(data["background_mean_b64"]), dtype=np.float32
+    )
+    background_inv_covariance = np.frombuffer(
+        base64.b64decode(data["background_inv_covariance_b64"]), dtype=np.float32
+    ).reshape(pca_dim, pca_dim)
+    pca_mean = np.frombuffer(base64.b64decode(data["pca_mean_b64"]), dtype=np.float32)
+    pca_components = np.frombuffer(
+        base64.b64decode(data["pca_components_b64"]), dtype=np.float32
+    ).reshape(pca_dim, feature_dim)
     return {
         "means": means,
         "inv_covariance": inv_covariance,
+        "background_mean": background_mean,
+        "background_inv_covariance": background_inv_covariance,
+        "pca_mean": pca_mean,
+        "pca_components": pca_components,
         "threshold": data["threshold"],
         "labels": data["labels"],
     }
 
 
-def _mahalanobis_min_distance(feature: np.ndarray, means: np.ndarray, inv_covariance: np.ndarray) -> float:
-    diffs = feature[None, :] - means
-    distances = np.einsum("ij,jk,ik->i", diffs, inv_covariance, diffs)
-    return float(distances.min())
+def _mahalanobis_scores(feature: np.ndarray, stats: dict) -> tuple[float, float, float]:
+    """Componentes del score de una sola muestra sobre la feature L2-normalizada y
+    proyectada por PCA: distancia a la clase mas cercana (MD "plana"), distancia a la
+    gaussiana de fondo, y su resta (RMD). Ver `scripts/pipeline/compute_ood_stats.py`
+    para el mismo calculo vectorizado.
+
+    @returns {tuple[float,float,float]} `(class_distance, background_distance, rmd)`.
+    """
+    normalized = _l2_normalize(feature[None, :])[0]
+    reduced = _apply_pca(normalized[None, :], stats["pca_mean"], stats["pca_components"])[0]
+    diffs = reduced[None, :] - stats["means"]
+    class_distance = float(
+        np.einsum("ij,jk,ik->i", diffs, stats["inv_covariance"], diffs).min()
+    )
+    background_distance = float(
+        _mahalanobis_to_mean(
+            reduced[None, :], stats["background_mean"], stats["background_inv_covariance"]
+        )[0]
+    )
+    return class_distance, background_distance, class_distance - background_distance
 
 
 def _synthetic_ood_images(image_size: tuple[int, int]) -> dict[str, torch.Tensor]:
@@ -87,6 +119,17 @@ def main() -> None:
         dest="splits_dir",
         help="Directorio con test.csv (default: el 'splits_dir' de summary.json).",
     )
+    parser.add_argument(
+        "--extra-images",
+        nargs="+",
+        default=None,
+        dest="extra_images",
+        metavar="PATH[:label]",
+        help="Rutas a imagenes reales (no sinteticas) a evaluar una por una, con "
+        "corregimiento EXIF igual que el pipeline de entrenamiento. Cada una puede "
+        "llevar ':label' (ej. 'foto.jpg:legit' o 'captura.png:ood') solo para el "
+        "reporte; no afecta el calculo.",
+    )
     args = parser.parse_args()
 
     checkpoint_path = Path(args.checkpoint)
@@ -108,13 +151,11 @@ def main() -> None:
     for name, tensor in synthetic.items():
         with torch.no_grad():
             _, features = model(tensor.unsqueeze(0).to(device))
-        distance = _mahalanobis_min_distance(
-            features.cpu().numpy()[0], stats["means"], stats["inv_covariance"]
-        )
-        flagged = distance > stats["threshold"]
+        class_distance, _, rmd = _mahalanobis_scores(features.cpu().numpy()[0], stats)
+        flagged = rmd > stats["threshold"]
         ood_flagged += int(flagged)
         status = "OOD (correcto)" if flagged else "NO detectado (FALLO)"
-        print(f"  {name:15s} distance={distance:12.2f}  {status}")
+        print(f"  {name:15s} MD_plana={class_distance:10.2f}  RMD={rmd:10.2f}  {status}")
 
     print(f"\nOOD sinteticas detectadas: {ood_flagged}/{len(synthetic)}")
 
@@ -133,10 +174,8 @@ def main() -> None:
                 break
             with torch.no_grad():
                 _, features = model(images.to(device))
-            distance = _mahalanobis_min_distance(
-                features.cpu().numpy()[0], stats["means"], stats["inv_covariance"]
-            )
-            flagged = distance > stats["threshold"]
+            _, _, rmd = _mahalanobis_scores(features.cpu().numpy()[0], stats)
+            flagged = rmd > stats["threshold"]
             false_positives += int(flagged)
             evaluated += 1
 
@@ -147,6 +186,27 @@ def main() -> None:
             print(
                 f"  Evaluadas: {evaluated}, falsos positivos: {false_positives} "
                 f"({fp_rate:.1%})"
+            )
+
+    if args.extra_images:
+        from src.data.loader import load_and_normalize_image
+
+        print("\n=== Imagenes reales sueltas (--extra-images) ===")
+        factory = CornTransformFactory(target_size=image_size)
+        transform = factory.get_pipeline("test")
+        for spec in args.extra_images:
+            image_path, _, label = spec.partition(":")
+            image = load_and_normalize_image(image_path)
+            tensor = transform(image)
+            with torch.no_grad():
+                logits, features = model(tensor.unsqueeze(0).to(device))
+            predicted = stats["labels"][int(logits.argmax(dim=1).item())]
+            _, _, rmd = _mahalanobis_scores(features.cpu().numpy()[0], stats)
+            flagged = rmd > stats["threshold"]
+            tag = f" [{label}]" if label else ""
+            print(
+                f"  {Path(image_path).name:40s}{tag:12s} predicho={predicted:26s} "
+                f"RMD={rmd:10.2f}  {'OOD' if flagged else 'id'}"
             )
 
 

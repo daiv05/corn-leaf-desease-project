@@ -84,6 +84,7 @@ const esDatasetSidebar = [
     items: [
       { text: "Teoría", link: "/es/deep-learning/" },
       { text: "Interpretabilidad (XAI)", link: "/es/deep-learning/interpretability" },
+      { text: "Detección OOD (Mahalanobis)", link: "/es/deep-learning/ood-detection" },
       { text: "Baselines", link: "/es/baselines/" },
     ],
   },
@@ -191,6 +192,7 @@ export default defineConfig({
                 items: [
                   { text: "Teoría", link: "/es/deep-learning/" },
                   { text: "Interpretabilidad (XAI)", link: "/es/deep-learning/interpretability" },
+                  { text: "Detección OOD (Mahalanobis)", link: "/es/deep-learning/ood-detection" },
                   { text: "Baselines", link: "/es/baselines/" },
                 ],
               },

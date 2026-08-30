@@ -1,10 +1,27 @@
-"""Calcula estadisticas de deteccion OOD (out-of-distribution) por distancia de Mahalanobis.
+"""Calcula estadisticas de deteccion OOD (out-of-distribution) por Relative Mahalanobis
+Distance (RMD) sobre un espacio de features reducido por PCA.
 
 Para cada modelo, extrae el vector de features pooled (penultima capa, via
-`FeatureExposedModel`) sobre el split de train y calcula el centroide por clase mas
-una covarianza pooled compartida. El umbral de rechazo se calibra sobre el split de
-val (no visto durante el entrenamiento) como el percentil pedido de las distancias de
-Mahalanobis de cada muestra a su propio centroide de clase.
+`FeatureExposedModel`) sobre el split de train, normaliza cada vector a norma L2
+unitaria (Mahalanobis++, Ren et al. 2025: arXiv:2505.18032), y proyecta a las
+componentes principales que explican el 99% de la varianza (`_fit_pca`). Sobre ese
+espacio reducido calcula el centroide por clase mas una covarianza pooled compartida,
+mas una gaussiana de fondo (sin condicionar por clase) sobre todo el split de train. El
+score final de cada muestra es la distancia de Mahalanobis a la clase mas cercana MENOS
+la distancia a la gaussiana de fondo (RMD, Ren et al. 2021: arXiv:2106.09022).
+
+La reduccion PCA es necesaria porque el feature vector crudo (1280 dimensiones) tiene un
+espectro de autovalores muy sesgado: solo un centenar de dimensiones concentran varianza
+real, el resto es esencialmente ruido numerico. Invertir la covarianza cruda de 1280x1280
+(incluso regularizada con un ridge pequeno) deja esas dimensiones de ruido con un peso
+desproporcionado en la distancia, y el detector no separa nada. Truncar a las componentes
+que explican el 99% de la varianza elimina ese ruido antes de que pueda dominar la suma.
+Ambas covarianzas (clase y fondo), ya en el espacio reducido, se regularizan (ridge
+proporcional a su traza) antes de invertir. El umbral de rechazo se calibra sobre el
+split de val (no visto durante el entrenamiento) como el percentil pedido del score RMD
+de cada muestra respecto a su propio centroide de clase.
+
+Metodologia completa: docs/es/deep-learning/ood-detection.md.
 
 Escribe `<run_dir>/export/ood_stats.json`, consumido por la app movil junto al
 `.tflite` de dos salidas (logits + features) para bloquear diagnosticos sobre
@@ -58,6 +75,14 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--batch-size", type=int, default=32, dest="batch_size")
     parser.add_argument(
+        "--explained-variance",
+        type=float,
+        default=0.99,
+        dest="explained_variance",
+        help="Fraccion de varianza a retener al reducir el feature vector via PCA "
+        "antes de ajustar la gaussiana (default: 0.99). Ver docs/es/deep-learning/ood-detection.md.",
+    )
+    parser.add_argument(
         "--percentile",
         type=float,
         default=95.0,
@@ -93,6 +118,71 @@ def _extract_features(
         all_features.append(features.cpu().numpy())
         all_labels.append(labels.numpy())
     return np.concatenate(all_features, axis=0), np.concatenate(all_labels, axis=0)
+
+
+def _l2_normalize(features: np.ndarray) -> np.ndarray:
+    """
+    Normaliza cada vector de features a norma L2 unitaria.
+
+    @param {np.ndarray} features Features (N, feature_dim).
+    @returns {np.ndarray} Features normalizadas, misma forma.
+    """
+    norms = np.linalg.norm(features, axis=1, keepdims=True)
+    return features / norms
+
+
+def _fit_pca(features: np.ndarray, explained_variance: float = 0.99) -> tuple[np.ndarray, np.ndarray, float]:
+    """
+    Ajusta PCA sobre `features` (ya L2-normalizadas) y devuelve las componentes que
+    explican al menos `explained_variance` de la varianza total.
+
+    @param {np.ndarray} features Features (N, feature_dim).
+    @param {float} explained_variance Fraccion minima de varianza acumulada a retener.
+    @returns {tuple[np.ndarray,np.ndarray,float]} `(mean, components, explained_actual)`.
+        `mean` es (feature_dim,); `components` es (k, feature_dim), filas ortonormales
+        ordenadas por varianza explicada descendente; `explained_actual` es la fraccion
+        de varianza realmente retenida con esas k componentes.
+    """
+    mean = features.mean(axis=0)
+    centered = features - mean
+    # SVD economica sobre (N, feature_dim) en vez de diagonalizar la covarianza
+    # (feature_dim, feature_dim): evita construir esa matriz solo para esto.
+    _, singular_values, vt = np.linalg.svd(centered, full_matrices=False)
+    variance = singular_values**2
+    cumulative = np.cumsum(variance) / np.sum(variance)
+    k = int(np.searchsorted(cumulative, explained_variance) + 1)
+    k = min(k, vt.shape[0])
+    return mean, vt[:k], float(cumulative[k - 1])
+
+
+def _apply_pca(features: np.ndarray, pca_mean: np.ndarray, pca_components: np.ndarray) -> np.ndarray:
+    """
+    Proyecta `features` al espacio reducido por PCA.
+
+    @param {np.ndarray} features Features (N, feature_dim), en el mismo espacio (L2-normalizado)
+        en que se ajusto `_fit_pca`.
+    @param {np.ndarray} pca_mean Media usada al ajustar PCA (feature_dim,).
+    @param {np.ndarray} pca_components Componentes principales (k, feature_dim).
+    @returns {np.ndarray} Features proyectadas (N, k).
+    """
+    return (features - pca_mean) @ pca_components.T
+
+
+def _regularize_covariance(covariance: np.ndarray, ridge_scale: float = 1e-3) -> np.ndarray:
+    """
+    Suma una matriz identidad escalada a la covarianza antes de invertir.
+
+    El ridge es proporcional a la traza (varianza promedio por dimension) en vez de un
+    valor absoluto fijo, para que la magnitud de la regularizacion se adapte a la escala
+    de las features (aqui, normalizadas a norma L2 unitaria).
+
+    @param {np.ndarray} covariance Covarianza (feature_dim, feature_dim).
+    @param {float} ridge_scale Fraccion de la varianza promedio sumada a la diagonal.
+    @returns {np.ndarray} Covarianza regularizada, misma forma.
+    """
+    feature_dim = covariance.shape[0]
+    ridge = ridge_scale * (np.trace(covariance) / feature_dim)
+    return covariance + ridge * np.eye(feature_dim)
 
 
 def _compute_class_means(features: np.ndarray, labels: np.ndarray, num_classes: int) -> np.ndarray:
@@ -166,6 +256,21 @@ def _mahalanobis_distances(
     return np.einsum("ij,jk,ik->i", diff, inv_covariance, diff)
 
 
+def _mahalanobis_to_mean(
+    features: np.ndarray, mean: np.ndarray, inv_covariance: np.ndarray
+) -> np.ndarray:
+    """
+    Distancia de Mahalanobis de cada muestra a una unica media (sin condicionar por clase).
+
+    @param {np.ndarray} features Features (N, feature_dim).
+    @param {np.ndarray} mean Media (feature_dim,).
+    @param {np.ndarray} inv_covariance Inversa (pseudo-inversa) de la covarianza.
+    @returns {np.ndarray} Distancias (N,).
+    """
+    diff = features - mean
+    return np.einsum("ij,jk,ik->i", diff, inv_covariance, diff)
+
+
 def _compute_one(args: argparse.Namespace, model_name: str, output_dir: Path) -> None:
     config_path = Path(args.config)
 
@@ -192,20 +297,47 @@ def _compute_one(args: argparse.Namespace, model_name: str, output_dir: Path) ->
         train_csv, config_path, class_to_idx, image_size, args.batch_size
     )
     train_features, train_labels = _extract_features(model, train_loader, device)
+    train_features = _l2_normalize(train_features)
+    feature_dim = int(train_features.shape[1])
     logger.info("Features de train: %s", train_features.shape)
 
-    means = _compute_class_means(train_features, train_labels, num_classes)
-    covariance = _compute_pooled_covariance(train_features, train_labels, means)
+    pca_mean, pca_components, explained_actual = _fit_pca(train_features, args.explained_variance)
+    pca_dim = pca_components.shape[0]
+    logger.info(
+        "PCA: %d -> %d dimensiones (%.2f%% varianza explicada, pedido %.2f%%)",
+        feature_dim,
+        pca_dim,
+        explained_actual * 100,
+        args.explained_variance * 100,
+    )
+    train_reduced = _apply_pca(train_features, pca_mean, pca_components)
+
+    means = _compute_class_means(train_reduced, train_labels, num_classes)
+    covariance = _regularize_covariance(_compute_pooled_covariance(train_reduced, train_labels, means))
     inv_covariance = np.linalg.pinv(covariance)
+
+    background_mean = train_reduced.mean(axis=0)
+    background_covariance = _regularize_covariance(
+        _compute_pooled_covariance(
+            train_reduced, np.zeros(len(train_reduced), dtype=np.int64), background_mean[None, :]
+        )
+    )
+    background_inv_covariance = np.linalg.pinv(background_covariance)
 
     logger.info("Extrayendo features de val (%s) para calibrar el umbral...", val_csv)
     val_loader, _ = build_test_loader(val_csv, config_path, class_to_idx, image_size, args.batch_size)
     val_features, val_labels = _extract_features(model, val_loader, device)
+    val_features = _l2_normalize(val_features)
+    val_reduced = _apply_pca(val_features, pca_mean, pca_components)
 
-    val_distances = _mahalanobis_distances(val_features, val_labels, means, inv_covariance)
-    threshold = float(np.percentile(val_distances, args.percentile))
+    val_class_distances = _mahalanobis_distances(val_reduced, val_labels, means, inv_covariance)
+    val_background_distances = _mahalanobis_to_mean(
+        val_reduced, background_mean, background_inv_covariance
+    )
+    val_rmd_scores = val_class_distances - val_background_distances
+    threshold = float(np.percentile(val_rmd_scores, args.percentile))
 
-    if not np.isfinite(threshold) or threshold <= 0:
+    if not np.isfinite(threshold):
         raise SystemExit(
             f"Umbral calibrado invalido ({threshold}) para '{model_name}'. "
             "Revisa que la covarianza pooled no este degenerada."
@@ -213,17 +345,22 @@ def _compute_one(args: argparse.Namespace, model_name: str, output_dir: Path) ->
 
     export_dir = run_dir / "export"
     export_dir.mkdir(parents=True, exist_ok=True)
-    # mean_per_class/inv_covariance van en base64 (float32 binario), no como arrays
-    # JSON de texto: un array 1024x1024 en texto pesa ~20MB; el binario equivalente
-    # son ~5.3MB en base64. Ver `_encode_float32_base64`.
-    feature_dim = int(train_features.shape[1])
+    # Los arrays van en base64 (float32 binario), no como arrays JSON de texto: mas
+    # compacto y evita parsear un array gigante como texto. Ver `_encode_float32_base64`.
     payload = {
-        "schema_version": 2,
+        "schema_version": 4,
         "model": model_name,
         "num_classes": num_classes,
         "feature_dim": feature_dim,
+        "pca_dim": int(pca_dim),
+        "explained_variance": explained_actual,
+        "l2_normalized": True,
+        "pca_mean_b64": _encode_float32_base64(pca_mean),
+        "pca_components_b64": _encode_float32_base64(pca_components),
         "mean_per_class_b64": _encode_float32_base64(means),
         "inv_covariance_b64": _encode_float32_base64(inv_covariance),
+        "background_mean_b64": _encode_float32_base64(background_mean),
+        "background_inv_covariance_b64": _encode_float32_base64(background_inv_covariance),
         "threshold": round(threshold, 6),
         "percentile": args.percentile,
         "calibration_split": "val",
@@ -233,10 +370,11 @@ def _compute_one(args: argparse.Namespace, model_name: str, output_dir: Path) ->
     output_path.write_text(json.dumps(payload))
 
     logger.info(
-        "OK: %s -> %s (feature_dim=%d, threshold=%.4f, percentile=%.1f)",
+        "OK: %s -> %s (feature_dim=%d, pca_dim=%d, threshold=%.4f, percentile=%.1f)",
         model_name,
         output_path,
-        train_features.shape[1],
+        feature_dim,
+        pca_dim,
         threshold,
         args.percentile,
     )

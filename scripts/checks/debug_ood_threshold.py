@@ -1,6 +1,5 @@
-"""Diagnostico puntual: distribucion de distancias Mahalanobis de val para un modelo,
-comparada contra las distancias de imagenes sinteticas OOD. Ayuda a diagnosticar por
-que un umbral calibrado puede fallar en separar OOD de datos legitimos.
+"""Diagnostico puntual: distribucion de scores RMD de val para un modelo, para
+entender donde vive el umbral calibrado respecto a los datos legitimos.
 """
 
 import argparse
@@ -11,6 +10,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from scripts.pipeline.compute_ood_stats import _apply_pca, _l2_normalize, _mahalanobis_to_mean
 from src.config import PROJECT_ROOT
 from src.export.common import load_checkpoint_for_export, resolve_export_inputs
 from src.export.data import build_test_loader, resolve_split_csv
@@ -22,19 +22,45 @@ def _load_ood_stats(path: Path) -> dict:
     data = json.loads(path.read_text())
     num_classes = data["num_classes"]
     feature_dim = data["feature_dim"]
+    pca_dim = data["pca_dim"]
     means = np.frombuffer(
         base64.b64decode(data["mean_per_class_b64"]), dtype=np.float32
-    ).reshape(num_classes, feature_dim)
+    ).reshape(num_classes, pca_dim)
     inv_covariance = np.frombuffer(
         base64.b64decode(data["inv_covariance_b64"]), dtype=np.float32
-    ).reshape(feature_dim, feature_dim)
-    return {"means": means, "inv_covariance": inv_covariance, "threshold": data["threshold"]}
+    ).reshape(pca_dim, pca_dim)
+    background_mean = np.frombuffer(
+        base64.b64decode(data["background_mean_b64"]), dtype=np.float32
+    )
+    background_inv_covariance = np.frombuffer(
+        base64.b64decode(data["background_inv_covariance_b64"]), dtype=np.float32
+    ).reshape(pca_dim, pca_dim)
+    pca_mean = np.frombuffer(base64.b64decode(data["pca_mean_b64"]), dtype=np.float32)
+    pca_components = np.frombuffer(
+        base64.b64decode(data["pca_components_b64"]), dtype=np.float32
+    ).reshape(pca_dim, feature_dim)
+    return {
+        "means": means,
+        "inv_covariance": inv_covariance,
+        "background_mean": background_mean,
+        "background_inv_covariance": background_inv_covariance,
+        "pca_mean": pca_mean,
+        "pca_components": pca_components,
+        "threshold": data["threshold"],
+    }
 
 
-def _mahalanobis_min_distance(feature, means, inv_covariance) -> float:
-    diffs = feature[None, :] - means
-    distances = np.einsum("ij,jk,ik->i", diffs, inv_covariance, diffs)
-    return float(distances.min())
+def _relative_mahalanobis_distance(feature: np.ndarray, stats: dict) -> float:
+    normalized = _l2_normalize(feature[None, :])[0]
+    reduced = _apply_pca(normalized[None, :], stats["pca_mean"], stats["pca_components"])[0]
+    diffs = reduced[None, :] - stats["means"]
+    class_distance = float(
+        np.einsum("ij,jk,ik->i", diffs, stats["inv_covariance"], diffs).min()
+    )
+    background_distance = _mahalanobis_to_mean(
+        reduced[None, :], stats["background_mean"], stats["background_inv_covariance"]
+    )[0]
+    return class_distance - float(background_distance)
 
 
 def main() -> None:
@@ -58,7 +84,7 @@ def main() -> None:
     model.eval()
 
     stats = _load_ood_stats(Path(args.ood_stats))
-    print(f"feature_dim={stats['means'].shape[1]}  threshold={stats['threshold']:.2f}")
+    print(f"pca_dim={stats['means'].shape[1]}  threshold={stats['threshold']:.2f}")
 
     val_csv = resolve_split_csv(run_dir, args.splits_dir, "val")
     loader, _ = build_test_loader(val_csv, config_path, class_to_idx, image_size, batch_size=1)
@@ -69,9 +95,7 @@ def main() -> None:
             break
         with torch.no_grad():
             _, features = model(images.to(device))
-        distances.append(
-            _mahalanobis_min_distance(features.cpu().numpy()[0], stats["means"], stats["inv_covariance"])
-        )
+        distances.append(_relative_mahalanobis_distance(features.cpu().numpy()[0], stats))
 
     distances = np.array(distances)
     print(f"\nDistribucion de distancias en val (n={len(distances)}):")

@@ -18,6 +18,8 @@ El principio que ordena todo lo demás: el archivo `.tflite` o `.onnx` no es un 
 | `eval_<formato>.json` | Métricas del artefacto sobre el split de test completo |
 | `labels.json` | Orden de clases del modelo: `{"schema_version": int, "model": str, "image_size": [h, w], "labels": list[str]}`, donde `labels[i]` es el nombre de clase del índice de salida `i`. Se escribe una sola vez por run, no por formato ni por variante de cuantización — el orden de clases no cambia entre ellos |
 
+`make compute-ood-stats` (aparte de `export-main`, sobre el mismo checkpoint) deja además `ood_stats.json` en el mismo directorio — centroides, covarianza y umbral para el detector OOD por distancia de Mahalanobis. Ver [Detección OOD](../deep-learning/ood-detection.md) para el método y [App React Native](#el-contrato-del-modelo) más abajo para cómo lo consume la app. `sync_mobile_model.py` copia los tres archivos (`.tflite`, `labels.json`, `ood_stats.json`) juntos y avisa si falta alguno.
+
 Tamaños de los artefactos reales del pipeline (9 clases, 224×224):
 
 | Modelo | ONNX FP32 | ONNX int8 | TFLite FP32 | TFLite int8 |
@@ -47,10 +49,10 @@ Esto es lo que no se puede cambiar sin romper la equivalencia con el entrenamien
 
 **Salida**
 
-- Tensor `float32` de forma `[1, 9]` con **logits**, no probabilidades. La app debe aplicar softmax si quiere mostrar confianza.
-- La salida también es `float32` en la variante `int8` por el mismo motivo (cuantización solo de pesos).
-- El nombre del tensor de salida en ONNX es `output`.
-- El índice de cada clase es su posición en `config/dataset.yaml`, en este orden exacto:
+- **Dos tensores.** El primero, `float32` de forma `[1, 9]`, son **logits** (no probabilidades — la app debe aplicar softmax si quiere mostrar confianza). El segundo, `float32` de forma `[1, feature_dim]` (1280 en `efficientnet_lite0`), es el vector de features pooled de la penúltima capa (antes del head de clasificación) — lo consume el detector de imágenes fuera de dominio por distancia de Mahalanobis, ver [Detección OOD](../deep-learning/ood-detection.md). El checkpoint se envuelve en `FeatureExposedModel` (`src/models/feature_exposed.py`) antes de exportar precisamente para exponer esta segunda salida sin tocar el primer output.
+- Ambas salidas son `float32` en la variante `int8` por el mismo motivo que la entrada (cuantización solo de pesos).
+- El nombre del tensor de salida de logits en ONNX es `output`.
+- El índice de cada clase (en la salida de logits) es su posición en `config/dataset.yaml`, en este orden exacto:
 
 ```
 0  common_rust
@@ -217,6 +219,13 @@ make eval-export-main EXPORT_FORMATS=onnx,tflite QUANTIZE=int8
 
 # Un solo modelo
 make export-main MAIN_MODELS=shufflenet_v2_x1_0 EXPORT_FORMATS=tflite QUANTIZE=int8
+
+# Estadisticas del detector OOD (mismo checkpoint que el export)
+make compute-ood-stats MAIN_MODELS=efficientnet_lite0
+
+# Copiar el trio (.tflite + labels.json + ood_stats.json) a la app
+make sync-mobile-model RUN_DIR=outputs/main/efficientnet_lite0/<run_id> \
+  DEST=../maize-doctor-app/assets/model
 ```
 
 Los mismos flujos existen en Modal con el prefijo `modal-` (`modal-export-main`, `modal-eval-export-main`). Ver [GPU en Modal](/es/deployment/modal).
