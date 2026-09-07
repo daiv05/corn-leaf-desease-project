@@ -21,6 +21,7 @@ Requiere: `pip install -e ".[cloud]"`, `modal setup`, y el secret:
     modal secret create hf HF_TOKEN=hf_xxx
 """
 
+import os
 import subprocess
 import sys
 
@@ -31,9 +32,11 @@ from scripts.modal._common import (
     DEFAULT_MODELS,
     OUTPUTS_MOUNT,
     REPO_ANCHOR,
+    SEGMENTED_DATASET_MOUNT,
     dataset_vol,
     image,
     outputs_vol,
+    segmented_dataset_vol,
 )
 
 app = modal.App("corn-leaf-explain", image=image)
@@ -42,7 +45,19 @@ app = modal.App("corn-leaf-explain", image=image)
 # con planes de subir a ~1000-2000) - el mayor throughput sobre T4 amortiza esa subida
 # futura sin tener que revisar el tier de cómputo otra vez.
 _GPU = "A10"
-_VOLUMES = {DATASET_MOUNT: dataset_vol, OUTPUTS_MOUNT: outputs_vol}
+_VOLUMES = {
+    DATASET_MOUNT: dataset_vol,
+    SEGMENTED_DATASET_MOUNT: segmented_dataset_vol,
+    OUTPUTS_MOUNT: outputs_vol,
+}
+
+
+def _segmented_env(segmented: bool) -> dict:
+    """Entorno del subprocess: DATASET_ROOT apunta a /data_segmented si `segmented`."""
+    env = dict(os.environ)
+    if segmented:
+        env["DATASET_ROOT"] = SEGMENTED_DATASET_MOUNT
+    return env
 
 _PIPELINE_DIRS = {
     "baselines": f"{OUTPUTS_MOUNT}/baselines",
@@ -156,11 +171,15 @@ def explain_compare(
     sample_size: int = 0,
     nsamples: int = 0,
     pipeline: str = "main",
+    segmented: bool = False,
 ) -> None:
     """Panel comparado LIME | SHAP | Grad-CAM. Espeja `make explain-compare-main`.
 
     SHAP esta reservado al pipeline principal, de ahi que el default de pipeline sea
     "main" y no "baselines" como en el resto de las funciones de este modulo.
+
+    @param {bool} segmented El run fue entrenado sobre corn-clean-segmented: usa DATASET_ROOT=
+        /data_segmented para explicar sobre las mismas imagenes que vio el checkpoint.
     """
     args = [sys.executable, "scripts/pipeline/explain.py", "compare", "--models", *models.split()]
     args += _output_dir_args(pipeline)
@@ -172,7 +191,7 @@ def explain_compare(
         args += ["--sample-size", str(sample_size)]
     if nsamples:
         args += ["--nsamples", str(nsamples)]
-    subprocess.run(args, check=True, cwd=REPO_ANCHOR)
+    subprocess.run(args, check=True, cwd=REPO_ANCHOR, env=_segmented_env(segmented))
     outputs_vol.commit()
 
 
@@ -186,8 +205,13 @@ def explain_global(
     sample_size: int = 0,
     nsamples: int = 0,
     pipeline: str = "main",
+    segmented: bool = False,
 ) -> None:
-    """Perfil global por clase. Espeja `make explain-global-main`."""
+    """Perfil global por clase. Espeja `make explain-global-main`.
+
+    @param {bool} segmented El run fue entrenado sobre corn-clean-segmented: usa DATASET_ROOT=
+        /data_segmented para explicar sobre las mismas imagenes que vio el checkpoint.
+    """
     args = [sys.executable, "scripts/pipeline/explain.py", "global", "--models", *models.split()]
     args += _output_dir_args(pipeline)
     if run:
@@ -198,5 +222,5 @@ def explain_global(
         args += ["--sample-size", str(sample_size)]
     if nsamples:
         args += ["--nsamples", str(nsamples)]
-    subprocess.run(args, check=True, cwd=REPO_ANCHOR)
+    subprocess.run(args, check=True, cwd=REPO_ANCHOR, env=_segmented_env(segmented))
     outputs_vol.commit()

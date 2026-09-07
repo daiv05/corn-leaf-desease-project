@@ -11,11 +11,13 @@ REPO_ANCHOR = "/root"
 HF_DATASET_REPO = "daiv05/corn-leaf-diseases-pests-and-deficiencies"
 
 DATASET_MOUNT = "/data"
+SEGMENTED_DATASET_MOUNT = "/data_segmented"
 OUTPUTS_MOUNT = "/outputs"
 
 DEFAULT_MODELS = "efficientnet_b0 shufflenet_v2_x1_0 efficientnet_lite0"
 
 dataset_vol = modal.Volume.from_name("corn-clean", create_if_missing=True)
+segmented_dataset_vol = modal.Volume.from_name("corn-clean-segmented", create_if_missing=True)
 outputs_vol = modal.Volume.from_name("corn-outputs", create_if_missing=True)
 
 image = (
