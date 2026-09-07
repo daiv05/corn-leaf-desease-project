@@ -344,6 +344,19 @@ modal-clean-outputs:
 modal-pull:
 	$(MODAL) volume get --force corn-outputs / ./outputs-remote
 
+.PHONY: modal-segment-dataset modal-pull-segmentation-previews
+
+# Pre-segmentación del dataset en GPU Modal (detached con DETACH=1).
+# Uso: make modal-segment-dataset [DETACH=1 PROFILE=crop_mask_letterbox MAX_IMAGES=1000 MAX_PREVIEWS=50]
+modal-segment-dataset:
+	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/segment_dataset.py \
+		$(if $(PROFILE),--profile "$(PROFILE)",) \
+		$(if $(MAX_IMAGES),--max-images "$(MAX_IMAGES)",) \
+		$(if $(MAX_PREVIEWS),--max-previews "$(MAX_PREVIEWS)",)
+
+modal-pull-segmentation-previews:
+	$(MODAL) volume get --force corn-outputs segmentation_previews ./outputs/segmentation_previews
+
 # ==============================================================================
 # Modal - entrenamiento
 # ==============================================================================
