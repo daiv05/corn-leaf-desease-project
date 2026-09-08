@@ -50,11 +50,12 @@ NUM_WORKERS ?=
 NO_PRETRAINED ?=
 LIME ?=
 
-# Optuna HPO
+# Optuna HPO & K-Fold Cross Validation
 N_TRIALS ?= 20
 TIMEOUT ?=
 PRUNER ?= median
 BASELINE_F1 ?= 0.9146
+K_FOLDS ?= 5
 
 # Exportacion (ONNX/TFLite). Vacia por defecto: opt-in via EXPORT_FORMATS=onnx[,tflite].
 # QUANTIZE=int8 produce model_int8.<fmt> junto al FP32, sin pisarlo.
@@ -222,6 +223,20 @@ evaluate-ensemble:
 		$(if $(BATCH_SIZE),--batch-size $(BATCH_SIZE),)
 
 ensemble: evaluate-ensemble
+
+# Validación Cruzada K-Fold (Criterio 3 Etapa 2)
+.PHONY: cross-validate kfold kfold-main
+cross-validate:
+	$(PYTHON) scripts/pipeline/cross_validate.py \
+		$(if $(MODEL),--model $(MODEL),) \
+		$(if $(K_FOLDS),--k-folds $(K_FOLDS),) \
+		$(if $(MAIN_EPOCHS),--epochs $(MAIN_EPOCHS),) \
+		$(if $(BATCH_SIZE),--batch-size $(BATCH_SIZE),) \
+		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
+		$(if $(OUTPUT_DIR),--output-dir $(OUTPUT_DIR),)
+
+kfold-main: cross-validate
+kfold: cross-validate
 
 # ==============================================================================
 # Local - exportacion (ONNX/TFLite)
