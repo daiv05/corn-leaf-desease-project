@@ -49,6 +49,12 @@ NUM_WORKERS ?=
 NO_PRETRAINED ?=
 LIME ?=
 
+# Optuna HPO
+N_TRIALS ?= 20
+TIMEOUT ?=
+PRUNER ?= median
+BASELINE_F1 ?= 0.9146
+
 # Exportacion (ONNX/TFLite). Vacia por defecto: opt-in via EXPORT_FORMATS=onnx[,tflite].
 # QUANTIZE=int8 produce model_int8.<fmt> junto al FP32, sin pisarlo.
 EXPORT_FORMATS ?=
@@ -90,6 +96,8 @@ help:
 	@echo ""
 	@echo "Local - pipeline principal (runs en $(MAIN_OUTPUT_DIR), var MAIN_MODELS):"
 	@echo "  train-main (alias: train)   [EXPORT_FORMATS=onnx,tflite para exportar al terminar]"
+	@echo "  tune-main (Optuna HPO)      [N_TRIALS=20 MAIN_EPOCHS=30 PRUNER=median]"
+	@echo "  tune-dashboard              (inicia optuna-dashboard en el puerto 8080)"
 	@echo "  export-main       (EXPORT_FORMATS=onnx,tflite [QUANTIZE=int8])"
 	@echo "  eval-export-main  (mide el .onnx/.tflite sobre el split de test completo)"
 	@echo "  explain-visual-main explain-fidelity-main explain-errors-main"
@@ -179,6 +187,24 @@ train:
 		$(if $(EXPORT_FORMATS),--export $(EXPORT_FORMATS),)
 
 train-main: train
+
+# Optuna HPO - Optimización Bayesiana de Hiperparámetros (Criterio 1 Etapa 2)
+.PHONY: tune tune-main tune-dashboard
+tune:
+	$(PYTHON) scripts/pipeline/tune.py --models $(MAIN_MODELS) \
+		$(if $(N_TRIALS),--n-trials $(N_TRIALS),) \
+		$(if $(MAIN_EPOCHS),--epochs $(MAIN_EPOCHS),) \
+		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
+		$(if $(TIMEOUT),--timeout $(TIMEOUT),) \
+		$(if $(PRUNER),--pruner $(PRUNER),) \
+		$(if $(BASELINE_F1),--baseline-f1 $(BASELINE_F1),) \
+		$(if $(NUM_WORKERS),--num-workers $(NUM_WORKERS),) \
+		$(if $(NO_PRETRAINED),--no-pretrained,)
+
+tune-main: tune
+
+tune-dashboard:
+	venv\Scripts\optuna-dashboard sqlite:///outputs/tuning/optuna_study.db --port 8080
 
 # ==============================================================================
 # Local - exportacion (ONNX/TFLite)
