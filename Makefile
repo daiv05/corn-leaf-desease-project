@@ -35,6 +35,7 @@ PIPELINE ?= baselines
 EPOCHS ?= 30
 MAIN_EPOCHS ?=
 SPLITS_DIR ?=
+SEGMENTED ?=
 CLASS_WEIGHTS ?=
 CLAHE ?=
 NO_CAP ?=
@@ -106,6 +107,10 @@ help:
 	@echo "Modal - infraestructura:"
 	@echo "  modal-seed modal-splits modal-clean-outputs modal-pull"
 	@echo "    modal-seed FORCE=1 vacía el Volume y re-descarga (para actualizar el dataset)"
+	@echo ""
+	@echo "Modal - dataset pre-segmentado (corn-clean-segmented):"
+	@echo "  modal-segment-dataset modal-splits-segmented"
+	@echo "    modal-train SEGMENTED=1 entrena sobre el dataset segmentado (requiere ambos antes)"
 	@echo ""
 	@echo "Modal - baselines (runs en /outputs/baselines, var MODELS):"
 	@echo "  modal-train-baselines"
@@ -364,6 +369,11 @@ modal-splits:
 		$(if $(NO_CAP),--no-cap,) \
 		$(if $(MAX_PER_CLASS),--max-per-class "$(MAX_PER_CLASS)",)
 
+# Splits sobre el dataset pre-segmentado (corn-clean-segmented -> splits/seed_42_segmented).
+# Requiere haber corrido antes modal-segment-dataset.
+modal-splits-segmented:
+	$(MODAL) run scripts/modal/train.py::make_splits_segmented
+
 modal-clean-outputs:
 	$(MODAL) run scripts/modal/train.py::clean_outputs
 
@@ -403,6 +413,8 @@ modal-train-baselines:
 		$(if $(LIME),--lime,)
 
 # Pipeline principal en GPU. Runs en /outputs/main/<modelo>/.
+# SEGMENTED=1 entrena sobre corn-clean-segmented + splits/seed_42_segmented (requiere
+# modal-segment-dataset y modal-splits-segmented corridos antes).
 modal-train:
 	$(MODAL) run scripts/modal/train.py::train_main --models "$(MAIN_MODELS)" \
 		$(if $(MAIN_EPOCHS),--epochs "$(MAIN_EPOCHS)",) \
@@ -411,7 +423,9 @@ modal-train:
 		$(if $(CLASS_WEIGHTS),--class-weights "$(CLASS_WEIGHTS)",) \
 		$(if $(NUM_WORKERS),--num-workers "$(NUM_WORKERS)",) \
 		$(if $(CLAHE),--clahe,) \
-		$(if $(NO_PRETRAINED),--no-pretrained,)
+		$(if $(NO_PRETRAINED),--no-pretrained,) \
+		$(if $(SEGMENTED),--segmented,) \
+		$(if $(SPLITS_DIR),--splits-dir "$(SPLITS_DIR)",)
 
 modal-train-main: modal-train
 
@@ -419,8 +433,11 @@ modal-train-main: modal-train
 # Modal - exportacion (ONNX/TFLite)
 # ==============================================================================
 
-.PHONY: modal-export-main modal-eval-export-main
+.PHONY: modal-export-main modal-eval-export-main modal-compute-ood-stats
 
+# SEGMENTED=1 en los tres targets de esta seccion: usa DATASET_ROOT=/data_segmented para
+# que la muestra de paridad / eval / features de OOD lean las mismas imagenes que vio el
+# checkpoint (necesario si el run se entreno con SEGMENTED=1 via modal-train).
 modal-export-main:
 	$(MODAL) run scripts/modal/export.py::export_main --models "$(MAIN_MODELS)" \
 		$(if $(RUN),--run $(RUN),) $(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),) \
@@ -430,7 +447,8 @@ modal-export-main:
 		$(if $(TOLERANCE),--tolerance $(TOLERANCE),) \
 		$(if $(MIN_AGREEMENT_RATE),--min-agreement-rate $(MIN_AGREEMENT_RATE),) \
 		$(if $(PARITY_SAMPLE_SIZE),--parity-sample-size $(PARITY_SAMPLE_SIZE),) \
-		$(if $(NO_PARITY),--no-parity,)
+		$(if $(NO_PARITY),--no-parity,) \
+		$(if $(SEGMENTED),--segmented,)
 
 modal-eval-export-main:
 	$(MODAL) run scripts/modal/export.py::evaluate_export_main --models "$(MAIN_MODELS)" \
@@ -440,7 +458,16 @@ modal-eval-export-main:
 		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
 		$(if $(BATCH_SIZE),--batch-size $(BATCH_SIZE),) \
 		$(if $(NO_TORCH_BASELINE),--no-torch-baseline,) \
-		$(if $(MAX_MACRO_F1_DROP),--max-macro-f1-drop $(MAX_MACRO_F1_DROP),)
+		$(if $(MAX_MACRO_F1_DROP),--max-macro-f1-drop $(MAX_MACRO_F1_DROP),) \
+		$(if $(SEGMENTED),--segmented,)
+
+modal-compute-ood-stats:
+	$(MODAL) run scripts/modal/export.py::compute_ood_stats --models "$(MAIN_MODELS)" \
+		$(if $(RUN),--run $(RUN),) $(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),) \
+		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
+		$(if $(BATCH_SIZE),--batch-size $(BATCH_SIZE),) \
+		$(if $(PERCENTILE),--percentile $(PERCENTILE),) \
+		$(if $(SEGMENTED),--segmented,)
 
 # ==============================================================================
 # Modal - explicabilidad (post-hoc)
@@ -470,12 +497,12 @@ modal-explain-errors:
 modal-explain-compare:
 	$(MODAL) run scripts/modal/explain.py::explain_compare --models "$(MODELS)" --pipeline "$(PIPELINE)" \
 		$(if $(RUN),--run $(RUN),) $(if $(SAMPLE_SIZE),--sample-size $(SAMPLE_SIZE),) \
-		$(if $(NSAMPLES),--nsamples $(NSAMPLES),)
+		$(if $(NSAMPLES),--nsamples $(NSAMPLES),) $(if $(SEGMENTED),--segmented,)
 
 modal-explain-global:
 	$(MODAL) run scripts/modal/explain.py::explain_global --models "$(MODELS)" --pipeline "$(PIPELINE)" \
 		$(if $(RUN),--run $(RUN),) $(if $(SAMPLE_SIZE),--sample-size $(SAMPLE_SIZE),) \
-		$(if $(NSAMPLES),--nsamples $(NSAMPLES),)
+		$(if $(NSAMPLES),--nsamples $(NSAMPLES),) $(if $(SEGMENTED),--segmented,)
 
 modal-explain-visual-baselines:
 	$(MAKE) modal-explain-visual MODELS="$(MODELS)" PIPELINE=baselines
@@ -496,10 +523,10 @@ modal-explain-errors-main:
 	$(MAKE) modal-explain-errors MODELS="$(MAIN_MODELS)" PIPELINE=main
 
 modal-explain-compare-main:
-	$(MAKE) modal-explain-compare MODELS="$(MAIN_MODELS)" PIPELINE=main
+	$(MAKE) modal-explain-compare MODELS="$(MAIN_MODELS)" PIPELINE=main SEGMENTED="$(SEGMENTED)"
 
 modal-explain-global-main:
-	$(MAKE) modal-explain-global MODELS="$(MAIN_MODELS)" PIPELINE=main
+	$(MAKE) modal-explain-global MODELS="$(MAIN_MODELS)" PIPELINE=main SEGMENTED="$(SEGMENTED)"
 
 # ==============================================================================
 # Calidad, documentación y limpieza
