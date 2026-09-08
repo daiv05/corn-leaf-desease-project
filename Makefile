@@ -99,6 +99,7 @@ help:
 	@echo "  train-main (alias: train)   [EXPORT_FORMATS=onnx,tflite para exportar al terminar]"
 	@echo "  tune-main (Optuna HPO)      [N_TRIALS=20 MAIN_EPOCHS=30 PRUNER=median]"
 	@echo "  tune-dashboard              (inicia optuna-dashboard en el puerto 8080)"
+	@echo "  evaluate-ensemble (alias: ensemble)  (evalúa Soft Voting Ensemble en test.csv)"
 	@echo "  export-main       (EXPORT_FORMATS=onnx,tflite [QUANTIZE=int8])"
 	@echo "  eval-export-main  (mide el .onnx/.tflite sobre el split de test completo)"
 	@echo "  explain-visual-main explain-fidelity-main explain-errors-main"
@@ -210,6 +211,17 @@ tune-main: tune
 
 tune-dashboard:
 	venv\Scripts\optuna-dashboard sqlite:///outputs/tuning/optuna_study.db --port 8080
+
+# Ensamble por Soft Voting (Criterio 2 Etapa 2)
+.PHONY: evaluate-ensemble ensemble
+evaluate-ensemble:
+	$(PYTHON) scripts/pipeline/evaluate_ensemble.py \
+		$(if $(MODELS),--models $(MODELS),) \
+		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
+		$(if $(OUTPUT_DIR),--output-dir $(OUTPUT_DIR),) \
+		$(if $(BATCH_SIZE),--batch-size $(BATCH_SIZE),)
+
+ensemble: evaluate-ensemble
 
 # ==============================================================================
 # Local - exportacion (ONNX/TFLite)
