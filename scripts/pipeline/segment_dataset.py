@@ -84,7 +84,11 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def run_segmentation(args: argparse.Namespace) -> None:
+def run_segmentation(
+    args: argparse.Namespace,
+    commit_callback: object = None,
+    commit_interval: int = 500,
+) -> dict[str, object]:
     dataset_dir = args.dataset_dir
     if dataset_dir is None:
         dataset_dir = get_dataset_root() / "clean"
@@ -129,7 +133,7 @@ def run_segmentation(args: argparse.Namespace) -> None:
 
     if not image_paths:
         print("[!] No se encontraron imágenes para procesar.")
-        return
+        return {}
 
     # Inicializar modelos
     segmenter = MaizeLeafSegmenter(
@@ -189,6 +193,11 @@ def run_segmentation(args: argparse.Namespace) -> None:
             saved_previews += 1
 
         processed_count += 1
+        if commit_callback and processed_count % commit_interval == 0:
+            try:
+                commit_callback(processed_count)
+            except Exception as exc:
+                print(f"[!] Aviso en commit_callback: {exc}", file=sys.stderr)
 
     elapsed = time.time() - t0
     stats = {
@@ -213,6 +222,7 @@ def run_segmentation(args: argparse.Namespace) -> None:
     print(json.dumps(stats, indent=2))
     print(f"[*] Estadísticas guardadas en: {summary_file}")
     print("=" * 50)
+    return stats
 
 
 if __name__ == "__main__":

@@ -14,8 +14,6 @@ Uso detached (desacoplado de la máquina local):
 
 from __future__ import annotations
 
-import subprocess
-import sys
 from pathlib import Path
 
 import modal
@@ -92,34 +90,30 @@ def run_segmentation_job(
                 f"ni en {alt_path}"
             )
 
-    print(f"[*] Checkpoint resuelto en Modal: {checkpoint_path}", flush=True)
+    from scripts.pipeline.segment_dataset import run_segmentation
 
-    cmd = [
-        sys.executable,
-        "scripts/pipeline/segment_dataset.py",
-        "--dataset-dir",
-        "/data/clean",
-        "--output-dir",
-        "/data_segmented/clean",
-        "--preview-dir",
-        "/outputs/segmentation_previews",
-        "--checkpoint",
-        str(checkpoint_path),
-        "--profile",
-        profile,
-        "--max-previews",
-        str(max_previews),
-        "--device",
-        "cuda:0",
-    ]
+    def _periodic_commit(count: int) -> None:
+        print(f"[*] Guardando progreso en el volumen ({count} imágenes)...", flush=True)
+        segmented_dataset_vol.commit()
 
-    if max_images > 0:
-        cmd.extend(["--max-images", str(max_images)])
+    import argparse
 
-    print(f"[*] Ejecutando comando: {' '.join(cmd)}", flush=True)
-    subprocess.run(cmd, check=True, cwd=REPO_ANCHOR)
+    args = argparse.Namespace(
+        dataset_dir=Path("/data/clean"),
+        output_dir=Path("/data_segmented/clean"),
+        preview_dir=Path("/outputs/segmentation_previews"),
+        checkpoint=checkpoint_path,
+        profile=profile,
+        target_size=[224, 224],
+        max_images=max_images,
+        max_previews=max_previews,
+        device="cuda:0",
+    )
 
-    print("[*] Confirmando cambios en volúmenes persistentes...", flush=True)
+    print("[*] Iniciando pre-segmentación con commits periódicos...", flush=True)
+    run_segmentation(args, commit_callback=_periodic_commit, commit_interval=500)
+
+    print("[*] Confirmando cambios finales en volúmenes persistentes...", flush=True)
     segmented_dataset_vol.commit()
     outputs_vol.commit()
     print("[*] Proceso completado exitosamente en Modal.", flush=True)
@@ -135,8 +129,10 @@ def main(
         f"Lanzando pre-segmentación en Modal (profile={profile}, "
         f"max_images={max_images}, max_previews={max_previews})..."
     )
-    run_segmentation_job.remote(
+    call = run_segmentation_job.spawn(
         profile=profile,
         max_images=max_images,
         max_previews=max_previews,
     )
+    print(f"✓ Tarea lanzada exitosamente a Modal con ID: {call.object_id}")
+    print("✓ El trabajo corre de forma autónoma en la nube. Tu consola queda libre.")
