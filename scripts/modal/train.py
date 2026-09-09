@@ -11,10 +11,15 @@ Uso:
     modal run scripts/modal/train.py::seed_dataset --force    # actualiza (vacía y re-descarga)
     modal run scripts/modal/train.py --models "efficientnet_b0" --epochs 30
     modal run scripts/modal/train.py::clean_outputs            # vacía el Volume corn-outputs
+
+    # Dataset pre-segmentado (corn-clean-segmented, ver scripts/modal/segment_dataset.py):
+    modal run scripts/modal/train.py::make_splits_segmented   # 1 vez: splits/seed_42_segmented
+    modal run scripts/modal/train.py::train_main --models "efficientnet_lite0" --segmented
 Requiere: `pip install -e ".[cloud]"`, `modal setup`, y el secret:
     modal secret create hf HF_TOKEN=hf_xxx
 """
 
+import os
 import shutil
 import subprocess
 import sys
@@ -26,9 +31,11 @@ from scripts.modal._common import (
     DATASET_MOUNT,
     DEFAULT_MODELS,
     REPO_ANCHOR,
+    SEGMENTED_DATASET_MOUNT,
     dataset_vol,
     image,
     outputs_vol,
+    segmented_dataset_vol,
 )
 
 app = modal.App("corn-leaf-baselines", image=image)
@@ -92,6 +99,30 @@ def make_splits(baseline: bool = False, no_cap: bool = False, max_per_class: int
             command += ["--max-per-class", str(max_per_class)]
 
     subprocess.run(command, check=True, cwd=REPO_ANCHOR)
+    outputs_vol.commit()
+
+
+@app.function(
+    # Igual que make_splits: indexado y hashing SHA-256, I/O-bound, sin GPU.
+    cpu=8.0,
+    volumes={SEGMENTED_DATASET_MOUNT: segmented_dataset_vol, "/outputs": outputs_vol},
+    timeout=2 * 3600,
+)
+def make_splits_segmented() -> None:
+    """Genera splits/seed_42_segmented sobre el dataset pre-segmentado (corn-clean-segmented),
+    usando config/dataset.segmented.yaml para no pisar splits/seed_42 del dataset original.
+    Requiere haber corrido antes `modal-segment-dataset` (o make_splits_segmented fallará si
+    /data_segmented/clean está vacío).
+    """
+    segmented_dataset_vol.reload()
+    command = [
+        sys.executable,
+        "scripts/pipeline/create_splits.py",
+        "--config",
+        "config/dataset.segmented.yaml",
+    ]
+    env = dict(os.environ, DATASET_ROOT=SEGMENTED_DATASET_MOUNT)
+    subprocess.run(command, check=True, cwd=REPO_ANCHOR, env=env)
     outputs_vol.commit()
 
 
@@ -166,7 +197,11 @@ def train_baselines(
 @app.function(
     gpu="A10",
     cpu=4.0,
-    volumes={"/data": dataset_vol, "/outputs": outputs_vol},
+    volumes={
+        "/data": dataset_vol,
+        SEGMENTED_DATASET_MOUNT: segmented_dataset_vol,
+        "/outputs": outputs_vol,
+    },
     secrets=[modal.Secret.from_name("hf")],
     # El pipeline principal corre sobre las 31 623 imagenes (3.2x el perfil capado) con
     # hasta 60 epocas: ~2-4 h por corrida. El techo de 8 h deja margen para la variante
@@ -184,6 +219,8 @@ def train_main(
     clahe: bool = False,
     no_pretrained: bool = False,
     num_workers: int = 0,
+    segmented: bool = False,
+    splits_dir: str = "",
 ) -> None:
     """
     Entrena el pipeline principal en GPU, persistiendo en el Volume corn-outputs.
@@ -198,8 +235,13 @@ def train_main(
     @param {bool} clahe Activa CLAHE como preprocesamiento.
     @param {bool} no_pretrained Entrena desde cero.
     @param {int} num_workers 0 usa el default del script.
+    @param {bool} segmented Entrena sobre el dataset pre-segmentado (corn-clean-segmented) en vez
+        del original. Requiere splits/seed_42_segmented (ver make_splits_segmented).
+    @param {str} splits_dir Override explícito del directorio de splits; "" usa el default según
+        `segmented` (splits/seed_42 o splits/seed_42_segmented).
     """
     dataset_vol.reload()
+    segmented_dataset_vol.reload()
     command = [
         sys.executable,
         "scripts/pipeline/train.py",
@@ -225,7 +267,15 @@ def train_main(
     if no_pretrained:
         command.append("--no-pretrained")
 
-    subprocess.run(command, check=True, cwd=REPO_ANCHOR)
+    env = dict(os.environ)
+    if segmented:
+        env["DATASET_ROOT"] = SEGMENTED_DATASET_MOUNT
+        command += ["--config", "config/dataset.segmented.yaml"]
+        command += ["--splits-dir", splits_dir or str(Path("/outputs/splits/seed_42_segmented"))]
+    elif splits_dir:
+        command += ["--splits-dir", splits_dir]
+
+    subprocess.run(command, check=True, cwd=REPO_ANCHOR, env=env)
     outputs_vol.commit()
 
 

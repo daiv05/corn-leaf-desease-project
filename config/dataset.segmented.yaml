@@ -1,0 +1,60 @@
+paths:
+  raw_dir: "clean" # relativo a DATASET_ROOT
+  split_output_dir: "splits/seed_42_segmented" # relativo a outputs/; separado del dataset original
+
+dataset:
+  target_size: [224, 224]
+  seed: 42
+  classes:
+    - common_rust
+    - fall_armyworm
+    - gray_leaf_spot
+    - healthy
+    - lethal_necrosis
+    - nitrogen_deficiency
+    - northern_corn_leaf_blight
+    - phosphorus_deficiency
+    - potassium_deficiency
+
+augmentation:
+  minority_ratio_threshold: 4.0
+
+clahe:
+  clip_limit: 2.0
+  tile_grid: 8
+
+baseline:
+  classes:
+    - common_rust
+    - fall_armyworm
+    - gray_leaf_spot
+    - healthy
+    - lethal_necrosis
+    - nitrogen_deficiency
+    - northern_corn_leaf_blight
+    - phosphorus_deficiency
+    - potassium_deficiency
+  max_images_per_class: 1500
+  seed: 42
+
+lime:
+  images_per_class: 2
+  num_samples: 1000
+  num_features: 5
+  seed: 42
+  baseline: true
+  report_sample_size: 30
+
+gradcam:
+  enabled: true
+
+shap:
+  segmentation: slic
+  n_segments: 50
+  compactness: 10.0
+  nsamples: 2048
+  batch_size: 128
+  background: black
+  images_per_class: 5
+  global_sample_size: 30
+  seed: 42
