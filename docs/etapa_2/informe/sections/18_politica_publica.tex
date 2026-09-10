@@ -1,0 +1,67 @@
+\section{Recomendaciones de política pública}
+
+Las siguientes medidas son propuestas derivadas del experimento. No se
+presentan como programas vigentes ni como decisiones ya adoptadas.
+
+\begin{enumerate}
+  \item \textbf{Crear un conjunto nacional con procedencia verificable.}
+  Instituciones académicas, asociaciones de productores y servicios de
+  extensión pueden acordar un esquema común para fotografías de hojas, con
+  municipio a una resolución apropiada, variedad, etapa fenológica, fecha,
+  dispositivo y diagnóstico de referencia. La diversidad regional debe
+  medirse, no asumirse.
+
+  \item \textbf{Estandarizar la captura sin volverla artificial.}
+  Cada registro debería incluir una vista cercana del síntoma y otra de la
+  planta, bajo luz disponible, además de una guía de enfoque. El protocolo
+  necesita ejemplos reales de fondos complejos; llenar el dataset de fondos
+  blancos mejoraría el laboratorio y empeoraría la pregunta de campo.
+
+  \item \textbf{Establecer revisión agronómica de etiquetas.}
+  Una corrección enviada desde la app no debe convertirse directamente en
+  ground truth. Se requiere doble revisión para casos dudosos, registro del
+  criterio usado y una categoría de desacuerdo. Las deficiencias N/P/K merecen
+  prioridad porque su similitud visual fue el principal problema de ambas
+  etapas.
+
+  \item \textbf{Usar el sistema como apoyo de extensión.}
+  El primer despliegue debería entregar la herramienta a equipos técnicos y a
+  grupos acompañados de productores. Esto permite contrastar la predicción con
+  síntomas de la parcela, corregir recomendaciones y definir cuándo la app debe
+  derivar a una visita.
+
+  \item \textbf{Monitorear por región, clase y dispositivo.}
+  Accuracy global no basta. Un tablero de operación debe seguir recall de
+  clases críticas, tasa de rechazo, correcciones, latencia y brechas entre
+  cámaras o zonas. Los grupos con soporte pequeño deben mostrarse con su
+  incertidumbre y no ocultarse bajo promedios nacionales.
+
+  \item \textbf{Minimizar y proteger ubicación.}
+  La georreferencia debe ser opcional, separada del uso básico y explicada en
+  lenguaje claro. Cuando el objetivo sea vigilancia regional, puede
+  almacenarse una cuadrícula o municipio en vez de coordenadas exactas. Deben
+  definirse retención, acceso, eliminación y respuesta ante filtraciones.
+
+  \item \textbf{Financiar el ciclo de retroalimentación.}
+  Recoger casos difíciles sin personal que los revise crea una cola, no un
+  dataset. El presupuesto debe incluir validación, curación, deduplicación,
+  versionado y reentrenamiento, además del desarrollo de la aplicación.
+
+  \item \textbf{Exigir validación de campo antes del uso masivo.}
+  Una versión candidata debe aprobar criterios predefinidos de rendimiento por
+  clase y entorno, prueba de teléfonos, estabilidad offline y comprensión del
+  mensaje de incertidumbre. Una caída grande en potasio o en una región debe
+  detener la promoción aunque el accuracy global siga alto.
+
+  \item \textbf{Publicar una ficha de cada versión.}
+  La ficha debe incluir corpus, fingerprint, clases, protocolo, métricas por
+  grupo, limitaciones, hash del modelo y cambios desde la versión anterior,
+  siguiendo la idea de reportes de modelo \citep{mitchell2019modelcards}.
+  Esto permite saber qué produjo un diagnóstico meses después.
+\end{enumerate}
+
+Estas recomendaciones colocan el mayor esfuerzo donde el experimento encontró
+la mayor fragilidad: datos con contexto, revisión y seguimiento. Comprar más
+capacidad de cómputo puede facilitar el entrenamiento, pero no resuelve una
+etiqueta ambigua ni una región ausente. La política útil conecta el modelo con
+una red de asistencia y con reglas para corregirlo.

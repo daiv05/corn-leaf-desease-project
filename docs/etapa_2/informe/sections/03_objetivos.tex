@@ -1,0 +1,56 @@
+\section{Objetivos}
+
+\subsection{Objetivo general}
+
+Optimizar y evaluar el clasificador de Doctor Maíz sobre el corpus actualizado,
+con un protocolo reproducible que permita seleccionar una alternativa
+experimental, medir su comportamiento por clase y condición de captura, y
+comprobar su integración en un prototipo de diagnóstico asistido.
+
+\subsection{Objetivos específicos}
+
+\begin{enumerate}
+  \item Reconstruir el dataset definitivo de la etapa, validar sus archivos,
+  eliminar duplicados exactos y congelar una división que mantenga separado el
+  holdout final.
+
+  \item Optimizar una cabeza clasificadora sobre EfficientNet-B0 mediante
+  búsqueda TPE y pruning con Optuna, usando macro-F1 de validación como función
+  objetivo y sin consultar el holdout.
+
+  \item Comparar EfficientNet-B0, ShuffleNetV2-x1.0, MobileNetV3 Small y
+  FastViT-T8 bajo el mismo preprocesamiento, partición y configuración de
+  cabeza, incluyendo calidad, cantidad de parámetros y latencia CPU del
+  backbone.
+
+  \item Medir complementariedad de errores y contrastar el mejor modelo
+  individual con soft voting uniforme y ponderado. Los pesos deben aprenderse
+  únicamente en validación.
+
+  \item Estimar la estabilidad de la selección con cinco folds estratificados
+  por clase y entorno, y efectuar una sola evaluación sobre el holdout
+  congelado con métricas globales y por clase.
+
+  \item Revisar el principal cuello de botella de la Etapa 1,
+  \texttt{potassium\_deficiency}, cuantificando sus confusiones con nitrógeno,
+  fósforo y las demás categorías.
+
+  \item Explicar casos finales con Grad-CAM y LIME, y describir brechas de
+  precision, recall y F1 asociadas con clase, laboratorio/campo, fuente,
+  resolución y nitidez.
+
+  \item Verificar el flujo real de la aplicación móvil y producir una demo
+  ejecutable que muestre entrada, preprocesamiento, Top-3, confianza, latencia
+  y advertencia de uso.
+
+  \item Traducir las limitaciones encontradas en condiciones de uso,
+  recomendaciones para extensionistas y propuestas concretas de política
+  pública, sin presentar beneficios no medidos.
+\end{enumerate}
+
+Estos objetivos combinan tres niveles que en la primera etapa todavía estaban
+separados: calidad estadística, comportamiento bajo condiciones distintas y
+operación dentro de una herramienta usable. Una mejora pequeña en macro-F1 no
+compensa una caída fuerte en campo; del mismo modo, una aplicación bien
+diseñada no corrige una clase minoritaria mal reconocida. La selección final se
+lee con las tres dimensiones.

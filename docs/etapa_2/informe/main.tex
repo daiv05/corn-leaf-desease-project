@@ -1,0 +1,105 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-nodecimaldot]{babel}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[hidelinks]{hyperref}
+
+\geometry{top=2.1cm,bottom=2.2cm,left=2.25cm,right=2.25cm}
+\setstretch{1.22}
+\setlength{\parindent}{1.15em}
+\setlength{\parskip}{0.28em}
+\setlength{\headheight}{14pt}
+\setlength{\emergencystretch}{2em}
+\setlist{nosep,leftmargin=1.6em}
+\graphicspath{{figures/}{../../../reports/firts-phase/images/}}
+\captionsetup{font=small,labelfont=bf}
+\hypersetup{
+  pdftitle={Doctor Maíz — Informe de Etapa 2},
+  pdfauthor={Josias Abner Rivas Fuentes, David Alejandro Deras Cerros, Elmer Edenilson Rosales Molina}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Doctor Maíz}
+\fancyhead[R]{Etapa 2}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+
+\begin{document}
+
+\begin{titlepage}
+  \thispagestyle{empty}
+  \begin{center}
+    \includegraphics[width=0.20\textwidth]{logo_ues.png}\\[0.8cm]
+    {\Large\bfseries UNIVERSIDAD DE EL SALVADOR}\\[0.2cm]
+    {\large FACULTAD DE INGENIERÍA Y ARQUITECTURA}\\[0.15cm]
+    {\large ESCUELA DE INGENIERÍA DE SISTEMAS INFORMÁTICOS}\\[1.25cm]
+
+    {\LARGE\bfseries DOCTOR MAÍZ}\\[0.3cm]
+    {\Large Clasificación de enfermedades y deficiencias\\nutricionales en hojas de maíz}\\[0.75cm]
+    {\LARGE\bfseries INFORME DE ETAPA 2}\\[0.25cm]
+    {\large Optimización, evaluación final y prototipo funcional}\\[1.1cm]
+
+    \begin{tabular}{ll}
+      \textbf{Josias Abner Rivas Fuentes} & RF20010 \\
+      \textbf{David Alejandro Deras Cerros} & DC19019 \\
+      \textbf{Elmer Edenilson Rosales Molina} & RM20001 \\
+    \end{tabular}
+
+    \vfill
+    {\large San Salvador, El Salvador}\\[0.15cm]
+    {\large Septiembre de 2026}
+  \end{center}
+\end{titlepage}
+
+\pagenumbering{roman}
+\input{sections/01_resumen}
+\clearpage
+\tableofcontents
+\clearpage
+\listoffigures
+\clearpage
+\listoftables
+\clearpage
+
+\pagenumbering{arabic}
+\input{sections/02_introduccion}
+\input{sections/03_objetivos}
+\input{sections/04_dataset}
+\input{sections/07_optimizacion}
+\input{sections/08_modelos_avanzados}
+\input{sections/09_ensemble}
+\input{sections/10_validacion_cruzada}
+\input{sections/11_evaluacion_final}
+\input{sections/12_analisis_errores}
+\input{sections/15_interpretabilidad}
+\input{sections/13_fairness}
+\input{sections/14_etica}
+\input{sections/16_prototipo}
+\input{sections/17_impacto_social}
+\input{sections/18_politica_publica}
+\input{sections/19_limitaciones}
+\input{sections/21_conclusiones}
+
+\clearpage
+\bibliographystyle{plainnat}
+\bibliography{referencias}
+
+\end{document}

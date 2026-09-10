@@ -1,0 +1,61 @@
+\section{Ensemble}
+
+\subsection{Complementariedad antes de combinar}
+
+Un ensemble solamente puede ayudar si sus componentes aportan información
+distinta. Se guardaron las nueve probabilidades de cada modelo para las 5\,015
+imágenes de validación y se compararon sus conjuntos de error. Para cada pareja
+se calculó la intersección y el Jaccard de errores. Un Jaccard cercano a uno
+indica que ambos fallan en casi los mismos casos; un valor menor deja más margen
+para que un voto corrija a uno con el otro.
+
+Se probaron dos combinaciones. El soft voting uniforme promedió las
+probabilidades de los cuatro componentes. El weighted soft voting asignó un
+peso no negativo a cada uno, normalizó la suma y optimizó esos pesos con 250
+trials TPE. Ni las etiquetas ni las probabilidades del holdout se usaron para
+esa decisión.
+
+\subsection{Resultado de la combinación}
+
+\begin{table}[H]
+  \centering
+  \caption{Mejor componente individual frente a los dos ensembles en
+  validación.}
+  \label{tab:ensemble}
+  \resizebox{0.94\textwidth}{!}{\input{tables/ensemble}}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.82\textwidth]{ensemble_comparison.pdf}
+  \caption{Cambio de macro-F1 al combinar los cuatro modelos. La escala se
+  acota para que una diferencia pequeña no desaparezca visualmente.}
+  \label{fig:ensemble}
+\end{figure}
+
+La regla de selección fue simple y se fijó antes del holdout: conservar el
+método con mayor macro-F1 de validación, aunque fuera un modelo individual. Así
+el ensemble no obtiene preferencia solamente por ser más complejo. Si la
+ganancia no compensa cuatro backbones, el resultado negativo sigue siendo útil
+para despliegue.
+
+La complementariedad sí existió. EfficientNet-B0 cometió 310 errores de
+validación y MobileNetV3 Small 404, pero solamente 155 fueron compartidos; su
+Jaccard de errores fue 0.277, el menor de las seis parejas. B0 y ShuffleNet
+compartieron 149 errores y obtuvieron Jaccard 0.281. Los modelos más débiles no
+se limitaron a repetir los fallos de B0, de modo que sus probabilidades podían
+corregir parte de ellos.
+
+El promedio uniforme elevó macro-F1 de 0.8887 a 0.9116. La optimización de
+pesos lo llevó a 0.9202, con 0.9539 de accuracy y 0.9197 de recall macro. Los
+pesos normalizados fueron 0.3658 para EfficientNet-B0, 0.2664 para ShuffleNet,
+0.2480 para MobileNetV3 y 0.1197 para FastViT. La búsqueda no eliminó los
+componentes de menor F1; les asignó menos influencia porque todavía corregían
+casos distintos.
+
+La ganancia del weighted soft voting frente al mejor individuo fue 0.0315 de
+macro-F1 y frente al voto uniforme 0.0086. Por esa razón pasó a validación
+cruzada y holdout. El costo también se acumula: los backbones suman cerca de
+38.3 MB en parámetros FP32 y aproximadamente 62.4 ms de latencia medida por
+separado en esta CPU. Es la mejor selección estadística del experimento, no la
+opción móvil más barata.

@@ -1,0 +1,81 @@
+\section{Consideraciones éticas}
+
+El riesgo principal de Doctor Maíz no es que una métrica baje unas décimas,
+sino que una persona convierta una predicción en una acción sobre el cultivo.
+Un falso negativo puede retrasar la consulta cuando la planta presenta necrosis
+letal o tizón. Un falso positivo de deficiencia puede inducir una aplicación de
+fertilizante que no era necesaria. También puede existir una predicción
+visualmente razonable pero agronómicamente incompleta: síntomas parecidos
+pueden tener causas distintas y una fotografía no contiene información sobre
+suelo, clima, etapa fenológica o evolución temporal.
+
+\subsection{Confianza y comunicación del resultado}
+
+La interfaz no presenta el resultado como un diagnóstico confirmado. Muestra
+probabilidad, segunda clase cuando la confianza es menor de 0.70 y un mensaje
+específico cuando el detector fuera de dominio rechaza la imagen. La demo
+experimental emplea un umbral de 0.60 para advertir baja confianza y acompaña
+cada salida con la frase «Apoyo orientativo; no sustituye la evaluación de un
+profesional agrónomo». Estos umbrales son controles de interfaz, no garantías
+estadísticas. No se ejecutó una calibración formal sobre el holdout y, por
+tanto, 80\% de confianza no debe leerse como 80\% de certeza clínica o
+agronómica.
+
+El rechazo fuera de dominio de la aplicación usa distancia relativa de
+Mahalanobis sobre un segundo tensor de características. Además, rechaza
+distribuciones con poca separación. Esto reduce el riesgo de clasificar una
+persona, una herramienta o una hoja de otra especie como una de las nueve
+clases. No cubre todas las imágenes extrañas posibles y pertenece al modelo
+móvil histórico, no al ensemble experimental. La selección de Etapa 2 todavía
+no incorpora su propio detector OOD.
+
+\subsection{Errores con costos distintos}
+
+Las nueve clases no tienen el mismo costo de error. Confundir nitrógeno con
+potasio puede terminar en una recomendación de manejo distinta; confundir una
+hoja sana con una enfermedad puede causar gasto y preocupación; declarar sana
+una hoja enferma puede demorar atención. El entrenamiento optimiza macro-F1,
+que protege estadísticamente a las clases pequeñas, pero no incorpora una matriz
+de costos agronómicos. Esa matriz debe definirse con especialistas y con
+información de manejo local antes de convertir el modelo en un sistema de
+decisión.
+
+Por esa razón las recomendaciones de la app deben entenderse como pasos de
+inspección: revisar otras hojas, observar la distribución del síntoma, repetir
+la captura y consultar asistencia técnica. No corresponde indicar dosis o
+productos solamente a partir del logit más alto. Una recomendación automática
+de insumos sería una función nueva, con riesgos y validación distintos a los de
+clasificar una imagen.
+
+\subsection{Datos, ubicación y trazabilidad}
+
+La base móvil almacena localmente ruta de imagen, etiqueta, confianza,
+distribución y fecha. También reserva campos opcionales de latitud y longitud.
+La operación offline evita enviar cada fotografía por defecto, pero no elimina
+el riesgo de privacidad si más adelante se sincroniza una contribución. La
+ubicación de una parcela puede revelar domicilio, patrón productivo o actividad
+económica. Debe solicitarse consentimiento separado, explicar el propósito,
+reducir precisión cuando no sea necesaria y permitir borrar el dato.
+
+Cada predicción que se use para seguimiento debería conservar versión del
+modelo, hash del artefacto, fecha y origen del resultado. La aplicación
+inspeccionada valida el orden de etiquetas y el contrato de tensores; el
+manifiesto del modelo registra arquitectura y SHA-256. Esa trazabilidad evita
+un problema concreto: que una corrección del usuario quede asociada a un modelo
+distinto del que produjo el diagnóstico.
+
+\subsection{Supervisión y salida segura}
+
+El sistema debe permitir «no sé». Una foto desenfocada, una hoja pequeña dentro
+del encuadre o una condición que no pertenece a las nueve clases necesita
+terminar en repetición de captura o consulta, no en una recomendación forzada.
+El protocolo de campo propuesto incluye revisar varios órganos de la planta y
+no actuar sobre una sola imagen. Las correcciones guardadas por productores o
+extensionistas tampoco deben incorporarse automáticamente al entrenamiento:
+primero requieren revisión agronómica, control de duplicados y registro de
+procedencia.
+
+Estas medidas no convierten el sistema en inocuo. Hacen visible dónde termina
+la clasificación y dónde empieza una decisión humana. Ese límite es
+especialmente necesario porque las métricas finales provienen de colecciones
+públicas y no de una validación prospectiva en parcelas salvadoreñas.

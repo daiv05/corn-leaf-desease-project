@@ -1,0 +1,103 @@
+\section{Optimización del clasificador}
+
+\subsection{Baseline de referencia}
+
+EfficientNet-B0 se mantuvo como punto de partida porque había obtenido el mejor
+macro-F1 de la Etapa 1. En la corrida nueva no se volvió a entrenar toda la red:
+se retiró su clasificador, se congelaron los 4\,007\,548 parámetros del
+backbone ImageNet y se extrajo un vector de 1\,280 características por imagen.
+Sobre esos vectores se ajustó una regresión logística multiclase incremental
+con SGD.
+
+El baseline interno de esta etapa usa $\alpha=10^{-4}$, tasa constante 0.01,
+penalización L2, batch 256, promedio de pesos, normalización L2 de embeddings y
+20 épocas. No debe confundirse con el EfficientNet-B0 end-to-end histórico. El
+primero sirve para aislar el efecto del tuning bajo el nuevo protocolo; el
+segundo conserva la referencia de 0.9146 macro-F1 sobre el corpus y test de la
+Etapa 1.
+
+\subsection{Espacio de hiperparámetros}
+
+Optuna se eligió porque el muestreador TPE usa los trials previos para concentrar
+la búsqueda y porque el pruning puede detener combinaciones que ya muestran un
+macro-F1 poco competitivo \citep{akiba2019optuna}. Se ejecutaron 30 trials con
+semilla 42. El objetivo fue macro-F1 en las 5\,015 imágenes de validación; el
+holdout no participó.
+
+La búsqueda cubrió $\alpha$ entre $10^{-6}$ y $10^{-3}$ en escala logarítmica,
+tasa inicial entre $3\times10^{-4}$ y $5\times10^{-2}$ también logarítmica,
+penalización L2 o elastic net, proporción L1 entre 0 y 0.5 cuando correspondía,
+batch de 128, 256 o 512, promedio de pesos activado o no, embeddings con o sin
+normalización L2 y potencia de balanceo 0, 0.5 o 1. Esta última transforma los
+pesos inversos de clase: cero no rebalancea, 0.5 aplica raíz cuadrada y uno usa
+la inversa completa.
+
+\begin{table}[H]
+  \centering
+  \caption{Configuración del baseline interno y combinación seleccionada por
+  Optuna.}
+  \label{tab:tuning-config}
+  \small
+  \input{tables/tuning_configuration}
+\end{table}
+
+El pruner fue \emph{MedianPruner}, con cinco trials iniciales y cuatro épocas de
+calentamiento. Cada época reportó macro-F1, de modo que una configuración podía
+terminar antes de las veinte épocas. La tabla de trials, el historial por época
+y la importancia de parámetros se guardaron directamente desde el estudio.
+
+\subsection{Resultados del tuning}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.88\textwidth]{optuna_history.pdf}
+  \caption{Macro-F1 de los trials completos y mejor valor acumulado. La línea
+  discontinua corresponde al baseline de la cabeza, no al modelo histórico.}
+  \label{fig:optuna-history}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\textwidth]{optuna_importance.pdf}
+  \caption{Importancia relativa calculada por Optuna dentro del espacio
+  explorado. Una importancia baja no prueba que el hiperparámetro sea inútil
+  fuera de esos rangos.}
+  \label{fig:optuna-importance}
+\end{figure}
+
+\begin{table}[H]
+  \centering
+  \caption{Cinco mejores trials completos según macro-F1 de validación.}
+  \label{tab:top-trials}
+  \input{tables/top_trials}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Efecto observado del tuning sobre la misma división y backbone.}
+  \label{tab:baseline-tuned}
+  \input{tables/baseline_vs_tuned}
+\end{table}
+
+Optuna completó 17 trials y podó 13. El mejor fue el trial 26 en la
+numeración mostrada al lector (índice interno 25): penalización L2,
+$\alpha=4.28\times10^{-6}$, tasa 0.000606, batch 512, potencia de balanceo
+0.5, sin promedio de pesos y sin normalización L2 de embeddings. El patrón de
+los mejores trials fue consistente: una regularización pequeña, tasa menor que
+la del baseline y balanceo por raíz cuadrada.
+
+El macro-F1 subió de 0.7799 a 0.8887, una ganancia absoluta de 0.1088 sobre la
+misma división. Accuracy pasó de 0.8742 a 0.9382 y el cambio mayor entre los
+componentes de macro-F1 apareció en recall macro: 0.7516 a 0.8914. Precision
+macro también aumentó, de 0.8511 a 0.8864. El baseline no fallaba solamente por
+falta de separación; estaba favoreciendo demasiado a las clases grandes. La
+raíz de los pesos inversos corrigió parte de ese sesgo sin llegar al balanceo
+completo, que varios trials llevaron a resultados peores.
+
+La Figura~\ref{fig:optuna-importance} atribuye la mayor importancia a la
+penalización (0.261), seguida por tasa de aprendizaje (0.189), promedio de
+pesos (0.186) y potencia de balanceo (0.176). Alpha quedó en 0.038 dentro de
+esta búsqueda. Esto no significa que la regularización sea irrelevante: los
+trials competitivos ya se concentraron en valores pequeños. La lectura útil es
+que no hizo falta aumentar la capacidad del backbone. La ganancia vino de cómo
+la cabeza convirtió sus características en fronteras para clases desiguales.

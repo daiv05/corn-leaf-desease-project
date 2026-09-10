@@ -1,0 +1,72 @@
+\section{Interpretabilidad}
+
+La Etapa 1 ya explicó LIME y Grad-CAM; aquí se aplicaron al modelo final en vez
+de repetir su teoría. Se seleccionaron cinco situaciones desde el CSV del
+holdout: acierto fácil, acierto difícil, error de alta confianza, deficiencia
+nutricional de potasio y una imagen de laboratorio con fondo controlado. La
+selección fue programática y el archivo \texttt{cases.csv} conserva ruta,
+etiqueta, predicción, confianza, entorno y fuente.
+
+Cuando el método final fue un ensemble, se calculó Grad-CAM para la clase
+predicha en la última capa convolucional de cada componente. Cada mapa se
+normalizó y se combinó con los mismos pesos del soft voting. La visualización
+localiza regiones que influyeron en los componentes, pero sigue siendo una
+aproximación de la decisión conjunta. Grad-CAM no prueba que la región sea una
+causa biológica \citep{selvaraju2017gradcam}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[height=0.82\textheight,keepaspectratio]{final_gradcam_cases.png}
+  \caption{Casos del holdout y mapas Grad-CAM del método final. El color rojo
+  marca mayor activación relativa dentro de cada imagen.}
+  \label{fig:gradcam-final}
+\end{figure}
+
+El acierto difícil de fósforo tuvo solamente 0.283 de confianza y concentró la
+activación sobre la nervadura con coloración púrpura. El modelo miró una señal
+coherente y aun así dejó probabilidades cercanas para otras clases. En el caso
+de potasio predicho como nitrógeno (0.269), el mapa cayó sobre el borde
+amarillento y necrótico. Aquí el modelo mira el lugar correcto y aun así se
+equivoca: el problema está en separar dos patrones nutricionales, no en haber
+ignorado la hoja.
+
+El error de mayor confianza cuenta otra historia. La imagen de fósforo
+clasificada como potasio con 0.978 activa con fuerza el borde de la maceta y el
+suelo alrededor, mientras buena parte de la hoja queda fría. Ese caso combina
+fondo, encuadre vertical y amarillamiento, y muestra un atajo más preocupante
+que una frontera fina entre lesiones. Los dos aciertos de roya sobre fondo
+negro también producen zonas calientes cerca del contorno recortado. La red
+usa puntos de roya, pero el borde artificial participa en la decisión.
+
+LIME se ejecutó sobre el error de alta confianza cuando existió uno; de lo
+contrario, sobre el acierto difícil. Se usaron 32 perturbaciones y ocho
+superpíxeles visibles sobre EfficientNet-B0, el componente con mayor peso del
+ensemble. A diferencia de Grad-CAM, LIME pregunta cómo cambia la salida al
+ocultar segmentos de esa imagen \citep{ribeiro2016why}. Con tan pocas
+perturbaciones se busca una comprobación cualitativa reproducible, no una
+estimación estable para todas las hojas ni una explicación del voto completo.
+La copia usada por LIME limita su lado mayor a 512 píxeles antes de generar
+perturbaciones; el clasificador de todas formas la reduce a 224.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\textwidth]{final_lime_case.png}
+  \caption{Imagen final seleccionada y explicación local LIME. Los bordes
+  corresponden a segmentos perturbados, no a una segmentación agronómica de la
+  lesión.}
+  \label{fig:lime-final}
+\end{figure}
+
+La explicación LIME se aplicó al mismo error fósforo--potasio de 0.978. Los
+segmentos influyentes no quedaron encerrados en la hoja central: aparecen sobre
+un fragmento de su tejido, hojas vecinas, suelo y el borde de otra maceta. Junto
+con el Grad-CAM concentrado alrededor de la maceta superior, ambos métodos
+indican que la salida mezcla una señal foliar débil con el contexto de captura.
+La figura no se usa para corregir la etiqueta. Sirve para decidir qué tipo de
+ejemplo debe añadirse: hojas con síntomas semejantes, pero fondos y encuadres
+diferentes.
+
+SHAP existe en la infraestructura histórica del repositorio, pero no se ejecutó
+sobre la cabeza final. Por esa razón no se incluye una figura SHAP reciclada
+como si perteneciera a esta corrida. La evidencia final de interpretabilidad
+son los mapas y metadatos generados por los dos métodos anteriores.

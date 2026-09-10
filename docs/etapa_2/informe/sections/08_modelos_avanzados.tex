@@ -1,0 +1,69 @@
+\section{Modelos avanzados}
+
+\subsection{Arquitecturas evaluadas}
+
+Se conservaron cuatro backbones con pesos ImageNet. EfficientNet-B0 escala
+profundidad, ancho y resolución de forma conjunta \citep{tan2019efficientnet};
+ShuffleNetV2-x1.0 prioriza operaciones eficientes y menor movimiento de memoria
+\citep{ma2018shufflenet}; MobileNetV3 Small fue diseñado mediante búsqueda para
+dispositivos con recursos limitados \citep{howard2019mobilenetv3}; FastViT-T8
+combina bloques convolucionales e ideas de transformers visuales con
+reparametrización estructural \citep{vasu2023fastvit}.
+
+Los cuatro recibieron exactamente las mismas filas de entrenamiento y
+validación y la configuración de cabeza seleccionada con EfficientNet-B0.
+Transferir esa misma cabeza metodológica evita darle a cada arquitectura una
+búsqueda de 30 trials diferente, aunque también favorece parámetros que fueron
+escogidos sobre B0. Los resultados miden la calidad de la representación
+congelada, no un ranking definitivo después de fine-tuning.
+
+El registro de código también admite EfficientNet-Lite0, EfficientNet-B4,
+MobileNetV3 Large y GhostNetV2-100. Registrado significa que el constructor
+puede instanciarlo; evaluado significa que produjo embeddings para las 33\,433
+imágenes y un CSV de predicciones en este protocolo. Solo los cuatro modelos
+de la Tabla~\ref{tab:model-comparison} cumplen la segunda condición.
+
+\subsection{Comparación experimental}
+
+\begin{table}[H]
+  \centering
+  \caption{Backbones evaluados con la misma cabeza optimizada. MB representa el
+  tamaño FP32 estimado de parámetros del backbone; ms es la mediana de 30
+  inferencias de una imagen en CPU.}
+  \label{tab:model-comparison}
+  \resizebox{\textwidth}{!}{\input{tables/model_comparison}}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\textwidth]{model_comparison.pdf}
+  \caption{Relación entre macro-F1, tamaño FP32 y latencia del backbone. El
+  color de cada punto corresponde a la latencia CPU.}
+  \label{fig:model-comparison}
+\end{figure}
+
+La latencia separó dos grupos aun antes de mirar la calidad. MobileNetV3 Small
+registró 5.2 ms y ShuffleNetV2-x1.0 9.5 ms por backbone; FastViT-T8 y
+EfficientNet-B0 rondaron 23.5 y 24.3 ms. Estas mediciones excluyen lectura de
+archivo, preprocesamiento y cabeza, y proceden de un Intel Core i7-12800HX. No
+son una predicción de tiempo Android.
+
+EfficientNet-B0 conservó el primer lugar: 0.9382 de accuracy y 0.8887 de
+macro-F1. ShuffleNet quedó segundo con 0.9264 y 0.8694. La diferencia de
+macro-F1 fue 0.0193, mientras ShuffleNet utilizó cerca del 31% del tamaño FP32
+de parámetros de B0 y el 39% de su latencia. Se repite así el trade-off de la
+Etapa 1: B0 ofrece la mejor calidad; ShuffleNet pierde poco y reduce de forma
+marcada el costo.
+
+MobileNetV3 Small fue todavía más rápido, 5.2 ms, pero su macro-F1 bajó a
+0.8651. Frente a ShuffleNet ahorra aproximadamente 4.2 ms en esta CPU a cambio
+de 0.0043 de macro-F1. Ese intercambio puede ser razonable en un teléfono
+lento, aunque requiere una medición Android antes de elegirlo. FastViT-T8 no
+justificó aquí su costo: obtuvo el macro-F1 menor, 0.8593, con latencia similar
+a EfficientNet-B0 y más parámetros que los otros dos modelos móviles.
+
+La comparación tampoco respalda la idea de que una arquitectura más reciente
+deba ganar automáticamente. El backbone híbrido fue competitivo en accuracy
+(0.9194), pero su promedio por clase dejó ver que la representación no separó
+las minorías tan bien como B0. Por eso EfficientNet-B0 pasó a la fase de
+ensemble como mejor candidato individual y no por continuidad histórica.

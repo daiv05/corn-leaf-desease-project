@@ -1,0 +1,79 @@
+\section{Impacto social}
+
+\subsection{Una herramienta de primera observación}
+
+Para un pequeño productor, el valor posible de Doctor Maíz no está en reemplazar
+un laboratorio ni en emitir una receta. Está en reducir la distancia entre
+notar un síntoma y formular una pregunta útil. Una foto puede sugerir si el
+patrón se parece más a roya, tizón, daño de gusano cogollero o una deficiencia,
+mostrar alternativas y conservar un registro para enseñarlo a un extensionista.
+La detección temprana solo ocurre si la captura se hace cuando el síntoma es
+visible y si la respuesta conduce a una revisión posterior.
+
+La operación local cambia la viabilidad en zonas con conexión irregular. El
+modelo móvil no necesita enviar la fotografía para inferir y WatermelonDB
+conserva historial y correcciones hasta que exista conectividad. Esto reduce
+consumo de datos y permite trabajar en una parcela sin señal. También concentra
+el costo en el teléfono: cámara, memoria y tiempo de inferencia deben ser
+aceptables en dispositivos de gama baja, algo que todavía no se midió con una
+muestra representativa de equipos.
+
+\subsection{Productores y extensionistas}
+
+Usado individualmente, el sistema puede ayudar a organizar observaciones:
+fotografiar varias hojas, comparar confianza, anotar una corrección y decidir
+si hace falta asistencia. Usado por extensionistas, puede funcionar como una
+ficha común para priorizar visitas y recopilar ejemplos difíciles. El segundo
+uso parece más seguro porque una persona con experiencia interpreta el
+resultado junto con etapa del cultivo, distribución del daño y condiciones del
+suelo.
+
+La cobertura de nueve clases limita ambas funciones. El maíz puede presentar
+otras enfermedades, daños por herbicida, sequía, plagas o síntomas combinados.
+Una categoría ausente no se convierte en visible por tener un detector OOD.
+El usuario necesita una salida clara para «ninguna de las anteriores» y una
+ruta de consulta. De lo contrario, la facilidad de tomar una foto puede
+producir más confianza de la que permite el dataset.
+
+\subsection{Beneficio posible y evidencia disponible}
+
+El proyecto no midió aumento de rendimiento, ahorro de fertilizante, reducción
+de pérdidas ni tiempo de respuesta de asistencia técnica. Atribuirle cualquiera
+de esos porcentajes sería inventar impacto. Lo que sí se comprobó es una cadena
+técnica: clasificación sobre un corpus amplio, evaluación separada, análisis
+por condiciones, inferencia local y mecanismo de corrección. Esa cadena hace
+posible una prueba de campo; todavía no demuestra un beneficio agronómico.
+
+Una evaluación de impacto debería comparar prácticas, no solamente modelos.
+Por ejemplo, se pueden asignar comunidades o extensionistas a tres condiciones:
+procedimiento habitual, acceso a Doctor Maíz y acceso a Doctor Maíz con revisión
+técnica. Las medidas relevantes serían tiempo hasta la consulta, concordancia
+con diagnóstico agronómico, decisiones evitadas por baja confianza y tasa de
+seguimiento. Rendimiento e insumos solo deberían medirse con un diseño que
+controle clima, variedad y manejo.
+
+\subsection{Riesgos de exclusión}
+
+El lenguaje, la alfabetización digital y el diseño del teléfono influyen tanto
+como el clasificador. Mostrar nombres en inglés, cifras sin explicación o
+pantallas cargadas puede excluir a la población a la que se busca apoyar. La
+aplicación ya presenta etiquetas y recomendaciones en español, pero no se
+realizó una prueba de usabilidad con productores. Tampoco se evaluaron
+variantes lingüísticas, accesibilidad visual o instrucciones por audio.
+
+El dataset introduce otra exclusión: proviene de colecciones externas y no
+identifica municipios salvadoreños. Un macro-F1 alto puede convivir con fallos
+en una variedad local, una cámara económica o una iluminación no representada.
+Por eso el despliegue responsable empieza pequeño, registra contexto con
+consentimiento y permite detener el uso si una región muestra una brecha
+persistente.
+
+\subsection{Condiciones para uso real}
+
+Antes de promover el sistema a escala se necesitan, como mínimo: validación
+prospectiva en parcelas; revisión de etiquetas por profesionales; protocolo de
+captura sencillo; prueba en teléfonos de distintas gamas; monitoreo por región
+y clase; canal de corrección; política de datos y ubicación; y un responsable
+que revise incidentes. Bajo esas condiciones, Doctor Maíz puede ampliar el
+alcance de la asistencia. Sin ellas, solo traslada al teléfono la incertidumbre
+del dataset.

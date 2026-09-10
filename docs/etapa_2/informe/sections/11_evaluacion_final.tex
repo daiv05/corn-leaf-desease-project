@@ -1,0 +1,96 @@
+\section{Evaluación final}
+
+\subsection{Apertura única del holdout}
+
+Una vez fijados la configuración de la cabeza, los modelos participantes y la
+regla de voting, cada cabeza se reajustó con las 28\,418 imágenes de desarrollo.
+El proceso comprobó que no existiera previamente
+\texttt{outputs/etapa\_2/final/metrics.json}; después creó el directorio final,
+evaluó las 5\,015 filas congeladas y registró
+\texttt{evaluation\_count=1}. El JSON conserva además el hash del CSV de
+holdout. Esta protección no es criptográfica frente a una persona que borre
+archivos, pero deja auditable la ejecución usada por el informe.
+
+\subsection{Resultados globales y por clase}
+
+\begin{table}[H]
+  \centering
+  \caption{Métricas obtenidas en la única evaluación del holdout.}
+  \label{tab:final-global}
+  \resizebox{0.92\textwidth}{!}{\input{tables/final_metrics}}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Precision, recall y F1 finales para las nueve clases.}
+  \label{tab:final-class}
+  \small
+  \input{tables/final_per_class}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\textwidth]{final_per_class.pdf}
+  \caption{Rendimiento final por clase. El soporte desigual no cambia el peso
+  de cada barra en macro-F1.}
+  \label{fig:final-class}
+\end{figure}
+
+El ensemble obtuvo 0.9537 de accuracy y F1 ponderado, 0.9012 de precision
+macro, 0.9092 de recall macro y 0.9035 de macro-F1. El resultado quedó 0.0062
+por debajo de la media de validación cruzada y dentro de una desviación
+estándar de ella. La validación fija había sido más optimista (0.9202), algo
+esperable porque allí también se eligieron los pesos.
+
+La diferencia entre accuracy y macro-F1 vuelve a concentrarse en tres clases.
+Necrosis letal obtuvo F1 0.9912 y roya común 0.9820; sana, gusano cogollero y
+tizón norteño también superaron 0.94. Potasio quedó en 0.6706, nitrógeno en
+0.8071 y fósforo en 0.8874. El ensemble mantiene el rendimiento global, pero no
+convierte las deficiencias en un problema resuelto.
+
+\subsection{Matriz de confusión}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{final_confusion_matrices.pdf}
+  \caption{Matriz final en conteos y normalizada por clase real. La segunda
+  vista permite leer clases pequeñas sin que desaparezcan detrás de la clase
+  sana.}
+  \label{fig:final-confusion}
+\end{figure}
+
+Hubo 232 errores en 5,015 imágenes. Los dos flujos individuales más grandes
+fueron potasio hacia nitrógeno (28 casos) y tizón norteño hacia sana (25).
+También aparecieron 21 casos de tizón como mancha gris y 13 en el sentido
+contrario. La matriz normalizada hace visible que los 36 fallos de potasio
+pesan mucho más para su clase que los 77 fallos totales de tizón para una clase
+con 1,024 ejemplos.
+
+La diagonal de roya parece casi perfecta en conteos, pero esconde una
+diferencia de entorno que se revisa en fairness: 327 de 338 casos fueron
+correctos y los once errores se concentran proporcionalmente en las pocas
+imágenes de campo. El problema no está en reconocer el patrón de laboratorio,
+sino en sostenerlo cuando cambia la captura.
+
+\subsection{Etapa 1 frente a Etapa 2}
+
+\begin{table}[H]
+  \centering
+  \caption{Referencias de ambas etapas. Accuracy y macro-F1 no son una
+  comparación controlada porque cambiaron corpus, división y entrenamiento.}
+  \label{tab:e1-e2}
+  \resizebox{\textwidth}{!}{\input{tables/etapa1_vs_etapa2}}
+\end{table}
+
+La tabla no atribuye el cambio a Optuna ni a la ampliación. El contraste
+controlado de tuning está en la Tabla~\ref{tab:baseline-tuned}; aquí la Etapa 1
+aporta el antecedente del proyecto y la Etapa 2 aporta un holdout que sí
+permaneció cerrado. Esta diferencia metodológica vale más que aparentar una
+ganancia directa entre dos números obtenidos bajo condiciones distintas.
+
+Como referencia, accuracy cambió de 0.9521 a 0.9537 y macro-F1 de 0.9146 a
+0.9035. No se interpreta la caída de 0.0111 como empeoramiento causal: el
+holdout nuevo contiene otro corpus y la cabeza no fue ajustada end-to-end. En
+potasio, el F1 pasó de 0.62 a 0.6706 y el soporte evaluado de 40 a 93. La señal
+es favorable, pero todavía insuficiente y tampoco aislable de los cambios de
+datos y protocolo.

@@ -1,0 +1,112 @@
+\section{Dataset actualizado y protocolo experimental}
+
+\subsection{Qué cambió desde la Etapa 1}
+
+La Etapa 1 trabajó con 31\,622 imágenes. Después se añadieron ejemplos a las
+clases que habían quedado más cortas: mancha gris y las tres deficiencias
+nutricionales. La publicación completa consultada para esta etapa contenía
+33\,437 archivos distribuidos en nueve clases \citep{huggingface2026maize}.
+Todos se abrieron, se normalizó su orientación EXIF y se calculó SHA-256,
+resolución y varianza del Laplaciano como indicador descriptivo de nitidez.
+No hubo imágenes ilegibles. Cuatro archivos de hojas sanas repetían exactamente
+el contenido de otro archivo y se eliminaron antes de dividir. El corpus
+experimental quedó en 33\,433 imágenes únicas.
+
+Esta secuencia explica cifras que antes podían parecer contradictorias.
+31\,622 corresponde al corpus de la Etapa 1; 33\,437 es el número de archivos
+de la publicación ampliada; 33\,433 es el total utilizado aquí después de la
+deduplicación. La cifra 33\,438 que aparecía en una versión de la auditoría no
+coincidió con el dataset descargado ni con su manifiesto y por eso no se
+conservó como resultado.
+
+\begin{table}[H]
+  \centering
+  \caption{Composición por clase antes y después de la ampliación. La fuente es
+  el manifiesto generado, no una transcripción manual.}
+  \label{tab:dataset-e1-e2}
+  \small
+  \input{tables/dataset_etapa1_vs_etapa2}
+\end{table}
+
+El incremento no fue uniforme. Potasio pasó de 266 a 621 imágenes y fósforo de
+612 a 938; nitrógeno llegó a 846. Mancha gris recibió la mayor ampliación
+absoluta entre las clases problemáticas, de 1\,119 a 1\,930. Aun así, la clase
+sana conserva 8\,740 imágenes, más de catorce veces el soporte de potasio. La
+ampliación reduce el extremo del desbalance, pero no lo elimina.
+
+\subsection{Composición y procedencia}
+
+El manifiesto conserva catorce identificadores de fuente obtenidos del nombre
+versionado de cada archivo. Las colecciones más grandes son
+\texttt{maize\_africa}, \texttt{multi\_desease},
+\texttt{maize\_desease\_v1.1}, \texttt{corn\_leaf\_roboflow} y
+\texttt{cropdg}. No existe un identificador de finca, municipio, dispositivo o
+campaña de captura. Por eso «fuente» permite detectar diferencias entre
+colecciones, pero no medir generalización geográfica en El Salvador.
+
+La etiqueta de entorno separa 3\,551 imágenes de laboratorio y 29\,882 de
+campo. Su distribución está muy lejos de ser factorial: roya común concentra
+2\,150 imágenes de laboratorio y 106 de campo; mancha gris tiene 513 y 1\,417;
+tizón norteño 888 y 5\,942. Las otras seis clases no poseen ejemplos de
+laboratorio. Esta asimetría importa más que el total global. Si el grupo de
+laboratorio obtiene otro F1, la diferencia puede deberse tanto al fondo como a
+las clases que lo componen.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\textwidth]{dataset_distribution.pdf}
+  \caption{Distribución del corpus único por clase y entorno. Las deficiencias
+  ampliaron su soporte, pero siguen siendo minoritarias y exclusivamente de
+  campo en los metadatos disponibles.}
+  \label{fig:dataset-distribution}
+\end{figure}
+
+La Figura~\ref{fig:dataset-distribution} deja ver dos riesgos. El primero es el
+peso de la clase sana y de necrosis letal frente a las deficiencias. El segundo
+es que «laboratorio» funciona casi como una pista de clase. Esto impide
+interpretar una diferencia global laboratorio/campo como efecto puro del
+entorno y obliga a acompañarla con comparaciones dentro de las tres clases que
+sí aparecen en ambos grupos.
+
+\subsection{Prevención de fugas y división}
+
+La deduplicación se hizo antes del muestreo. Cada fila contiene ruta relativa,
+clase, índice de clase, entorno, fuente, ancho, alto, megapíxeles, indicador de
+blur y SHA-256. El fingerprint del conjunto completo se calculó ordenando las
+rutas y concatenando ruta, clase, entorno y hash. El valor resultante es:
+
+\begin{center}
+\small\ttfamily
+c44de0783d3c3f88ef6151eaa75536d1020f5b208327419c4cb7f3ac459d3892
+\end{center}
+
+Se reservaron 5\,015 imágenes (15\%) como holdout con semilla 4202. El 85\%
+restante se dividió en 23\,403 imágenes de entrenamiento y 5\,015 de
+validación, utilizando semilla 42. Ambos cortes se estratificaron por la
+combinación clase--entorno. El archivo \texttt{holdout.lock.json} se creó antes
+de extraer características y guarda el fingerprint, el hash del CSV de holdout
+y la regla de no consultar sus etiquetas durante selección.
+
+El conjunto histórico llamado test no se reutilizó como prueba final. Esa
+decisión sacrifica comparabilidad directa con la Etapa 1, pero recupera una
+interpretación limpia: la evaluación final responde a decisiones fijadas sin
+haber visto esas 5\,015 etiquetas. Los resultados de ambas etapas se comparan
+más adelante como referencias sobre corpus y protocolos distintos, no como
+una prueba controlada de superioridad.
+
+\subsection{Preprocesamiento y métricas}
+
+Las imágenes se corrigieron según EXIF, se convirtieron a RGB, se redimensionaron
+a la entrada nativa de cada backbone y se normalizaron con media y desviación
+de ImageNet. El redimensionamiento directo no conserva la relación de aspecto;
+es una limitación deliberadamente visible del protocolo. Cada foto se decodificó
+una vez durante la extracción conjunta, y FastViT recibió 256 píxeles mientras
+los otros backbones recibieron 224.
+
+La métrica de selección fue macro-F1, porque concede el mismo peso a potasio y
+a la clase sana. También se guardaron accuracy, precision macro, recall macro
+y F1 ponderado. Accuracy permite continuidad con la etapa anterior; F1
+ponderado describe el volumen total; macro-F1 evita que cualquiera de esas dos
+lecturas oculte las clases pequeñas. Para fairness se calcularon las mismas
+métricas dentro de grupos, pero sus brechas se reportan como diferencias
+descriptivas y no como causalidad.

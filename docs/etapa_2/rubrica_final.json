@@ -1,0 +1,85 @@
+{
+  "maximum_total": 100,
+  "awarded_total": 96,
+  "overall_status": "Cumplimiento con una salvedad",
+  "overall_note": "La disponibilidad pública del despliegue no pudo confirmarse al cierre.",
+  "criteria": [
+    {
+      "criterion": "Optimización e hiperparámetros",
+      "maximum": 20,
+      "awarded": 20,
+      "status": "Completo",
+      "evidence_short": "30 trials, 13 podados; macro-F1 0.7799 a 0.8887.",
+      "evidence": [
+        "outputs/etapa_2/tuning/summary.json",
+        "outputs/etapa_2/tuning/trials.csv",
+        "scripts/etapa_2/stage2_experiments.py",
+        "docs/etapa_2/informe/sections/07_optimizacion.tex"
+      ]
+    },
+    {
+      "criterion": "Modelos avanzados y ensemble",
+      "maximum": 20,
+      "awarded": 20,
+      "status": "Completo",
+      "evidence_short": "Cuatro backbones; weighted soft voting mejora 0.0315.",
+      "evidence": [
+        "outputs/etapa_2/model_comparison/models.csv",
+        "outputs/etapa_2/ensemble/complementarity.csv",
+        "outputs/etapa_2/ensemble/selection.json",
+        "docs/etapa_2/informe/sections/08_modelos_avanzados.tex",
+        "docs/etapa_2/informe/sections/09_ensemble.tex"
+      ]
+    },
+    {
+      "criterion": "Evaluación rigurosa",
+      "maximum": 15,
+      "awarded": 15,
+      "status": "Completo",
+      "evidence_short": "5-fold y holdout congelado evaluado una sola vez.",
+      "evidence": [
+        "outputs/etapa_2/holdout.lock.json",
+        "outputs/etapa_2/cross_validation/summary.json",
+        "outputs/etapa_2/final/metrics.json",
+        "outputs/etapa_2/final/confusion_matrix.csv"
+      ]
+    },
+    {
+      "criterion": "Sesgos y ética",
+      "maximum": 15,
+      "awarded": 15,
+      "status": "Completo",
+      "evidence_short": "Brechas por clase, entorno, fuente, blur y resolución.",
+      "evidence": [
+        "outputs/etapa_2/fairness/gaps.csv",
+        "outputs/etapa_2/fairness/environment_within_class.csv",
+        "docs/etapa_2/informe/sections/13_fairness.tex",
+        "docs/etapa_2/informe/sections/14_etica.tex"
+      ]
+    },
+    {
+      "criterion": "Prototipo",
+      "maximum": 15,
+      "awarded": 11,
+      "status": "Parcial",
+      "evidence_short": "Demo y 276 pruebas; API/APK no disponibles al cierre.",
+      "evidence": [
+        "outputs/etapa_2/prototype/demo_result.json",
+        "docs/etapa_2/02_prototipo_verificado.md",
+        "docs/etapa_2/informe/sections/16_prototipo.tex"
+      ]
+    },
+    {
+      "criterion": "Impacto y recomendaciones",
+      "maximum": 15,
+      "awarded": 15,
+      "status": "Completo",
+      "evidence_short": "Condiciones de uso y nueve propuestas concretas.",
+      "evidence": [
+        "docs/etapa_2/informe/sections/17_impacto_social.tex",
+        "docs/etapa_2/informe/sections/18_politica_publica.tex",
+        "docs/etapa_2/informe/sections/19_limitaciones.tex"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+\section{Conclusiones}
+
+La Etapa 1 terminó con tres buenos baselines y una pregunta incómoda: ¿de qué
+sirve superar 0.90 de macro-F1 si potasio sigue fallando y el test ya fue visto
+varias veces? La segunda etapa no resolvió ese problema con una sola cifra.
+Cambió el corpus, congeló un holdout nuevo, comparó representaciones bajo el
+mismo protocolo y mantuvo las métricas minoritarias junto al resultado global.
+
+El tuning produjo la mejora controlada más clara del trabajo. Sobre
+EfficientNet-B0 y la misma validación, la cabeza pasó de 0.7799 a 0.8887 de
+macro-F1. El cambio que más importó no fue añadir parámetros: fue reducir la
+tasa, usar penalización L2 y ponderar las clases con la raíz de su frecuencia
+inversa. Recall macro aumentó 0.1399. Esto confirma que el baseline dejaba
+información útil en los embeddings, pero la frontera aprendida favorecía a las
+clases grandes.
+
+EfficientNet-B0 volvió a ser el mejor modelo individual, aunque no dominó cada
+imagen. Su conjunto de errores tuvo Jaccard 0.277 con MobileNetV3; esa
+complementariedad permitió que el voto ponderado alcanzara 0.9202 en
+validación, 0.0315 más que B0. El costo es concreto: cuatro backbones, cerca de
+38.3 MB FP32 sumados y más latencia. Para investigación se selecciona el
+ensemble; para teléfono, ShuffleNet o MobileNet siguen siendo alternativas que
+merecen una prueba de dispositivo.
+
+Los cinco folds situaron el macro-F1 en $0.9097\pm0.0090$. El holdout único
+quedó en 0.9035, acompañado por 0.9537 de accuracy. La cercanía con validación
+cruzada indica que la selección no dependió completamente de un corte, pero el
+quinto fold reveló su límite: potasio cayó a F1 0.6304. En el holdout, potasio
+obtuvo 0.6706 y solo 57 de 93 imágenes correctas. Veintiocho de sus 36 errores
+fueron nitrógeno. La clase mejoró frente a la referencia histórica de 0.62,
+pero sigue siendo el problema central y no debe ocultarse detrás de 95\% de
+accuracy.
+
+El sesgo laboratorio/campo resultó más específico de lo que sugería un promedio
+global. Mancha gris y tizón tuvieron recalls ligeramente mayores en campo;
+roya pasó de 1.0 en 322 imágenes de laboratorio a 0.3125 en 16 de campo. El
+soporte pequeño impide fijar la magnitud real, pero la dirección confirma que
+el fondo controlado puede sostener un atajo. Las brechas por fuente y clase
+fueron mayores que las de resolución. La acción correcta no es declarar que el
+modelo es justo, sino recolectar roya de campo, revisar N/P/K y monitorear cada
+segmento con su soporte.
+
+La aplicación móvil completa la cadena técnica: captura, preprocesamiento,
+TFLite local, confianza, OOD, resultado e historial offline. Sus 276 pruebas y
+typecheck aprobaron; la demo experimental también produjo una salida real. Sin
+embargo, el modelo final de esta etapa no reemplazó el EfficientNet-Lite0
+embarcado y el despliegue público no estuvo accesible al cierre. El informe
+descuenta esa evidencia faltante. Un prototipo funcional no se convierte en
+servicio disponible solamente porque exista una URL en la configuración.
+
+\subsection{Cumplimiento de la rúbrica}
+
+La calificación documentada es 96/100. Los cuatro puntos no otorgados
+corresponden al criterio de prototipo: faltó comprobar disponibilidad pública
+continua y ejecutar el modelo experimental final dentro de Android. Los demás
+criterios poseen CSV, JSON, código, figuras y secciones enlazadas. No se asignó
+puntaje por una capacidad registrada sin corrida.
+
+Doctor Maíz queda en un punto útil pero delimitado. Ya existe evidencia
+reproducible de selección y una aplicación donde integrar modelos; todavía
+falta la evidencia que solo puede dar el campo. La siguiente decisión no
+debería buscar otra arquitectura por novedad, sino comprobar con productores y
+extensionistas si las hojas locales, los teléfonos reales y la forma de mostrar
+incertidumbre sostienen lo observado aquí.
+
+\begin{table}[H]
+  \centering
+  \caption{Puntuación final respaldada por artefactos reproducibles.}
+  \label{tab:rubric}
+  \small
+  \input{tables/rubric}
+\end{table}

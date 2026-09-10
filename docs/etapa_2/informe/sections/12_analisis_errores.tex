@@ -1,0 +1,61 @@
+\section{Análisis de errores}
+
+El análisis se hizo a partir de las 5\,015 predicciones del holdout y no de una
+selección visual de casos convenientes. La matriz de conteos permite seguir
+cada error desde su clase real hasta la predicción. También se separaron los
+errores con mayor confianza para comprobar si el problema detectado en la
+Etapa 1 seguía presente.
+
+\subsection{Deficiencias de nitrógeno, fósforo y potasio}
+
+Las tres deficiencias reunieron 61 errores y 51 de ellos (83.6%) terminaron en
+otra clase del mismo bloque N/P/K. Nitrógeno tuvo 127 ejemplos: ocho se
+predijeron como potasio y dos como fósforo. Fósforo tuvo 141: siete pasaron a
+potasio y uno a nitrógeno. Potasio tuvo 93 y produjo el flujo más grande: 28 a
+nitrógeno y cinco a fósforo. La confusión no desapareció al ampliar el corpus;
+se volvió más asimétrica. El modelo suele absorber potasio dentro de nitrógeno,
+pero también recibe falsos positivos de las otras deficiencias.
+
+\subsection{Potasio: el cuello de botella anterior}
+
+Solo 57 de las 93 imágenes de potasio fueron correctas. Su precision fue 0.7403,
+recall 0.6129 y F1 0.6706. De los 36 errores, 28 terminaron en nitrógeno
+(77.8%), cinco en fósforo y uno respectivamente en gusano cogollero, sana y
+necrosis letal. El problema principal no es una dispersión aleatoria por nueve
+clases; es una frontera concreta entre amarillamientos nutricionales.
+
+Frente al F1 histórico de 0.62 existe una mejora orientativa de 0.0506 y el
+soporte de evaluación aumentó de 40 a 93. Sin embargo, el recall sigue dejando
+sin reconocer casi cuatro de cada diez casos y en validación cruzada osciló con
+desviación 0.0496. Potasio mejoró, pero continúa siendo el cuello de botella.
+
+\subsection{Mancha gris y tizón norteño}
+
+Mancha gris acertó 269 de 290 imágenes. Trece de sus 21 errores fueron hacia
+tizón norteño. En el sentido inverso, 21 de 77 errores de tizón terminaron en
+mancha gris; otros 25 se clasificaron como sanos. La relación visual detectada
+en la Etapa 1 permanece, aunque sus F1 finales de 0.9150 y 0.9446 están muy por
+encima del bloque nutricional. Aquí el modelo falla en una minoría de lesiones
+parecidas; en potasio falla en la estructura central de la clase.
+
+\subsection{Errores de alta confianza}
+
+Siete de los 232 errores superaron 0.90 de confianza. El mayor fue una imagen
+de fósforo predicha como potasio con 0.9779. Tres hojas enfermas ---dos con
+gusano cogollero y una con tizón--- se mostraron como sanas con confianza entre
+0.9296 y 0.9571; otra hoja de tizón recibió sana con 0.9145. También hubo roya
+de campo como mancha gris (0.9178) y mancha gris de laboratorio como tizón
+(0.9143).
+
+Los casos más confiados cruzan precisamente dos límites de riesgo: confundir
+insumos dentro de N/P/K y declarar sana una hoja afectada. El ensemble reduce
+errores globales, pero no elimina la sobreconfianza. La interfaz debe mostrar
+la segunda posibilidad, permitir rechazo y evitar convertir el porcentaje en
+una orden de manejo.
+
+La confianza máxima utilizada aquí procede de probabilidades one-vs-rest
+normalizadas. Sirve para ordenar los casos, pero no está calibrada. Un error de
+0.95 no demuestra que el sistema estuviera estadísticamente 95\% seguro; sí
+demuestra que la interfaz habría mostrado una alternativa dominante. Esos
+casos deben alimentar pruebas OOD, revisión de etiqueta y futuras corridas de
+calibración.

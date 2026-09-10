@@ -1,0 +1,55 @@
+\section{Validación cruzada}
+
+\subsection{Diseño}
+
+Después de fijar hiperparámetros, arquitectura o ensemble se unieron
+entrenamiento y validación en un conjunto de desarrollo de 28\,418 imágenes.
+Sobre él se ejecutó StratifiedKFold de cinco partes, con barajado y semilla 42.
+La estratificación utilizó la combinación clase--entorno para impedir que uno
+de los folds perdiera los pocos ejemplos de roya de campo o concentrara los
+fondos de laboratorio.
+
+En cada fold la cabeza se ajustó desde cero sobre cuatro partes y se evaluó en
+la quinta. Cuando la selección fue un ensemble, se reajustó una cabeza para
+cada backbone y se conservaron los pesos de voting aprendidos antes. No se
+volvieron a optimizar pesos dentro de los folds. Esto mide estabilidad de la
+configuración fijada y evita cinco búsquedas nuevas.
+
+\begin{table}[H]
+  \centering
+  \caption{Resultados de cinco folds, media y desviación estándar muestral.}
+  \label{tab:cv}
+  \resizebox{\textwidth}{!}{\input{tables/cross_validation}}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.82\textwidth]{cross_validation.pdf}
+  \caption{Macro-F1 por fold y media de la configuración seleccionada.}
+  \label{fig:cv}
+\end{figure}
+
+Esta validación no vuelve ciega la selección: Optuna y la comparación ya habían
+visto una división del mismo conjunto de desarrollo. Su función es comprobar
+si el resultado depende de un corte afortunado. El estimador no consultado
+permanece en el holdout.
+
+Los cinco folds produjeron 0.9097 de macro-F1 medio con desviación 0.0090. El
+mejor fue el tercero (0.9195) y el menor el quinto (0.8955); la distancia entre
+ambos fue 0.0240. Accuracy varió mucho menos, con media 0.9531 y desviación
+0.0027. Esa diferencia entre la estabilidad de accuracy y macro-F1 vuelve a
+mostrar que el movimiento ocurre en las clases pequeñas, no en el grueso del
+dataset.
+
+Potasio fue al mismo tiempo la clase con menor F1 medio (0.7039) y la más
+variable (desviación 0.0496). En el quinto fold su recall cayó a 0.5524 y su F1
+a 0.6304, aun cuando el accuracy global permaneció en 0.9495. Nitrógeno quedó
+segundo entre los promedios bajos, con F1 0.8326, pero su desviación fue 0.0159.
+Roya común y necrosis letal superaron 0.98 de F1 medio con variaciones menores
+a 0.002.
+
+La configuración es estable para las clases grandes y visualmente distintivas,
+pero no para potasio. El fold bajo no invalida el ensemble; evita resumirlo como
+0.91 sin decir que una partición produjo 0.63 de F1 en el problema central de
+la etapa anterior. Esa variación justifica mantener métricas por clase en el
+monitoreo del prototipo.

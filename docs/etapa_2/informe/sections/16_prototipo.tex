@@ -1,0 +1,99 @@
+\section{Prototipo funcional}
+
+\subsection{Arquitectura verificada}
+
+La evidencia operativa combina dos piezas. La primera es la demo reproducible
+de esta etapa, que ejecuta la selección final sobre una imagen real. La segunda
+es la aplicación móvil Doctor Maíz inspeccionada en el commit
+\nolinkurl{dd048d37dcabd08c53c704d702825e7d672f0f37}. La aplicación usa React
+Native 0.86, Expo 57, TypeScript, WatermelonDB y
+\texttt{react-native-fast-tflite}. El modelo embarcado es
+EfficientNet-Lite0 TFLite con pesos int8, entrada y salida float32 y tamaño de
+3\,743\,824 bytes. Su SHA-256 coincide con el manifiesto:
+\par\smallskip\noindent
+\texttt{3a0623cd985a23b954e424e605a2e00c}\allowbreak
+\texttt{91f8d592e376dfe3149e5820485bc2b3}.
+
+\begin{figure}[H]
+  \centering
+  \fbox{\begin{minipage}{0.88\textwidth}
+    \centering
+    \textbf{Cámara o galería}
+    $\longrightarrow$ orientación EXIF, RGB y $224\times224$
+    $\longrightarrow$ \textbf{TFLite local}\\[0.3em]
+    $\longrightarrow$ logits + características OOD
+    $\longrightarrow$ Top-1, confianza y rechazo
+    $\longrightarrow$ \textbf{resultado e historial offline}
+  \end{minipage}}
+  \caption{Flujo real implementado en la aplicación móvil. La API participa en
+  autenticación, sincronización y actualización; la inferencia ocurre en el
+  dispositivo.}
+  \label{fig:prototype-flow}
+\end{figure}
+
+El motor materializa el modelo como archivo local, comprueba que el tensor de
+entrada tenga $1\times3\times224\times224$ elementos y que existan nueve
+salidas en el orden de \texttt{labels.json}. También exige un segundo tensor de
+características para el detector OOD. La pantalla de captura acepta cámara o
+galería, ejecuta preprocesamiento e inferencia, navega al resultado y guarda el
+escaneo. La pantalla siguiente muestra la fotografía, diagnóstico, confianza,
+segunda opción en casos de confianza baja y recomendaciones. Si la imagen se
+rechaza, no fuerza una enfermedad: pide acercarse a una hoja con mejor luz.
+
+\subsection{Comprobación ejecutable}
+
+Se instaló el lockfile del repositorio móvil en un clon temporal. La instalación
+normal detectó un conflicto entre React Native 0.86.0 y
+\texttt{@react-native/jest-preset} 0.86.2; se completó con
+\texttt{npm ci --legacy-peer-deps}. Después, \texttt{npm run typecheck} terminó
+sin errores y \texttt{npm test -- --runInBand} aprobó 40 suites y 276 pruebas.
+Las advertencias de React sobre \texttt{act(...)} no cambiaron el código de
+salida. El entorno disponible usa Node 18.19.1 aunque dependencias recientes
+solicitan Node 20.19.4 o superior; reproducir la app requiere alinear esa
+versión. La instalación también reportó 24 vulnerabilidades de dependencias
+(17 moderadas y 7 altas). No se ejecutó una actualización forzada porque
+habría cambiado el lockfile del prototipo; deben revisarse antes de distribuir
+otra compilación.
+
+La Figura~\ref{fig:prototype-capture} es una captura generada por ejecución, no
+una maqueta. El comando carga los pesos públicos del o de los backbones
+seleccionados, aplica la cabeza final y escribe un JSON con Top-3, confianza y
+latencia CPU. Se usa una imagen del holdout solo después de terminar la
+evaluación final.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.94\textwidth]{prototype_capture.png}
+  \caption{Captura de la demo de Etapa 2: entrada real y salida producida por el
+  pipeline final. La latencia corresponde a CPU de escritorio y no se presenta
+  como benchmark Android.}
+  \label{fig:prototype-capture}
+\end{figure}
+
+La demo se reproduce desde la raíz del clasificador con:
+
+\begin{verbatim}
+PYTHONPATH=.:/tmp/doctor-maiz-pydeps python \
+  scripts/etapa_2/stage2_experiments.py \
+  --output-dir outputs/etapa_2 demo --image /ruta/hoja.jpg
+\end{verbatim}
+
+\subsection{Qué modelo está desplegado}
+
+La aplicación móvil conserva EfficientNet-Lite0 de la línea de entrenamiento
+principal, no la cabeza congelada evaluada en esta etapa. Hacer el reemplazo
+habría requerido exportar conjuntamente backbone, escalado y regresión
+one-vs-rest, validar paridad y volver a medir OOD en Android. Ninguna de esas
+pruebas se ejecutó, así que el informe no afirma un despliegue que no ocurrió.
+El prototipo demuestra que la arquitectura de integración existe y que el
+artefacto histórico funciona dentro de ella; la demo demuestra que la selección
+experimental produce resultados reproducibles.
+
+Durante una primera consulta, el endpoint de salud respondió
+\texttt{\{"status":"ok"\}} y el endpoint de versión informó Android 1.0.0,
+código 6. En la verificación final del mismo día, el dominio dejó de resolver
+por DNS y la URL de APK sin autenticación devolvió HTTP 404. Por eso el
+prototipo se califica como funcional e integrado, pero no como un despliegue
+público con disponibilidad comprobada de extremo a extremo. Esta diferencia
+reduce la puntuación del criterio y queda como limitación operativa, no como
+pendiente oculto.

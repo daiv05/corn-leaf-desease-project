@@ -1,0 +1,84 @@
+\section{Sesgos y fairness}
+
+En Doctor Maíz, fairness no se refiere a atributos demográficos. Se pregunta si
+el clasificador mantiene un rendimiento parecido entre clases y condiciones de
+captura agrícola. El reporte se generó únicamente sobre el holdout final y
+calculó precision, recall y F1 por clase, entorno, fuente, tercil de resolución
+y tercil de blur. Para evitar grupos diminutos se exigieron al menos 30 imágenes
+por fuente y 20 en las demás dimensiones.
+
+\begin{table}[H]
+  \centering
+  \caption{Diferencia entre el mayor y menor valor observado dentro de cada
+  dimensión. Los gaps son descriptivos y no llevan signo.}
+  \label{tab:fairness-gaps}
+  \input{tables/fairness_gaps}
+\end{table}
+
+La brecha mayor apareció entre clases: 0.2584 en precision, 0.3767 en recall y
+0.3206 en F1. El extremo inferior de precision fue nitrógeno (0.7386); el de
+recall y F1 fue potasio (0.6129 y 0.6706). Necrosis letal ocupó el extremo alto
+de recall y F1. La desigualdad entre clases es mayor que cualquiera de las
+brechas agregadas de calidad de imagen.
+
+Fuente quedó muy cerca: gap 0.3151 en F1 y 0.3599 en recall. Blur produjo 0.0929
+de F1; entorno 0.0861; resolución 0.0683. Que entorno tenga un gap global menor
+no contradice el sesgo de fondos: sus dos grupos contienen conjuntos de clases
+distintos y por eso se necesita la lectura controlada siguiente.
+
+\subsection{Laboratorio frente a campo}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.96\textwidth]{fairness_environment.pdf}
+  \caption{A la izquierda, macro métricas globales de grupos con composición de
+  clases distinta; a la derecha, recall dentro de las clases presentes en ambos
+  entornos.}
+  \label{fig:fairness-environment}
+\end{figure}
+
+En el resumen global, laboratorio obtuvo F1 0.9352 y campo 0.8491; los recalls
+fueron 0.9371 y 0.8376. No se concluye que retirar el fondo cause 0.0861 de
+ganancia. Laboratorio no contiene deficiencias y el grupo de campo sí incluye
+potasio, la clase más difícil.
+
+Dentro de mancha gris el recall fue 0.9091 en laboratorio y 0.9343 en campo;
+para tizón norteño, 0.9023 y 0.9282. Esas dos clases no muestran una caída de
+campo. Roya sí: 1.0000 sobre 322 imágenes de laboratorio y 0.3125 sobre solo 16
+de campo. El tamaño de ese último grupo impide generalizar el número, pero
+confirma el atajo advertido en la Etapa 1: reconocer roya sobre fondo controlado
+no garantiza reconocer sus pocas capturas reales.
+
+La mitad izquierda no se interpreta como efecto causal del fondo. Laboratorio
+solo contiene roya, mancha gris y tizón norteño, mientras campo contiene las
+nueve categorías. La comparación dentro de clase reduce ese problema para tres
+categorías, aunque todavía puede mezclar fuente, cámara y resolución.
+
+\subsection{Fuente, resolución, nitidez y clases pequeñas}
+
+Entre fuentes, \texttt{maize\_field} tuvo el F1 menor (0.6849), mientras
+\texttt{maize\_leaf\_roboflow} alcanzó 1.0000 en su subconjunto. La diferencia
+no compara colecciones equivalentes: una fuente puede aportar una sola clase o
+un estilo particular. Su utilidad es operativa: antes de añadir nuevas imágenes
+de \texttt{maize\_field} conviene revisar por qué casi un tercio de su rendimiento
+queda fuera del extremo superior.
+
+El tercil con mayor desenfoque aparente obtuvo F1 0.8022 y el más nítido 0.8951.
+La dirección coincide con lo esperado: menos detalle acompaña más errores. En
+cambio, resolución no fue monotónica. El tercil medio quedó en 0.8425 y el de
+menor resolución en 0.9108. Más píxeles originales no aseguran que la lesión
+esté grande, enfocada o bien iluminada; usar resolución como filtro automático
+habría descartado casos sin evidencia suficiente.
+
+El indicador de blur es la varianza del Laplaciano de una copia reducida. Una
+lesión con textura puede elevarlo y una hoja correctamente enfocada pero lisa
+puede reducirlo; por eso se habla de terciles de nitidez aparente. De forma
+similar, resolución original no garantiza que la hoja ocupe suficientes
+píxeles. Estas variables ayudan a encontrar segmentos débiles, no sustituyen
+una auditoría de calidad de captura.
+
+El informe evita la frase «el modelo es justo». Un gap pequeño en este holdout
+solo significa que los grupos definidos aquí quedaron cerca. Sin ubicación,
+finca, variedad o dispositivo no se puede descartar una brecha regional. El
+formato sigue el principio de una ficha de modelo: mostrar soporte, condiciones
+y límites junto con la métrica \citep{mitchell2019modelcards}.

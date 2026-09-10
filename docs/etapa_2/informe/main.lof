@@ -1,0 +1,14 @@
+\babel@toc {spanish}{}\relax 
+\contentsline {figure}{\numberline {1}{\ignorespaces Distribución del corpus único por clase y entorno. Las deficiencias ampliaron su soporte, pero siguen siendo minoritarias y exclusivamente de campo en los metadatos disponibles.\relax }}{4}{figure.caption.6}%
+\contentsline {figure}{\numberline {2}{\ignorespaces Macro-F1 de los trials completos y mejor valor acumulado. La línea discontinua corresponde al baseline de la cabeza, no al modelo histórico.\relax }}{6}{figure.caption.8}%
+\contentsline {figure}{\numberline {3}{\ignorespaces Importancia relativa calculada por Optuna dentro del espacio explorado. Una importancia baja no prueba que el hiperparámetro sea inútil fuera de esos rangos.\relax }}{7}{figure.caption.9}%
+\contentsline {figure}{\numberline {4}{\ignorespaces Relación entre macro-F1, tamaño FP32 y latencia del backbone. El color de cada punto corresponde a la latencia CPU.\relax }}{9}{figure.caption.13}%
+\contentsline {figure}{\numberline {5}{\ignorespaces Cambio de macro-F1 al combinar los cuatro modelos. La escala se acota para que una diferencia pequeña no desaparezca visualmente.\relax }}{10}{figure.caption.15}%
+\contentsline {figure}{\numberline {6}{\ignorespaces Macro-F1 por fold y media de la configuración seleccionada.\relax }}{12}{figure.caption.17}%
+\contentsline {figure}{\numberline {7}{\ignorespaces Rendimiento final por clase. El soporte desigual no cambia el peso de cada barra en macro-F1.\relax }}{13}{figure.caption.20}%
+\contentsline {figure}{\numberline {8}{\ignorespaces Matriz final en conteos y normalizada por clase real. La segunda vista permite leer clases pequeñas sin que desaparezcan detrás de la clase sana.\relax }}{14}{figure.caption.21}%
+\contentsline {figure}{\numberline {9}{\ignorespaces Casos del holdout y mapas Grad-CAM del método final. El color rojo marca mayor activación relativa dentro de cada imagen.\relax }}{17}{figure.caption.23}%
+\contentsline {figure}{\numberline {10}{\ignorespaces Imagen final seleccionada y explicación local LIME. Los bordes corresponden a segmentos perturbados, no a una segmentación agronómica de la lesión.\relax }}{18}{figure.caption.24}%
+\contentsline {figure}{\numberline {11}{\ignorespaces A la izquierda, macro métricas globales de grupos con composición de clases distinta; a la derecha, recall dentro de las clases presentes en ambos entornos.\relax }}{19}{figure.caption.26}%
+\contentsline {figure}{\numberline {12}{\ignorespaces Flujo real implementado en la aplicación móvil. La API participa en autenticación, sincronización y actualización; la inferencia ocurre en el dispositivo.\relax }}{22}{figure.caption.27}%
+\contentsline {figure}{\numberline {13}{\ignorespaces Captura de la demo de Etapa 2: entrada real y salida producida por el pipeline final. La latencia corresponde a CPU de escritorio y no se presenta como benchmark Android.\relax }}{23}{figure.caption.28}%

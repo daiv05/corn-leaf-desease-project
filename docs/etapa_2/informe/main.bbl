@@ -1,0 +1,83 @@
+\begin{thebibliography}{9}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Akiba et~al.(2019)Akiba, Sano, Yanase, Ohta, and
+  Koyama]{akiba2019optuna}
+Takuya Akiba, Shotaro Sano, Toshihiko Yanase, Takeru Ohta, and Masanori Koyama.
+\newblock Optuna: A next-generation hyperparameter optimization framework.
+\newblock In \emph{Proceedings of the 25th ACM SIGKDD International Conference
+  on Knowledge Discovery and Data Mining}, pages 2623--2631, 2019.
+\newblock \doi{10.1145/3292500.3330701}.
+
+\bibitem[Howard et~al.(2019)Howard, Sandler, Chu, Chen, Chen, Tan, Wang, Zhu,
+  Pang, Vasudevan, Le, and Adam]{howard2019mobilenetv3}
+Andrew Howard, Mark Sandler, Grace Chu, Liang-Chieh Chen, Bo~Chen, Mingxing
+  Tan, Weijun Wang, Yukun Zhu, Ruoming Pang, Vijay Vasudevan, Quoc~V. Le, and
+  Hartwig Adam.
+\newblock Searching for mobilenetv3.
+\newblock In \emph{2019 IEEE/CVF International Conference on Computer Vision},
+  pages 1314--1324, 2019.
+\newblock \doi{10.1109/ICCV.2019.00140}.
+
+\bibitem[Ma et~al.(2018)Ma, Zhang, Zheng, and Sun]{ma2018shufflenet}
+Ningning Ma, Xiangyu Zhang, Hai-Tao Zheng, and Jian Sun.
+\newblock Shufflenet v2: Practical guidelines for efficient cnn architecture
+  design.
+\newblock In \emph{European Conference on Computer Vision}, pages 116--131,
+  2018.
+
+\bibitem[Mitchell et~al.(2019)Mitchell, Wu, Zaldivar, Barnes, Vasserman,
+  Hutchinson, Spitzer, Raji, and Gebru]{mitchell2019modelcards}
+Margaret Mitchell, Simone Wu, Andrew Zaldivar, Parker Barnes, Lucy Vasserman,
+  Ben Hutchinson, Elena Spitzer, Inioluwa~Deborah Raji, and Timnit Gebru.
+\newblock Model cards for model reporting.
+\newblock In \emph{Proceedings of the Conference on Fairness, Accountability,
+  and Transparency}, pages 220--229, 2019.
+\newblock \doi{10.1145/3287560.3287596}.
+
+\bibitem[{Proyecto Doctor Maíz}(2026)]{huggingface2026maize}
+{Proyecto Doctor Maíz}.
+\newblock Maize disease and deficiency dataset.
+\newblock Hugging Face Datasets, 2026.
+\newblock URL
+  \url{https://huggingface.co/datasets/elmerrosales/maize-disease-deficiency-dataset}.
+\newblock Consultado el 9 de septiembre de 2026.
+
+\bibitem[Ribeiro et~al.(2016)Ribeiro, Singh, and Guestrin]{ribeiro2016why}
+Marco~Tulio Ribeiro, Sameer Singh, and Carlos Guestrin.
+\newblock Why should i trust you? explaining the predictions of any classifier.
+\newblock In \emph{Proceedings of the 22nd ACM SIGKDD International Conference
+  on Knowledge Discovery and Data Mining}, pages 1135--1144, 2016.
+\newblock \doi{10.1145/2939672.2939778}.
+
+\bibitem[Selvaraju et~al.(2017)Selvaraju, Cogswell, Das, Vedantam, Parikh, and
+  Batra]{selvaraju2017gradcam}
+Ramprasaath~R. Selvaraju, Michael Cogswell, Abhishek Das, Ramakrishna Vedantam,
+  Devi Parikh, and Dhruv Batra.
+\newblock Grad-cam: Visual explanations from deep networks via gradient-based
+  localization.
+\newblock In \emph{2017 IEEE International Conference on Computer Vision},
+  pages 618--626, 2017.
+\newblock \doi{10.1109/ICCV.2017.74}.
+
+\bibitem[Tan and Le(2019)]{tan2019efficientnet}
+Mingxing Tan and Quoc~V. Le.
+\newblock Efficientnet: Rethinking model scaling for convolutional neural
+  networks.
+\newblock In \emph{Proceedings of the 36th International Conference on Machine
+  Learning}, pages 6105--6114, 2019.
+
+\bibitem[Vasu et~al.(2023)Vasu, Gabriel, Zhu, Tuzel, and
+  Ranjan]{vasu2023fastvit}
+Pavan Kumar~Anasosalu Vasu, James Gabriel, Jeff Zhu, Oncel Tuzel, and Anurag
+  Ranjan.
+\newblock Fastvit: A fast hybrid vision transformer using structural
+  reparameterization.
+\newblock In \emph{2023 IEEE/CVF International Conference on Computer Vision},
+  pages 5785--5795, 2023.
+
+\end{thebibliography}

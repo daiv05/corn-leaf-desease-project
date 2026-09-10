@@ -1,0 +1,74 @@
+\section{Introducción}
+
+\subsection{Punto de partida de la Etapa 1}
+
+La primera etapa dejó un resultado favorable, pero también un problema bastante
+claro. Los tres modelos ligeros superaron la meta de macro-F1 de 0.85:
+EfficientNet-B0 alcanzó 0.9146, ShuffleNetV2-x1.0 obtuvo 0.9030 y
+EfficientNet-Lite0 llegó a 0.8951. La diferencia entre ellos no estaba tanto en
+reconocer roya, hojas sanas o necrosis letal, sino en las clases con menos
+ejemplos. \texttt{potassium\_deficiency} tenía solamente 266 imágenes y su F1
+bajó hasta 0.62 con EfficientNet-B0, 0.54 con ShuffleNet y 0.49 con
+EfficientNet-Lite0. El modelo podía acertar casi siempre en el conjunto
+completo y, al mismo tiempo, fallar justo en la clase que más necesitaba
+mejorar.
+
+La matriz de confusión de aquella etapa mostró que las deficiencias de
+nitrógeno, fósforo y potasio compartían parte de sus errores. También aparecía
+una confusión menor entre mancha gris y tizón norteño. Las explicaciones LIME y
+Grad-CAM aportaron otra advertencia: a veces la red miraba la hoja y aun así se
+equivocaba, pero en imágenes de laboratorio también podía aprovechar un fondo
+uniforme que no estaría presente en una parcela. La confianza alta tampoco
+garantizaba una decisión correcta. Esos hallazgos hicieron insuficiente
+limitarse a entrenar más épocas o escoger el mayor valor de accuracy.
+
+Había además un problema de evaluación. El conjunto llamado \emph{test} había
+sido consultado durante comparaciones, exportaciones y verificaciones
+posteriores. Sus métricas siguen siendo útiles como registro histórico, pero ya
+no representan una prueba ciega. Presentarlas otra vez como resultado final
+habría dado una precisión metodológica que el experimento no tenía.
+
+\subsection{Alcance de la Etapa 2}
+
+La segunda etapa responde a esos puntos con un protocolo nuevo. Primero se
+reconstruyó el corpus desde la publicación completa, se verificó cada archivo y
+se retiraron duplicados exactos antes de dividir. Luego se congeló un holdout
+nuevo de 5\,015 imágenes, sin emplearlo para elegir arquitectura,
+hiperparámetros ni pesos del ensemble. La selección trabajó únicamente con
+entrenamiento y validación; el holdout se abrió una vez al final.
+
+La máquina disponible no expuso una GPU CUDA. Para no reemplazar un experimento
+real por cifras estimadas, se congelaron backbones preentrenados en ImageNet y
+se optimizó sobre sus embeddings una cabeza lineal de pérdida logística. Esto
+no equivale al ajuste fino \emph{end-to-end} empleado en la Etapa 1. Sí permite
+comparar cuatro representaciones modernas sobre las 33\,433 imágenes únicas,
+ejecutar 30 trials de Optuna, probar soft voting, repetir cinco folds y evaluar
+el holdout completo en CPU. La restricción cambia la pregunta experimental:
+se mide qué tan separables son las nueve clases con cada representación
+preentrenada y una cabeza común optimizada. El informe conserva esa distinción
+cada vez que compara con el baseline histórico.
+
+También se revisó el producto que rodea al clasificador. La aplicación móvil
+captura o selecciona una foto, ejecuta un modelo TFLite local, calcula
+confianza y rechazo fuera de dominio, guarda el diagnóstico sin depender de
+conectividad y permite sincronizar correcciones. Su modelo embarcado pertenece
+a la línea histórica EfficientNet-Lite0; no se sustituyó silenciosamente por el
+modelo experimental de esta etapa. La demo incluida aquí ejecuta la selección
+de Etapa 2 sobre una imagen real y deja una salida reproducible, mientras la
+inspección de la aplicación confirma que existe una ruta móvil completa.
+
+El objetivo no fue acumular arquitecturas. EfficientNet-B0 y ShuffleNet
+continuaron por su papel en la etapa anterior; MobileNetV3 Small añadió una
+alternativa diseñada para dispositivos; FastViT-T8 permitió contrastar una
+arquitectura híbrida reciente. EfficientNet-B4, GhostNetV2 y otros nombres
+registrados en el código no aparecen como resultados porque no tuvieron una
+corrida completa en este protocolo. Separar lo implementado de lo evaluado
+evita convertir el catálogo de modelos en evidencia que no existe.
+
+La lectura final se concentra en cambios observables: cuánto aportó el tuning,
+si los modelos cometieron errores distintos, si el ensemble justificó su costo,
+qué variación hubo entre folds, qué ocurrió con potasio y qué brechas aparecieron
+entre clases, fuentes, resolución, nitidez y entornos de captura. La última
+parte traslada esos hallazgos a decisiones de uso. Doctor Maíz puede orientar
+una inspección; no identifica con certeza una causa agronómica ni prescribe por
+sí solo una aplicación de insumos.

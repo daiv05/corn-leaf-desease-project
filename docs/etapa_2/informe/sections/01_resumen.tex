@@ -1,0 +1,44 @@
+\section*{Resumen}
+\addcontentsline{toc}{section}{Resumen}
+
+Esta segunda etapa parte del clasificador obtenido en la etapa anterior y se
+concentra en los problemas que quedaron abiertos: el bajo rendimiento de
+potasio, el desbalance, el sesgo laboratorio/campo, la selección del modelo y
+una evaluación final que no reutilizara el test histórico. Se reconstruyó la
+publicación ampliada del dataset, se verificaron 33\,437 archivos y se
+eliminaron cuatro duplicados exactos. El corpus definitivo contiene 33\,433
+imágenes de nueve clases, con un holdout nuevo de 5\,015 fotografías congelado
+antes de modelar y fingerprint
+\texttt{c44de0783d3c3f88ef6151eaa75536d1020f5b208327419c4cb7f3ac459d3892}.
+
+Por ausencia de GPU, los experimentos nuevos utilizaron backbones ImageNet
+congelados y una cabeza logística entrenada sobre sus embeddings; no se
+presentan como fine-tuning end-to-end. Optuna ejecutó 30 trials sobre
+EfficientNet-B0 y podó 13. La mejor configuración elevó el macro-F1 de
+validación de la cabeza baseline de 0.7799 a 0.8887, principalmente al usar
+balanceo por raíz cuadrada, una tasa menor y penalización L2.
+EfficientNet-B0 superó a ShuffleNetV2-x1.0, MobileNetV3 Small y FastViT-T8 como
+modelo individual. Los errores fueron suficientemente distintos para que el
+weighted soft voting mejorara hasta 0.9202 en validación, con pesos aprendidos
+sin consultar el holdout.
+
+En cinco folds, el ensemble obtuvo macro-F1 medio de 0.9097 y desviación 0.0090.
+La evaluación única del holdout produjo 0.9537 de accuracy, 0.9012 de precision
+macro, 0.9092 de recall macro, 0.9035 de macro-F1 y 0.9537 de F1 ponderado.
+Potasio mejoró de forma orientativa desde el F1 histórico 0.62 hasta 0.6706,
+pero siguió siendo la clase más débil: 28 de sus 36 errores terminaron en
+nitrógeno. Fairness encontró las mayores brechas por clase (0.3206 de F1) y
+fuente (0.3151); además, roya obtuvo recall 1.0 en 322 imágenes de laboratorio
+y 0.3125 en solo 16 de campo, una señal importante aunque de soporte pequeño.
+
+Grad-CAM y LIME se aplicaron a casos finales, incluidos un error de alta
+confianza y una deficiencia nutricional. La demo ejecutable genera Top-3,
+confianza, latencia y advertencia sobre una imagen real. También se verificó la
+aplicación React Native con EfficientNet-Lite0 TFLite, inferencia offline y
+rechazo fuera de dominio: typecheck y 276 pruebas aprobaron. El endpoint y el
+APK no estuvieron disponibles en la comprobación final, por lo que el
+prototipo es funcional e integrado, pero no recibe puntuación completa de
+despliegue público.
+
+\noindent\textbf{Palabras clave:} clasificación foliar, maíz, Optuna, ensemble,
+validación cruzada, fairness, interpretabilidad, inferencia móvil.

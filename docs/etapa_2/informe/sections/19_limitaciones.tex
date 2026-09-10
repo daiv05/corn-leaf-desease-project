@@ -1,0 +1,70 @@
+\section{Limitaciones}
+
+\begin{enumerate}
+  \item \textbf{No hubo ajuste fino end-to-end en la corrida nueva.} La máquina
+  disponible no expuso CUDA. Se compararon backbones ImageNet congelados con
+  una cabeza logística optimizada. Es un experimento completo sobre el corpus,
+  pero no demuestra el rendimiento que tendrían las mismas arquitecturas al
+  adaptar todos sus pesos.
+
+  \item \textbf{La comparación con Etapa 1 no es controlada.} Cambiaron corpus,
+  división, objetivo de entrenamiento y familia de cabeza. Las diferencias
+  históricas ayudan a entender el proyecto; no aíslan el efecto causal de la
+  ampliación o de Optuna.
+
+  \item \textbf{Los grupos de entorno están confundidos con la clase.}
+  Solamente roya, mancha gris y tizón norteño tienen imágenes tanto de
+  laboratorio como de campo. El gap global resume el dataset, no mide por sí
+  solo el efecto de retirar un fondo uniforme.
+
+  \item \textbf{Faltan metadatos de campo.} No se conoce finca, municipio,
+  variedad, teléfono, campaña o evaluador. La fuente del archivo no reemplaza
+  esos datos y puede estar asociada simultáneamente con clase, resolución y
+  estilo de captura.
+
+  \item \textbf{Blur y resolución son indicadores indirectos.} La varianza del
+  Laplaciano depende del contenido de la lesión y la compresión, no solamente
+  del enfoque. Los terciles describen diferencias internas y no fijan un
+  umbral universal de calidad.
+
+  \item \textbf{La validación cruzada es condicional a una selección previa.}
+  Arquitectura, hiperparámetros y ensemble se eligieron con la división
+  train/validación. Los cinco folds posteriores miden estabilidad dentro del
+  desarrollo; el estimador verdaderamente no consultado es el holdout final.
+
+  \item \textbf{No se calibraron probabilidades.} La confianza sirve para
+  ordenar alternativas y activar una advertencia de interfaz, pero no se
+  comprobó confiabilidad mediante ECE, diagrama de calibración o temperatura
+  ajustada en un conjunto separado.
+
+  \item \textbf{La explicación del ensemble es aproximada.} Grad-CAM combina
+  mapas normalizados de componentes usando los pesos de soft voting. Esto ayuda
+  a localizar regiones influyentes, pero no produce una descomposición causal
+  exacta de la probabilidad conjunta. LIME usa 32 perturbaciones en un caso y
+  explica solo EfficientNet-B0, el componente de mayor peso.
+
+  \item \textbf{La latencia no es móvil.} Los valores comparativos de backbones
+  y la demo corresponden a CPU de escritorio. El artefacto móvil histórico sí
+  está integrado, pero no se ejecutó un benchmark en varios teléfonos Android
+  durante esta etapa.
+
+  \item \textbf{Disponibilidad pública no confirmada al cierre.} La aplicación
+  aprobó typecheck y 276 pruebas, pero el dominio de la API dejó de resolver en
+  la comprobación final y la URL de APK respondió 404 sin autenticación. No se
+  otorgan todos los puntos de despliegue.
+
+  \item \textbf{Cobertura diagnóstica limitada.} Nueve etiquetas no representan
+  todas las enfermedades, plagas, daños químicos, estrés hídrico ni síntomas
+  mixtos. El sistema no determina dosis, causalidad ni manejo a partir de una
+  sola foto.
+
+  \item \textbf{No hay validación prospectiva salvadoreña ni medición de
+  impacto.} Los resultados provienen de colecciones públicas. No se midió
+  concordancia con especialistas en parcelas, ahorro, rendimiento, adopción o
+  comprensión del usuario.
+\end{enumerate}
+
+Ninguna de estas limitaciones invalida los artefactos generados. Define con
+precisión qué pregunta respondieron. La etapa demuestra un protocolo de
+selección reproducible y una ruta funcional de producto; todavía no demuestra
+eficacia agronómica ni disponibilidad operativa a escala.

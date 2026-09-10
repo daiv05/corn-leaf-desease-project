@@ -1,0 +1,13 @@
+\babel@toc {spanish}{}\relax 
+\contentsline {table}{\numberline {1}{\ignorespaces Composición por clase antes y después de la ampliación. La fuente es el manifiesto generado, no una transcripción manual.\relax }}{3}{table.caption.5}%
+\contentsline {table}{\numberline {2}{\ignorespaces Configuración del baseline interno y combinación seleccionada por Optuna.\relax }}{6}{table.caption.7}%
+\contentsline {table}{\numberline {3}{\ignorespaces Cinco mejores trials completos según macro-F1 de validación.\relax }}{7}{table.caption.10}%
+\contentsline {table}{\numberline {4}{\ignorespaces Efecto observado del tuning sobre la misma división y backbone.\relax }}{7}{table.caption.11}%
+\contentsline {table}{\numberline {5}{\ignorespaces Backbones evaluados con la misma cabeza optimizada. MB representa el tamaño FP32 estimado de parámetros del backbone; ms es la mediana de 30 inferencias de una imagen en CPU.\relax }}{8}{table.caption.12}%
+\contentsline {table}{\numberline {6}{\ignorespaces Mejor componente individual frente a los dos ensembles en validación.\relax }}{10}{table.caption.14}%
+\contentsline {table}{\numberline {7}{\ignorespaces Resultados de cinco folds, media y desviación estándar muestral.\relax }}{11}{table.caption.16}%
+\contentsline {table}{\numberline {8}{\ignorespaces Métricas obtenidas en la única evaluación del holdout.\relax }}{13}{table.caption.18}%
+\contentsline {table}{\numberline {9}{\ignorespaces Precision, recall y F1 finales para las nueve clases.\relax }}{13}{table.caption.19}%
+\contentsline {table}{\numberline {10}{\ignorespaces Referencias de ambas etapas. Accuracy y macro-F1 no son una comparación controlada porque cambiaron corpus, división y entrenamiento.\relax }}{14}{table.caption.22}%
+\contentsline {table}{\numberline {11}{\ignorespaces Diferencia entre el mayor y menor valor observado dentro de cada dimensión. Los gaps son descriptivos y no llevan signo.\relax }}{19}{table.caption.25}%
+\contentsline {table}{\numberline {12}{\ignorespaces Puntuación final respaldada por artefactos reproducibles.\relax }}{29}{table.caption.29}%

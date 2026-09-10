@@ -1,0 +1,35 @@
+{
+  "generated_at_utc": "2026-09-09T20:13:54.121526+00:00",
+  "dataset_fingerprint": "c44de0783d3c3f88ef6151eaa75536d1020f5b208327419c4cb7f3ac459d3892",
+  "selected_model": "weighted_soft_voting",
+  "figures": [
+    "README.md",
+    "cross_validation.pdf",
+    "dataset_distribution.pdf",
+    "dataset_distribution.png",
+    "ensemble_comparison.pdf",
+    "fairness_environment.pdf",
+    "final_confusion_matrices.pdf",
+    "final_gradcam_cases.png",
+    "final_lime_case.png",
+    "final_per_class.pdf",
+    "model_comparison.pdf",
+    "optuna_history.pdf",
+    "optuna_importance.pdf",
+    "prototype_capture.png"
+  ],
+  "tables": [
+    "baseline_vs_tuned.tex",
+    "cross_validation.tex",
+    "dataset_etapa1_vs_etapa2.tex",
+    "ensemble.tex",
+    "etapa1_vs_etapa2.tex",
+    "fairness_gaps.tex",
+    "final_metrics.tex",
+    "final_per_class.tex",
+    "model_comparison.tex",
+    "rubric.tex",
+    "top_trials.tex",
+    "tuning_configuration.tex"
+  ]
+}
