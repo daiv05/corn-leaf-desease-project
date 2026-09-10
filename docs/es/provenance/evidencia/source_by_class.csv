@@ -1,0 +1,15 @@
+source,common_rust,fall_armyworm,gray_leaf_spot,healthy,lethal_necrosis,nitrogen_deficiency,northern_corn_leaf_blight,phosphorus_deficiency,potassium_deficiency
+corn_leaf_diseases_classification_roboflow,0,0,480,0,0,0,0,0,0
+corn_leaf_roboflow,0,807,0,456,0,424,523,499,210
+cropdg,0,0,513,1161,0,0,888,0,0
+maize_2_roboflow,0,0,0,0,0,247,0,291,308
+maize_africa,0,2423,0,0,3184,0,4223,0,0
+maize_africa_v1,0,0,0,460,0,0,0,0,0
+maize_africa_v1.2,0,0,0,1854,0,0,0,0,0
+maize_deficiency_scanner_roboflow,0,0,0,0,0,76,0,35,47
+maize_desease,1192,0,0,0,0,0,1056,0,0
+maize_desease_v1.1,0,0,0,4741,0,0,0,0,0
+maize_field,106,0,606,0,0,0,140,0,0
+maize_leaf_roboflow,0,0,331,0,0,0,0,0,0
+maize_nutrient,0,0,0,72,0,99,0,113,56
+multi_desease,958,1627,0,0,3231,0,0,0,0

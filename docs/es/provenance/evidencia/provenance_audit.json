@@ -1,0 +1,53 @@
+{
+  "source_verification": {
+    "images_total": 33437,
+    "images_without_source": 0,
+    "tokens_found": 14,
+    "tokens_undocumented": [],
+    "datasets_documented": 12,
+    "datasets_with_images": 11,
+    "datasets_without_images": [
+      "corn-leaf-diseases"
+    ]
+  },
+  "images_outside_splits": [
+    "clean/healthy/real/healthy_maize_africa_v1.2_real_49.jpg",
+    "clean/healthy/real/healthy_maize_africa_v1.2_real_892.jpg",
+    "clean/healthy/real/healthy_maize_africa_v1.2_real_9.jpg",
+    "clean/healthy/real/healthy_maize_africa_v1.2_real_945.jpg"
+  ],
+  "exact_duplicate_groups": 4,
+  "exact_duplicate_groups_cross_split": 0,
+  "near_duplicate_sweep": [
+    {
+      "max_distance": 0,
+      "groups_cross_split": 52,
+      "groups_cross_split_and_class": 10,
+      "images_in_multi_member_groups": 291
+    },
+    {
+      "max_distance": 1,
+      "groups_cross_split": 104,
+      "groups_cross_split_and_class": 20,
+      "images_in_multi_member_groups": 582
+    },
+    {
+      "max_distance": 2,
+      "groups_cross_split": 166,
+      "groups_cross_split_and_class": 47,
+      "images_in_multi_member_groups": 1115
+    },
+    {
+      "max_distance": 3,
+      "groups_cross_split": 216,
+      "groups_cross_split_and_class": 59,
+      "images_in_multi_member_groups": 1872
+    },
+    {
+      "max_distance": 4,
+      "groups_cross_split": 242,
+      "groups_cross_split_and_class": 71,
+      "images_in_multi_member_groups": 2923
+    }
+  ]
+}
