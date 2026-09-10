@@ -41,7 +41,7 @@ Ejecutado en Modal sobre GPU A10 el 2026-09-09.
 | Archivo | Contenido |
 |---|---|
 | `leave_one_source_out.json` | Resultado por pliegue y agrupado: métricas, predicciones por imagen y rutas |
-| `leave_one_source_out.log` | Traza completa de la ejecución en Modal, época a época |
+| `leave_one_source_out.run.txt` | Traza completa de la ejecución en Modal, época a época |
 | `loso_per_class.csv` | F1 por clase, comparando partición aleatoria y fuera de fuente |
 
 ## Nota sobre `PYTHONIOENCODING`
