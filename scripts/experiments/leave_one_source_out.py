@@ -51,6 +51,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--num-workers", type=int, default=8)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--arm", type=str, default="original")
+    parser.add_argument("--balance-groups", action="store_true")
+    parser.add_argument("--backmix", type=float, default=0.0)
     parser.add_argument("--folds", type=str, default="")
     parser.add_argument("--output", type=Path, default=None)
     return parser.parse_args()
@@ -130,6 +132,33 @@ def build_folds(manifest: pd.DataFrame) -> list[dict[str, object]]:
     return folds
 
 
+def balance_by_group(train: pd.DataFrame, cap: int) -> pd.DataFrame:
+    """Reparte el cupo de cada clase entre sus fuentes en lugar de tomarlo del total.
+
+    Una clase cuyo 80 % procede de una sola fuente entrena, sin esto, casi sólo con esa
+    fuente. El reparto es por llenado progresivo: las celdas pequeñas aportan todo lo que
+    tienen y liberan su remanente para las demás.
+
+    @param {pd.DataFrame} train Subconjunto de entrenamiento con columnas label y provenance.
+    @param {int} cap Cupo total por clase.
+    @returns {pd.DataFrame} Subconjunto reequilibrado por celda fuente-clase.
+    """
+    selected = []
+    for _, class_frame in train.groupby("label"):
+        cells = sorted(
+            (cell for _, cell in class_frame.groupby("provenance")),
+            key=len,
+        )
+        remaining = cap
+        for position, cell in enumerate(cells):
+            quota = remaining // (len(cells) - position)
+            take = min(len(cell), quota)
+            if take:
+                selected.append(cell.sample(take, random_state=42))
+            remaining -= take
+    return pd.concat(selected, ignore_index=True)
+
+
 def run_fold(fold, manifest, dataset_root, classes, args, device) -> dict[str, object]:
     """Entrena con las fuentes restantes y evalúa sobre la fuente retenida."""
     class_to_idx = {name: index for index, name in enumerate(classes)}
@@ -139,11 +168,11 @@ def run_fold(fold, manifest, dataset_root, classes, args, device) -> dict[str, o
         val = val.sample(args.val_cap, random_state=42)
     train = manifest[~manifest.provenance.isin({fold["test_group"], fold["val_group"]})]
     if args.train_cap > 0:
-        train = pd.concat(
+        train = (balance_by_group(train, args.train_cap) if args.balance_groups else pd.concat(
             [group.sample(min(len(group), args.train_cap), random_state=42)
              for _, group in train.groupby("label")],
             ignore_index=True,
-        )
+        ))
 
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
@@ -152,7 +181,8 @@ def run_fold(fold, manifest, dataset_root, classes, args, device) -> dict[str, o
     for name, frame, is_train in parts:
         loaders[name] = DataLoader(
             LeakDataset(frame, dataset_root, class_to_idx, args.arm, 0.10,
-                        args.image_size, is_train, args.seed),
+                        args.image_size, is_train, args.seed,
+                        backmix_probability=args.backmix if is_train else 0.0),
             batch_size=args.batch_size, shuffle=is_train,
             num_workers=args.num_workers, pin_memory=True,
             persistent_workers=args.num_workers > 0,
@@ -193,6 +223,8 @@ def run_fold(fold, manifest, dataset_root, classes, args, device) -> dict[str, o
     present = sorted({int(t) for t in trues})
     return {
         "arm": args.arm,
+        "balance_groups": bool(args.balance_groups),
+        "backmix": float(args.backmix),
         "test_group": fold["test_group"],
         "val_group": fold["val_group"],
         "n_train": int(len(train)),

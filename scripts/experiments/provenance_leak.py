@@ -97,7 +97,8 @@ def apply_arm(array: np.ndarray, arm: str, ring_fraction: float) -> np.ndarray:
 class LeakDataset(Dataset):
     """Sirve imágenes del manifiesto aplicando el recorte del brazo."""
 
-    def __init__(self, frame, dataset_root, class_to_idx, arm, ring_fraction, size, train, seed):
+    def __init__(self, frame, dataset_root, class_to_idx, arm, ring_fraction, size, train, seed,
+                 backmix_probability=0.0, backmix_black_level=12, backmix_min_fraction=0.30):
         self.paths = frame["image_path"].tolist()
         self.labels = [class_to_idx[label] for label in frame["label"]]
         self.dataset_root = dataset_root
@@ -106,17 +107,47 @@ class LeakDataset(Dataset):
         self.size = size
         self.train = train
         self.seed = seed
+        self.backmix_probability = backmix_probability
+        self.backmix_black_level = backmix_black_level
+        self.backmix_min_fraction = backmix_min_fraction
 
     def __len__(self) -> int:
         return len(self.paths)
 
-    def __getitem__(self, index: int):
+    def load_raw(self, index: int) -> np.ndarray:
+        """Decodifica y reescala una imagen sin aplicar brazo ni normalización.
+
+        @param {int} index Posición en el manifiesto.
+        @returns {np.ndarray} Imagen HWC en uint8 al tamaño de entrada.
+        """
         with Image.open(self.dataset_root / self.paths[index]) as handle:
             if handle.format == "JPEG":
                 handle.draft("RGB", (self.size * 2, self.size * 2))
             image = handle.convert("RGB").resize((self.size, self.size), Image.Resampling.BILINEAR)
-        array = apply_arm(np.asarray(image, dtype=np.uint8), self.arm, self.ring_fraction)
-        if self.train and np.random.default_rng(self.seed * 1_000_003 + index).random() < 0.5:
+        return np.asarray(image, dtype=np.uint8)
+
+    def _backmix(self, array: np.ndarray, rng) -> np.ndarray:
+        """Sustituye el fondo negro pre-enmascarado por el de otra imagen del conjunto.
+
+        Sólo actúa sobre imágenes que ya vienen recortadas sobre negro, que son las únicas
+        cuya máscara es recuperable sin segmentar.
+
+        @param {np.ndarray} array Imagen HWC en uint8.
+        @returns {np.ndarray} Imagen con el fondo sustituido, o la original si no aplica.
+        """
+        black = array.max(axis=2) <= self.backmix_black_level
+        if black.mean() < self.backmix_min_fraction:
+            return array
+        donor = self.load_raw(int(rng.integers(len(self.paths))))
+        return np.where(black[:, :, None], donor, array).astype(np.uint8)
+
+    def __getitem__(self, index: int):
+        rng = np.random.default_rng(self.seed * 1_000_003 + index)
+        array = self.load_raw(index)
+        if self.train and self.backmix_probability and rng.random() < self.backmix_probability:
+            array = self._backmix(array, rng)
+        array = apply_arm(array, self.arm, self.ring_fraction)
+        if self.train and rng.random() < 0.5:
             array = np.ascontiguousarray(array[:, ::-1])
         tensor = (array.astype(np.float32) / 255.0 - IMAGENET_MEAN) / IMAGENET_STD
         return torch.from_numpy(np.ascontiguousarray(tensor.transpose(2, 0, 1))), self.labels[index]

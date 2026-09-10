@@ -21,7 +21,7 @@ from scripts.modal._common import REPO_ANCHOR, dataset_vol, image, outputs_vol
 
 app = modal.App("corn-leave-one-source-out", image=image)
 
-RESULTS_TEMPLATE = "/outputs/experiments/leave_one_source_out{arm}{seed}.json"
+RESULTS_TEMPLATE = "/outputs/experiments/leave_one_source_out{tag}{arm}{seed}.json"
 
 
 @app.function(
@@ -44,6 +44,8 @@ def run_leave_one_source_out(
     seed: int = 0,
     folds: str = "",
     arm: str = "original",
+    balance_groups: bool = False,
+    backmix: float = 0.0,
 ) -> None:
     """Ejecuta la validación por fuente en la GPU remota y persiste el JSON en el Volume.
 
@@ -72,8 +74,12 @@ def run_leave_one_source_out(
         "--batch-size", str(batch_size),
         "--seed", str(seed),
         "--arm", arm,
+        *(["--balance-groups"] if balance_groups else []),
+        *(["--backmix", str(backmix)] if backmix else []),
         "--num-workers", "8",
         "--output", RESULTS_TEMPLATE.format(
+            tag=("_balanced" if balance_groups else "")
+            + (f"_backmix{backmix:g}" if backmix else ""),
             arm="" if arm == "original" else f"_{arm}",
             seed="" if seed == 0 else f"_seed{seed}"),
     ]
@@ -94,6 +100,8 @@ def main(
     seed: int = 0,
     folds: str = "",
     arm: str = "original",
+    balance_groups: bool = False,
+    backmix: float = 0.0,
 ) -> None:
     """Entrypoint de `modal run`: dispara la validación por fuente en la GPU remota."""
     run_leave_one_source_out.remote(
@@ -105,4 +113,6 @@ def main(
         seed=seed,
         folds=folds,
         arm=arm,
+        balance_groups=balance_groups,
+        backmix=backmix,
     )

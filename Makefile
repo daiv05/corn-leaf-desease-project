@@ -115,6 +115,11 @@ help:
 	@echo "  modal-explain-visual-main modal-explain-fidelity-main modal-explain-errors-main"
 	@echo "  modal-explain-compare-main modal-explain-global-main"
 	@echo ""
+	@echo "Procedencia y fuga (docs/es/provenance):"
+	@echo "  provenance-audit  (local, sin GPU)"
+	@echo "  modal-provenance-leak  modal-loso  modal-pull-provenance"
+	@echo "    DETACH=1 deja la corrida viva en Modal aunque se cierre la terminal"
+	@echo ""
 	@echo "Otros: inference lint lint-fix fmt check docs-eda compile-pdf clean-outputs"
 	@echo ""
 	@echo "Los targets sin sufijo (explain-visual, modal-explain-fidelity, ...) son los genericos:"
@@ -366,6 +371,40 @@ modal-segment-dataset:
 
 modal-pull-segmentation-previews:
 	$(MODAL) volume get --force corn-outputs segmentation_previews ./outputs/segmentation_previews
+
+# ==============================================================================
+# Procedencia y fuga (docs/es/provenance)
+# ==============================================================================
+
+.PHONY: provenance-audit modal-provenance-leak modal-loso modal-pull-provenance
+
+# Auditoria local: fuente por imagen, duplicados exactos y barrido de casi-duplicados.
+# No requiere GPU ni Modal.
+provenance-audit:
+	$(PYTHON) scripts/experiments/provenance_audit.py
+
+# Test de fuga de procedencia sobre la particion aleatoria (detached con DETACH=1).
+# Uso: make modal-provenance-leak [DETACH=1 ARMS=original,border_ring SEEDS=0,1,2]
+modal-provenance-leak:
+	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/provenance_leak.py \
+		$(if $(ARMS),--arms "$(ARMS)",) \
+		$(if $(SEEDS),--seeds "$(SEEDS)",) \
+		$(if $(TRAIN_CAP),--train-cap "$(TRAIN_CAP)",) \
+		$(if $(RING_FRACTION),--ring-fraction "$(RING_FRACTION)",)
+
+# Validacion dejando una fuente fuera (detached con DETACH=1).
+# Uso: make modal-loso [DETACH=1 SEED=1 ARM=border_ring BALANCE=1 BACKMIX=0.5]
+modal-loso:
+	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/leave_one_source_out.py \
+		$(if $(SEED),--seed "$(SEED)",) \
+		$(if $(ARM),--arm "$(ARM)",) \
+		$(if $(FOLDS),--folds "$(FOLDS)",) \
+		$(if $(BALANCE),--balance-groups,) \
+		$(if $(BACKMIX),--backmix "$(BACKMIX)",) \
+		$(if $(TRAIN_CAP),--train-cap "$(TRAIN_CAP)",)
+
+modal-pull-provenance:
+	$(MODAL) volume get --force corn-outputs experiments ./outputs/experiments
 
 # ==============================================================================
 # Modal - entrenamiento
