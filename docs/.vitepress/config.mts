@@ -80,6 +80,13 @@ const esDatasetSidebar = [
     ],
   },
   {
+    text: "Procedencia y fuga",
+    items: [
+      { text: "Plan de experimentación", link: "/es/provenance/" },
+      { text: "Fase 0 - Auditoría", link: "/es/provenance/fase-0-auditoria" },
+    ],
+  },
+  {
     text: "Deep Learning",
     items: [
       { text: "Teoría", link: "/es/deep-learning/" },
