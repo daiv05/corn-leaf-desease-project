@@ -101,24 +101,90 @@ imagen. Aquí cae de 0,838 a 0,397 cuando se le retira la fuente. Los dos experi
 apuntan a lo mismo desde ángulos distintos: **el rendimiento de esta clase en la partición
 aleatoria no proviene de la lesión**.
 
+## El anillo de borde bajo el mismo protocolo
+
+El criterio de la Compuerta 1 incluía una segunda condición sobre el anillo de borde, pero la
+única medición disponible al redactar el plan se hizo sobre la partición **aleatoria**, donde
+el atajo transfiere por construcción. Aplicarla a un F1 fuera de fuente mezcla dos protocolos
+y no significa nada, así que **el brazo `border_ring` se volvió a ejecutar con los mismos once
+pliegues**, cambiando únicamente lo que ve el modelo: un marco exterior del 10 %, sin hoja y
+sin lesión.
+
+```bash
+modal run scripts/modal/leave_one_source_out.py --arm border_ring
+```
+
+| | Imagen completa | Solo el marco |
+|---|---:|---:|
+| macro-F1 agrupado | 0,5573 | **0,3870** |
+| Exactitud agrupada | 0,6884 | **0,4894** |
+
+**Aun con la partición honesta, el marco solo recupera el 69,5 % del macro-F1.** El atajo no
+desaparece al separar las fuentes: se atenúa.
+
+### Recuperación por clase
+
+| Clase | Imagen completa | Solo el marco | El marco recupera |
+|---|---:|---:|---:|
+| `lethal_necrosis` | 0,7912 | 0,7889 | **99,7 %** |
+| `common_rust` | 0,7804 | 0,7688 | **98,5 %** |
+| `fall_armyworm` | 0,6194 | 0,4217 | 68,1 % |
+| `nitrogen_deficiency` | 0,4190 | 0,2631 | 62,8 % |
+| `northern_corn_leaf_blight` | 0,7171 | 0,4478 | 62,4 % |
+| `healthy` | 0,8092 | 0,4534 | 56,0 % |
+| `potassium_deficiency` | 0,1958 | 0,1062 | 54,2 % |
+| `gray_leaf_spot` | 0,3972 | 0,1868 | 47,0 % |
+| `phosphorus_deficiency` | 0,2861 | 0,0466 | 16,3 % |
+
+**`lethal_necrosis` y `common_rust` siguen siendo identificables casi por completo desde el
+marco aunque el modelo nunca haya visto su fuente.** Su F1 alto no mide capacidad
+diagnóstica: mide que sus fuentes comparten una firma de captura entre ellas. Es coherente
+con lo ya documentado: la mayor parte de `common_rust` son imágenes de laboratorio
+pre-enmascaradas en negro, presentes en dos fuentes distintas derivadas de PlantVillage, y
+`lethal_necrosis` procede de dos fuentes que son primeros planos a cuadro completo.
+
+En el extremo opuesto, el F1 bajo de `phosphorus_deficiency` **no** proviene del marco: con
+16,3 % de recuperación, esa clase simplemente es difícil y escasa.
+
 ## Compuerta 1
 
-El criterio fijado en el [plan](/es/provenance/) era F1 ≥ 0,70 **y** que el anillo de borde
-recuperara menos del 60 %.
+Con las dos condiciones medidas bajo el mismo protocolo:
 
-**El criterio estaba mal especificado y se corrige aquí.** La medición del anillo disponible
-al escribirlo se hizo sobre la partición **aleatoria**, donde el atajo transfiere por
-construcción; aplicarla a un F1 fuera de fuente mezcla dos protocolos y no significa nada.
-La segunda condición se vuelve a medir bajo el mismo protocolo de esta fase, y su resultado
-se documenta en la sección siguiente.
+| Clase | F1 fuera de fuente | El marco recupera | Banda |
+|---|---:|---:|---|
+| `healthy` | 0,8092 | 56,0 % | **Sostenida** |
+| `lethal_necrosis` | 0,7912 | 99,7 % | Sostenida por procedencia |
+| `common_rust` | 0,7804 | 98,5 % | Sostenida por procedencia |
+| `northern_corn_leaf_blight` | 0,7171 | 62,4 % | Sostenida por procedencia |
+| `fall_armyworm` | 0,6194 | 68,1 % | Frágil |
+| `nitrogen_deficiency` | 0,4190 | 62,8 % | Frágil |
+| `gray_leaf_spot` | 0,3972 | 47,0 % | No soportada |
+| `phosphorus_deficiency` | 0,2861 | 16,3 % | No soportada |
+| `potassium_deficiency` | 0,1958 | 54,2 % | No soportada |
 
-Con la primera condición, la clasificación es:
+### La compuerta produjo una celda que no había previsto
 
-| Banda | Clases |
-|---|---|
-| **Sostenidas** | `healthy`, `lethal_necrosis`, `common_rust`, `northern_corn_leaf_blight` |
-| **Frágiles** | `fall_armyworm`, `nitrogen_deficiency` |
-| **No soportadas** | `gray_leaf_spot`, `phosphorus_deficiency`, `potassium_deficiency` |
+El plan definía tres bandas y exigía **ambas** condiciones para «sostenida», pero no decía
+qué hacer con una clase que supera el umbral de F1 y **falla** el del marco. Tres clases caen
+ahí. La resolución que se adopta, y que queda registrada como enmienda al criterio original:
+
+> **Sostenida por procedencia.** F1 fuera de fuente ≥ 0,70 con recuperación del marco ≥ 60 %.
+> La clase se predice bien, pero no se ha demostrado que sea por la lesión. Su número **no
+> puede presentarse como capacidad diagnóstica** sin una de dos cosas: que una intervención de
+> la Fase 2 baje la recuperación del marco por debajo del 60 % manteniendo el F1, o que se
+> documente explícitamente como limitación.
+
+Con esa enmienda, **una sola clase de nueve —`healthy`— supera la compuerta completa**, y con
+poco margen: 56,0 % frente a un umbral de 60 %.
+
+## Qué entra en la Fase 2
+
+Las dos clases frágiles (`fall_armyworm`, `nitrogen_deficiency`) y las tres sostenidas por
+procedencia (`lethal_necrosis`, `common_rust`, `northern_corn_leaf_blight`), estas últimas
+con un objetivo distinto: no subir el F1 sino **bajar la recuperación del marco** sin perderlo.
+
+Las tres no soportadas pasan a limitación documentada, salvo que la Fase 2 las recupere por
+encima de 0,40.
 
 ## Qué queda sin verificar
 

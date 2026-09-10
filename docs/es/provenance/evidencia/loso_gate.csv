@@ -1,0 +1,10 @@
+,loso_original,loso_border_ring,anillo_recupera_%,banda
+healthy,0.8092,0.4534,56.0,sostenida
+lethal_necrosis,0.7912,0.7889,99.7,sostenida por procedencia
+common_rust,0.7804,0.7688,98.5,sostenida por procedencia
+northern_corn_leaf_blight,0.7171,0.4478,62.4,sostenida por procedencia
+fall_armyworm,0.6194,0.4217,68.1,fragil
+nitrogen_deficiency,0.419,0.2631,62.8,fragil
+gray_leaf_spot,0.3972,0.1868,47.0,no soportada
+phosphorus_deficiency,0.2861,0.0466,16.3,no soportada
+potassium_deficiency,0.1958,0.1062,54.2,no soportada

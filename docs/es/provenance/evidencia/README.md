@@ -33,6 +33,7 @@ Generado con:
 
 ```bash
 modal run scripts/modal/leave_one_source_out.py
+modal run scripts/modal/leave_one_source_out.py --arm border_ring
 modal volume get corn-outputs experiments/leave_one_source_out.json <destino>
 ```
 
@@ -43,6 +44,9 @@ Ejecutado en Modal sobre GPU A10 el 2026-09-09.
 | `leave_one_source_out.json` | Resultado por pliegue y agrupado: métricas, predicciones por imagen y rutas |
 | `leave_one_source_out.run.txt` | Traza completa de la ejecución en Modal, época a época |
 | `loso_per_class.csv` | F1 por clase, comparando partición aleatoria y fuera de fuente |
+| `leave_one_source_out_border_ring.json` | Igual que el anterior, con el brazo que solo ve el marco exterior |
+| `leave_one_source_out_border_ring.run.txt` | Traza de esa ejecución |
+| `loso_gate.csv` | Aplicación de la Compuerta 1 con ambas condiciones medidas bajo el mismo protocolo |
 
 ## Nota sobre `PYTHONIOENCODING`
 
