@@ -21,8 +21,7 @@ from scripts.modal._common import REPO_ANCHOR, dataset_vol, image, outputs_vol
 
 app = modal.App("corn-leave-one-source-out", image=image)
 
-RESULTS_PATH = "/outputs/experiments/leave_one_source_out.json"
-RESULTS_PATH_BY_ARM = "/outputs/experiments/leave_one_source_out_{arm}.json"
+RESULTS_TEMPLATE = "/outputs/experiments/leave_one_source_out{arm}{seed}.json"
 
 
 @app.function(
@@ -74,8 +73,9 @@ def run_leave_one_source_out(
         "--seed", str(seed),
         "--arm", arm,
         "--num-workers", "8",
-        "--output", RESULTS_PATH if arm == "original"
-        else RESULTS_PATH_BY_ARM.format(arm=arm),
+        "--output", RESULTS_TEMPLATE.format(
+            arm="" if arm == "original" else f"_{arm}",
+            seed="" if seed == 0 else f"_seed{seed}"),
     ]
     if folds:
         command += ["--folds", folds]

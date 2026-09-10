@@ -1,0 +1,209 @@
+{
+  "classes": [
+    "common_rust",
+    "fall_armyworm",
+    "gray_leaf_spot",
+    "healthy",
+    "lethal_necrosis",
+    "nitrogen_deficiency",
+    "northern_corn_leaf_blight",
+    "phosphorus_deficiency",
+    "potassium_deficiency"
+  ],
+  "duplicates_dropped": 165,
+  "pooled": {
+    "n": 33268,
+    "macro_f1": 0.4143265620788099,
+    "accuracy": 0.5113322111338223,
+    "per_class_f1": {
+      "common_rust": 0.8509874326750448,
+      "fall_armyworm": 0.4078962469872604,
+      "gray_leaf_spot": 0.1996535296665223,
+      "healthy": 0.5259627329192547,
+      "lethal_necrosis": 0.7782081925327619,
+      "nitrogen_deficiency": 0.3097744360902256,
+      "northern_corn_leaf_blight": 0.4364258815474153,
+      "phosphorus_deficiency": 0.12368024132730016,
+      "potassium_deficiency": 0.09635036496350365
+    }
+  },
+  "folds": [
+    {
+      "arm": "border_ring",
+      "test_group": "corn-leaf-diseases-classification-roboflow",
+      "val_group": "corn-leaf-roboflow",
+      "n_train": 7270,
+      "n_val": 2000,
+      "n_test": 476,
+      "val_macro_f1": 0.17847761514219268,
+      "test_macro_f1": 0.052161486245087534,
+      "test_accuracy": 0.3067226890756303,
+      "per_class_f1": {
+        "gray_leaf_spot": 0.4694533762057878
+      }
+    },
+    {
+      "arm": "border_ring",
+      "test_group": "corn-leaf-roboflow",
+      "val_group": "cropdg-unified-multidomain",
+      "n_train": 7270,
+      "n_val": 2000,
+      "n_test": 2919,
+      "val_macro_f1": 0.12653226226905295,
+      "test_macro_f1": 0.16591644605844685,
+      "test_accuracy": 0.20829051044878383,
+      "per_class_f1": {
+        "fall_armyworm": 0.19481680071492405,
+        "healthy": 0.1548731642189586,
+        "nitrogen_deficiency": 0.44699872286079184,
+        "northern_corn_leaf_blight": 0.21651630811936157,
+        "phosphorus_deficiency": 0.23720349563046192,
+        "potassium_deficiency": 0.07692307692307693
+      }
+    },
+    {
+      "arm": "border_ring",
+      "test_group": "cropdg-unified-multidomain",
+      "val_group": "maize-2-roboflow",
+      "n_train": 7558,
+      "n_val": 845,
+      "n_test": 2560,
+      "val_macro_f1": 0.08424535989774208,
+      "test_macro_f1": 0.115212960876362,
+      "test_accuracy": 0.323046875,
+      "per_class_f1": {
+        "gray_leaf_spot": 0.06030150753768844,
+        "healthy": 0.6777837547068316,
+        "northern_corn_leaf_blight": 0.2988313856427379
+      }
+    },
+    {
+      "arm": "border_ring",
+      "test_group": "maize-2-roboflow",
+      "val_group": "maize-beans-tomatoes-africa",
+      "n_train": 7558,
+      "n_val": 2000,
+      "n_test": 845,
+      "val_macro_f1": 0.29589274541087285,
+      "test_macro_f1": 0.08071863639397908,
+      "test_accuracy": 0.18106508875739644,
+      "per_class_f1": {
+        "nitrogen_deficiency": 0.4503311258278146,
+        "phosphorus_deficiency": 0.09009009009009009,
+        "potassium_deficiency": 0.18604651162790697
+      }
+    },
+    {
+      "arm": "border_ring",
+      "test_group": "maize-beans-tomatoes-africa",
+      "val_group": "maize-deficiency-scanner-roboflow",
+      "n_train": 8245,
+      "n_val": 158,
+      "n_test": 12112,
+      "val_macro_f1": 0.13493466941742804,
+      "test_macro_f1": 0.26877670549170013,
+      "test_accuracy": 0.5732331571994715,
+      "per_class_f1": {
+        "fall_armyworm": 0.5681420355088772,
+        "healthy": 0.45480851063829786,
+        "lethal_necrosis": 0.8335842114065898,
+        "northern_corn_leaf_blight": 0.5624555918715362
+      }
+    },
+    {
+      "arm": "border_ring",
+      "test_group": "maize-deficiency-scanner-roboflow",
+      "val_group": "maize-diseases",
+      "n_train": 8245,
+      "n_val": 2000,
+      "n_test": 158,
+      "val_macro_f1": 0.22552266248563196,
+      "test_macro_f1": 0.11366025670638072,
+      "test_accuracy": 0.310126582278481,
+      "per_class_f1": {
+        "nitrogen_deficiency": 0.5042016806722689,
+        "phosphorus_deficiency": 0.17391304347826086,
+        "potassium_deficiency": 0.3448275862068966
+      }
+    },
+    {
+      "arm": "border_ring",
+      "test_group": "maize-diseases",
+      "val_group": "maize-in-field-dataset",
+      "n_train": 8354,
+      "n_val": 851,
+      "n_test": 6970,
+      "val_macro_f1": 0.06904625450724741,
+      "test_macro_f1": 0.22475843853921093,
+      "test_accuracy": 0.5992826398852223,
+      "per_class_f1": {
+        "common_rust": 0.9936948297604036,
+        "healthy": 0.6190749784544671,
+        "northern_corn_leaf_blight": 0.4100561386380278
+      }
+    },
+    {
+      "arm": "border_ring",
+      "test_group": "maize-in-field-dataset",
+      "val_group": "maize-leaf-roboflow",
+      "n_train": 8392,
+      "n_val": 331,
+      "n_test": 851,
+      "val_macro_f1": 0.07867494824016563,
+      "test_macro_f1": 0.05302594792726129,
+      "test_accuracy": 0.1692126909518214,
+      "per_class_f1": {
+        "common_rust": 0.0,
+        "gray_leaf_spot": 0.2928759894459103,
+        "northern_corn_leaf_blight": 0.18435754189944134
+      }
+    },
+    {
+      "arm": "border_ring",
+      "test_group": "maize-leaf-roboflow",
+      "val_group": "maize-nutrient-deficiency",
+      "n_train": 8136,
+      "n_val": 337,
+      "n_test": 331,
+      "val_macro_f1": 0.12061290742660684,
+      "test_macro_f1": 0.07994842037395228,
+      "test_accuracy": 0.5619335347432024,
+      "per_class_f1": {
+        "gray_leaf_spot": 0.7195357833655706
+      }
+    },
+    {
+      "arm": "border_ring",
+      "test_group": "maize-nutrient-deficiency",
+      "val_group": "multicrop-disease-maiz",
+      "n_train": 8136,
+      "n_val": 2000,
+      "n_test": 337,
+      "val_macro_f1": 0.24628999902381438,
+      "test_macro_f1": 0.08937260701697285,
+      "test_accuracy": 0.19584569732937684,
+      "per_class_f1": {
+        "healthy": 0.6179775280898876,
+        "nitrogen_deficiency": 0.038834951456310676,
+        "phosphorus_deficiency": 0.14754098360655737,
+        "potassium_deficiency": 0.0
+      }
+    },
+    {
+      "arm": "border_ring",
+      "test_group": "multicrop-disease-maiz",
+      "val_group": "corn-leaf-diseases-classification-roboflow",
+      "n_train": 8403,
+      "n_val": 476,
+      "n_test": 5709,
+      "val_macro_f1": 0.0686985970004838,
+      "test_macro_f1": 0.24522210061451075,
+      "test_accuracy": 0.6502014363286039,
+      "per_class_f1": {
+        "common_rust": 0.9027052681537732,
+        "fall_armyworm": 0.4958061509785648,
+        "lethal_necrosis": 0.808487486398259
+      }
+    }
+  ]
+}

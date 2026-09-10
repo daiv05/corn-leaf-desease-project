@@ -46,7 +46,9 @@ Ejecutado en Modal sobre GPU A10 el 2026-09-09.
 | `loso_per_class.csv` | F1 por clase, comparando partición aleatoria y fuera de fuente |
 | `leave_one_source_out_border_ring.json` | Igual que el anterior, con el brazo que solo ve el marco exterior |
 | `leave_one_source_out_border_ring.run.txt` | Traza de esa ejecución |
-| `loso_gate.csv` | Aplicación de la Compuerta 1 con ambas condiciones medidas bajo el mismo protocolo |
+| `loso_gate.csv` | Compuerta 1 con ambas condiciones bajo el mismo protocolo, semilla 0 |
+| `loso_gate_3seeds.csv` | Compuerta 1 consolidada: media y desviación sobre tres semillas |
+| `*_seed1.json`, `*_seed2.json` | Semillas adicionales de ambos brazos, con sus trazas `.run.txt` |
 
 ## Nota sobre `PYTHONIOENCODING`
 

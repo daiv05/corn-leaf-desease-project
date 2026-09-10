@@ -177,6 +177,72 @@ ahí. La resolución que se adopta, y que queda registrada como enmienda al crit
 Con esa enmienda, **una sola clase de nueve —`healthy`— supera la compuerta completa**, y con
 poco margen: 56,0 % frente a un umbral de 60 %.
 
+## Consolidación con tres semillas
+
+La tabla anterior usa una sola semilla, y cuatro clases quedaban a menos de 2 σ de su umbral.
+Se ejecutaron dos semillas más de **ambos** brazos —cuatro corridas de once pliegues, en
+paralelo sobre cuatro A10— para obtener media y desviación **medidas bajo este protocolo**,
+en lugar de importadas de la partición aleatoria.
+
+```bash
+modal run scripts/modal/leave_one_source_out.py --seed 1
+modal run scripts/modal/leave_one_source_out.py --seed 2
+modal run scripts/modal/leave_one_source_out.py --seed 1 --arm border_ring
+modal run scripts/modal/leave_one_source_out.py --seed 2 --arm border_ring
+```
+
+| | Imagen completa | Solo el marco |
+|---|---:|---:|
+| macro-F1 agrupado | **0,5515 ± 0,0072** | **0,4001 ± 0,0137** |
+| Exactitud agrupada | 0,6941 | — |
+| El marco recupera | | **72,6 %** |
+
+### Bandas con media ± σ
+
+| Clase | F1 fuera de fuente | σ al umbral | El marco recupera | σ al umbral | Banda |
+|---|---:|---:|---:|---:|---|
+| `healthy` | 0,8192 ± 0,0099 | 12,0 | 62,4 % ± 5,7 | **0,4** | Sostenida por procedencia |
+| `lethal_necrosis` | 0,8090 ± 0,0154 | 7,1 | 95,5 % ± 4,0 | 8,9 | Sostenida por procedencia |
+| `common_rust` | 0,7847 ± 0,0407 | **2,1** | 104,1 % ± 8,6 | 5,1 | Sostenida por procedencia |
+| `northern_corn_leaf_blight` | 0,7143 ± 0,0045 | 3,2 | 63,5 % ± 2,7 | **1,3** | Sostenida por procedencia |
+| `fall_armyworm` | 0,6344 ± 0,0130 | 5,0 | 63,4 % ± 4,8 | — | Frágil |
+| `nitrogen_deficiency` | 0,4387 ± 0,0171 | 2,3 | 61,6 % ± 8,3 | — | Frágil |
+| `gray_leaf_spot` | 0,3709 ± 0,0263 | **1,1** | 55,0 % ± 7,0 | — | No soportada |
+| `phosphorus_deficiency` | 0,2091 ± 0,0683 | 2,8 | 42,2 % ± 25,3 | — | No soportada |
+| `potassium_deficiency` | 0,1831 ± 0,0110 | 19,7 | 51,1 % ± 5,6 | — | No soportada |
+
+### Qué cambió respecto a una sola semilla
+
+**Ninguna clase de las nueve supera la compuerta completa.** Con una semilla, `healthy` la
+superaba con una recuperación del marco del 56,0 %. Con tres, su media sube a 62,4 % y cruza
+el umbral: pasa a **sostenida por procedencia**. El resultado anterior era ruido, y queda
+retirado.
+
+**`common_rust` recupera el 104,1 % desde el marco**: el modelo que solo ve el borde predice
+esa clase *mejor* que el que ve la imagen completa. Con 8,6 puntos de desviación, el exceso
+sobre el 100 % no es significativo, pero la lectura sí lo es: para esta clase la hoja no
+aporta nada por encima del contexto de captura.
+
+**`gray_leaf_spot` bajó de 0,3972 a 0,3709 ± 0,0263.** Sigue a 1,1 σ del umbral, así que la
+banda «no soportada» **no está firme**; simplemente es ahora la más probable de las dos.
+
+**La desviación del cociente del marco, que antes no existía, resulta ser grande**: de 2,7
+a 25,3 puntos porcentuales según la clase. En `phosphorus_deficiency` (± 25,3) el cociente es
+directamente inutilizable, aunque su banda queda determinada por el F1, a 2,8 σ.
+
+### Qué sigue sin estar firme
+
+| Clase | Motivo | Consecuencia si cambia |
+|---|---|---|
+| `healthy` | 0,4 σ del umbral del marco | Es la única candidata a «sostenida» plena |
+| `gray_leaf_spot` | 1,1 σ del umbral de F1 | Entre «no soportada» y «frágil» |
+| `northern_corn_leaf_blight` | 1,3 σ del umbral del marco | Entre «sostenida» y «sostenida por procedencia» |
+| `common_rust` | 2,1 σ del umbral de F1 | Entre «sostenida por procedencia» y «frágil» |
+
+Tres semillas no bastan para estas cuatro. Se documentan como **indecidibles con el
+protocolo actual** y, mientras no se resuelvan, se tratan con el criterio más conservador de
+las dos bandas posibles.
+
 ## Qué entra en la Fase 2
 
 Las dos clases frágiles (`fall_armyworm`, `nitrogen_deficiency`) y las tres sostenidas por

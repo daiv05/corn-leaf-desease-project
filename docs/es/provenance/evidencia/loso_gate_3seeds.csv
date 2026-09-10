@@ -1,0 +1,10 @@
+,F1_media,F1_sd,marco_media_%,marco_sd_pp,banda,umbral_F1,sigmas_F1,sigmas_marco
+healthy,0.8192,0.0099,62.4436,5.7393,sostenida por procedencia,0.7,12.0,0.4
+lethal_necrosis,0.809,0.0154,95.5268,3.9709,sostenida por procedencia,0.7,7.1,8.9
+common_rust,0.7847,0.0407,104.1029,8.6087,sostenida por procedencia,0.7,2.1,5.1
+northern_corn_leaf_blight,0.7143,0.0045,63.5375,2.712,sostenida por procedencia,0.7,3.2,1.3
+fall_armyworm,0.6344,0.013,63.3531,4.7601,fragil,0.7,5.0,
+nitrogen_deficiency,0.4387,0.0171,61.5728,8.2637,fragil,0.4,2.3,
+gray_leaf_spot,0.3709,0.0263,54.9883,6.9706,no soportada,0.4,1.1,
+phosphorus_deficiency,0.2091,0.0683,42.2267,25.2881,no soportada,0.4,2.8,
+potassium_deficiency,0.1831,0.011,51.1325,5.6269,no soportada,0.4,19.7,
