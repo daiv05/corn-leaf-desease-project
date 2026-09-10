@@ -348,6 +348,116 @@ def optuna_dashboard_modal():
     ])
 
 
+@app.function(
+    gpu="A10",
+    cpu=4.0,
+    volumes={"/data": dataset_vol, "/outputs": outputs_vol},
+    secrets=[modal.Secret.from_name("hf")],
+    timeout=3600,
+)
+def evaluate_ensemble_modal(
+    models: str = "efficientnet_b0 shufflenet_v2_x1_0",
+    batch_size: int = 64,
+    splits_dir: str = "",
+    output_dir: str = "",
+) -> None:
+    """Evalúa el Soft Voting Ensemble en GPU de Modal sobre el conjunto de test."""
+    dataset_vol.reload()
+    outputs_vol.reload()
+    command = [
+        sys.executable,
+        "scripts/pipeline/evaluate_ensemble.py",
+        "--models",
+        *models.split(),
+        "--batch-size",
+        str(batch_size),
+    ]
+    if splits_dir:
+        command += ["--splits-dir", splits_dir]
+    if output_dir:
+        command += ["--output-dir", output_dir]
+
+    subprocess.run(command, check=True, cwd=REPO_ANCHOR)
+    outputs_vol.commit()
+
+
+@app.function(
+    gpu="A10",
+    cpu=4.0,
+    volumes={"/data": dataset_vol, "/outputs": outputs_vol},
+    secrets=[modal.Secret.from_name("hf")],
+    timeout=8 * 3600,
+)
+def cross_validate_modal(
+    model: str = "efficientnet_b0",
+    k_folds: int = 5,
+    epochs: int = 20,
+    batch_size: int = 64,
+    splits_dir: str = "",
+    output_dir: str = "",
+) -> None:
+    """Ejecuta Validación Cruzada Estratificada K-Fold (K=5) en GPU de Modal."""
+    dataset_vol.reload()
+    outputs_vol.reload()
+    command = [
+        sys.executable,
+        "scripts/pipeline/cross_validate.py",
+        "--model",
+        model,
+        "--k-folds",
+        str(k_folds),
+        "--epochs",
+        str(epochs),
+        "--batch-size",
+        str(batch_size),
+    ]
+    if splits_dir:
+        command += ["--splits-dir", splits_dir]
+    if output_dir:
+        command += ["--output-dir", output_dir]
+
+    subprocess.run(command, check=True, cwd=REPO_ANCHOR)
+    outputs_vol.commit()
+
+
+@app.function(
+    gpu="A10",
+    cpu=4.0,
+    volumes={"/data": dataset_vol, "/outputs": outputs_vol},
+    secrets=[modal.Secret.from_name("hf")],
+    timeout=3600,
+)
+def fairness_report_modal(
+    model: str = "efficientnet_b0",
+    checkpoint: str = "",
+    batch_size: int = 64,
+    splits_dir: str = "",
+    output_dir: str = "",
+) -> None:
+    """Ejecuta la Auditoría de Equidad (Fairness Report) en GPU de Modal."""
+    dataset_vol.reload()
+    outputs_vol.reload()
+    command = [
+        sys.executable,
+        "scripts/pipeline/evaluate_fairness.py",
+        "--model",
+        model,
+        "--batch-size",
+        str(batch_size),
+        "--run-gradcam",
+        "--run-shortcut-test",
+    ]
+    if checkpoint:
+        command += ["--checkpoint", checkpoint]
+    if splits_dir:
+        command += ["--splits-dir", splits_dir]
+    if output_dir:
+        command += ["--output-dir", output_dir]
+
+    subprocess.run(command, check=True, cwd=REPO_ANCHOR)
+    outputs_vol.commit()
+
+
 @app.function(volumes={"/outputs": outputs_vol}, timeout=600)
 def clean_outputs() -> None:
     """Vacía el contenido del Volume corn-outputs (splits/runs/reportes). No borra el Volume."""

@@ -113,17 +113,42 @@ def _resolve_checkpoint(model_name: str, explicit_path: str | None) -> Path | No
             return p
         logger.warning("Checkpoint especificado no encontrado: %s", explicit_path)
 
-    # Búsqueda heurística de checkpoints
-    candidates = [
-        get_output_root() / "main" / model_name / "best.pt",
-        get_output_root() / "baselines" / model_name / "best.pt",
-        PROJECT_ROOT / "outputs" / "main" / model_name / "best.pt",
-        PROJECT_ROOT / "outputs" / "baselines" / model_name / "best.pt",
-    ]
-    for c in candidates:
-        if c.exists():
-            logger.info("Checkpoint auto-descubierto: %s", c)
-            return c
+    output_root = get_output_root()
+    for pipeline_dir in ["main", "baselines"]:
+        parent = output_root / pipeline_dir / model_name
+        if not parent.exists():
+            continue
+        latest_json = parent / "latest.json"
+        if latest_json.exists():
+            try:
+                with open(latest_json, "r", encoding="utf-8") as f:
+                    meta = json.load(f)
+                run_id = meta.get("run_id") or meta.get("run")
+                if run_id:
+                    for name in ["best.pth", "best.pt"]:
+                        p = parent / run_id / name
+                        if p.exists():
+                            logger.info("Checkpoint auto-descubierto: %s", p)
+                            return p
+            except Exception:
+                pass
+
+        for name in ["best.pth", "best.pt"]:
+            for cand in [
+                parent / "latest" / "checkpoints" / name,
+                parent / "latest" / name,
+                parent / name,
+            ]:
+                if cand.exists():
+                    logger.info("Checkpoint auto-descubierto: %s", cand)
+                    return cand
+
+        pts = list(parent.rglob("best.pth")) + list(parent.rglob("best.pt"))
+        if pts:
+            chosen = sorted(pts, key=lambda p: p.stat().st_mtime, reverse=True)[0]
+            logger.info("Checkpoint auto-descubierto: %s", chosen)
+            return chosen
+
     return None
 
 
