@@ -211,7 +211,7 @@ tune:
 tune-main: tune
 
 tune-dashboard:
-	venv\Scripts\optuna-dashboard sqlite:///outputs/tuning/optuna_study.db --port 8080
+	$(PYTHON) -c "from optuna_dashboard._cli import main; main()" sqlite:///outputs/tuning/optuna_study.db --port 8080
 
 # Ensamble por Soft Voting (Criterio 2 Etapa 2)
 .PHONY: evaluate-ensemble ensemble
@@ -237,6 +237,19 @@ cross-validate:
 
 kfold-main: cross-validate
 kfold: cross-validate
+
+# Auditoría de Equidad y Sesgos (Criterio 4 Etapa 2)
+.PHONY: fairness-report fairness
+fairness-report:
+	$(PYTHON) scripts/pipeline/evaluate_fairness.py \
+		$(if $(MODEL),--model $(MODEL),) \
+		$(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),) \
+		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
+		$(if $(OUTPUT_DIR),--output-dir $(OUTPUT_DIR),) \
+		$(if $(BATCH_SIZE),--batch-size $(BATCH_SIZE),) \
+		--run-gradcam --run-shortcut-test
+
+fairness: fairness-report
 
 # ==============================================================================
 # Local - exportacion (ONNX/TFLite)
@@ -456,6 +469,20 @@ modal-train:
 
 modal-train-main: modal-train
 
+.PHONY: modal-tune modal-tune-dashboard
+modal-tune:
+	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/train.py::tune_main \
+		$(if $(MODEL),--models "$(MODEL)",--models "$(MODELS)") \
+		$(if $(N_TRIALS),--n-trials "$(N_TRIALS)",) \
+		$(if $(EPOCHS),--epochs "$(EPOCHS)",) \
+		$(if $(TIMEOUT),--timeout "$(TIMEOUT)",) \
+		$(if $(PRUNER),--pruner "$(PRUNER)",) \
+		$(if $(BASELINE_F1),--baseline-macro-f1 "$(BASELINE_F1)",) \
+		$(if $(SPLITS_DIR),--splits-dir "$(SPLITS_DIR)",)
+
+modal-tune-dashboard:
+	$(MODAL) serve scripts/modal/train.py
+
 # ==============================================================================
 # Modal - exportacion (ONNX/TFLite)
 # ==============================================================================
@@ -576,6 +603,12 @@ check:
 # Requiere shell POSIX (Powershell/Git Bash/WSL en Windows) y que existan outputs/eda/eda_*.png
 docs-eda:
 	cp outputs/eda/eda_*.png public/eda/
+
+.PHONY: docs docs-dev
+docs-dev:
+	npm run docs:dev
+
+docs: docs-dev
 
 compile-pdf:
 	cd reports/firts-phase && pdflatex -interaction=nonstopmode documentation_first_phase.tex

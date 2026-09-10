@@ -279,6 +279,75 @@ def train_main(
     outputs_vol.commit()
 
 
+@app.function(
+    gpu="A10",
+    cpu=4.0,
+    volumes={
+        "/data": dataset_vol,
+        "/outputs": outputs_vol,
+    },
+    secrets=[modal.Secret.from_name("hf")],
+    timeout=8 * 3600,
+)
+def tune_main(
+    models: str = "efficientnet_b0",
+    n_trials: int = 20,
+    epochs: int = 15,
+    timeout: int = 0,
+    pruner: str = "median",
+    baseline_macro_f1: float = 0.9146,
+    splits_dir: str = "",
+) -> None:
+    """Optimización de hiperparámetros con Optuna en GPU de Modal (A10G).
+
+    Soporta uno o múltiples modelos separados por espacio (ej. 'efficientnet_b0 shufflenet_v2_x1_0').
+    Persiste best_params.json, trials.csv y gráficos en el Volume corn-outputs (/outputs/tuning/<model>/).
+    """
+    dataset_vol.reload()
+    command = [
+        sys.executable,
+        "scripts/pipeline/tune.py",
+        "--models",
+        *models.split(),
+        "--n-trials",
+        str(n_trials),
+        "--epochs",
+        str(epochs),
+        "--pruner",
+        pruner,
+        "--baseline-f1",
+        str(baseline_macro_f1),
+    ]
+    if timeout:
+        command += ["--timeout", str(timeout)]
+    if splits_dir:
+        command += ["--splits-dir", splits_dir]
+
+    subprocess.run(command, check=True, cwd=REPO_ANCHOR)
+    outputs_vol.commit()
+
+
+@app.function(
+    volumes={"/outputs": outputs_vol},
+    timeout=24 * 3600,
+)
+@modal.web_server(port=8080, startup_timeout=60)
+def optuna_dashboard_modal():
+    """Servidor web de Optuna Dashboard en Modal.
+
+    Lee la base de datos persistida /outputs/tuning/optuna_study.db y expone una URL HTTPS pública.
+    """
+    outputs_vol.reload()
+    db_path = Path("/outputs/tuning/optuna_study.db")
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.Popen([
+        "optuna-dashboard",
+        f"sqlite:///{db_path}",
+        "--port", "8080",
+        "--host", "0.0.0.0",
+    ])
+
+
 @app.function(volumes={"/outputs": outputs_vol}, timeout=600)
 def clean_outputs() -> None:
     """Vacía el contenido del Volume corn-outputs (splits/runs/reportes). No borra el Volume."""
