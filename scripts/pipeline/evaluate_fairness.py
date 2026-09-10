@@ -25,6 +25,7 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
+import yaml
 from PIL import Image
 from torch.utils.data import DataLoader
 
@@ -98,6 +99,11 @@ def _parse_args() -> argparse.Namespace:
         help="Ejecutar el test de control negativo de oclusión foliar (Clever Hans check).",
     )
     parser.add_argument(
+        "--config",
+        default=str(PROJECT_ROOT / "config" / "dataset.yaml"),
+        help="Ruta al archivo dataset.yaml de configuración.",
+    )
+    parser.add_argument(
         "--seed",
         type=int,
         default=42,
@@ -160,6 +166,8 @@ def _generate_gradcam_panel(
     idx_to_class: dict[int, str],
     device: torch.device,
     output_path: Path,
+    input_size: tuple[int, int],
+    factory: CornTransformFactory,
 ) -> None:
     """Genera un panel comparativo de Grad-CAM auditando casos en campo real y laboratorio."""
     try:
@@ -169,8 +177,7 @@ def _generate_gradcam_panel(
         return
 
     dataset_root = get_dataset_root()
-    input_size = resolve_input_size(model_name)
-    tf_eval = CornTransformFactory.build_eval_transform(input_size=input_size)
+    tf_eval = factory.get_pipeline("test")
 
     # Seleccionar muestras representativas: 2 de campo real y 2 de lab
     real_samples = test_df[test_df["environment"] == "real"].head(2)
@@ -187,59 +194,60 @@ def _generate_gradcam_panel(
 
     model.eval()
 
-    with GradCAM(model, target_layer) as cam_extractor:
-        for row_idx, row in selected_samples.iterrows():
-            img_rel_path = row["image_path"]
-            img_path = dataset_root / img_rel_path
-            true_label = row["label"]
-            env = row["environment"]
-            true_idx = class_to_idx.get(true_label, 0)
+    for row_idx, row in selected_samples.iterrows():
+        img_rel_path = row["image_path"]
+        img_path = dataset_root / img_rel_path
+        true_label = row["label"]
+        env = row["environment"]
+        true_idx = class_to_idx.get(true_label, 0)
 
-            if not img_path.exists():
-                continue
+        if not img_path.exists():
+            continue
 
-            pil_img = Image.open(img_path).convert("RGB")
-            img_tensor = tf_eval(pil_img).unsqueeze(0).to(device)
+        pil_img = Image.open(img_path).convert("RGB")
+        img_tensor = tf_eval(pil_img).unsqueeze(0).to(device)
 
-            # Inferencia
-            with torch.no_grad():
-                logits = model(img_tensor)
-                probs = torch.softmax(logits, dim=-1)
-                pred_idx = int(torch.argmax(probs, dim=-1).item())
-                pred_conf = float(probs[0, pred_idx].item())
-                pred_label = idx_to_class.get(pred_idx, f"Clase_{pred_idx}")
+        # Inferencia
+        with torch.no_grad():
+            logits = model(img_tensor)
+            probs = torch.softmax(logits, dim=-1)
+            pred_idx = int(torch.argmax(probs, dim=-1).item())
+            pred_conf = float(probs[0, pred_idx].item())
+            pred_label = idx_to_class.get(pred_idx, f"Clase_{pred_idx}")
 
-            # Grad-CAM heatmap
+        # Grad-CAM heatmap
+        with GradCAM(model, target_layer) as cam_extractor:
             cam_map = cam_extractor(img_tensor, pred_idx)
-            img_np01 = np.array(pil_img.resize((input_size, input_size))) / 255.0
-            overlay = build_gradcam_overlay(img_np01, cam_map, (input_size, input_size))
 
-            # Columna 1: Imagen Original
-            axes[row_idx, 0].imshow(img_np01)
-            axes[row_idx, 0].set_title(f"Original ({env})\nReal: {true_label}", fontsize=9, fontweight="bold")
-            axes[row_idx, 0].axis("off")
+        img_np01 = np.array(pil_img.resize((input_size[1], input_size[0]))) / 255.0
+        overlay = build_gradcam_overlay(img_np01, cam_map, input_size)
 
-            # Columna 2: Mapa de Calor Grad-CAM
-            upsampled_cam = (
-                torch.nn.functional.interpolate(
-                    cam_map[None, None, :, :],
-                    size=(input_size, input_size),
-                    mode="bilinear",
-                    align_corners=False,
-                )
-                .squeeze()
-                .cpu()
-                .numpy()
+        # Columna 1: Imagen Original
+        axes[row_idx, 0].imshow(img_np01)
+        axes[row_idx, 0].set_title(f"Original ({env})\nReal: {true_label}", fontsize=9, fontweight="bold")
+        axes[row_idx, 0].axis("off")
+
+        # Columna 2: Mapa de Calor Grad-CAM
+        upsampled_cam = (
+            torch.nn.functional.interpolate(
+                cam_map[None, None, :, :],
+                size=input_size,
+                mode="bilinear",
+                align_corners=False,
             )
-            axes[row_idx, 1].imshow(upsampled_cam, cmap="jet")
-            axes[row_idx, 1].set_title(f"Mapa Grad-CAM (Atención)\nPred: {pred_label} ({pred_conf*100:.1f}%)", fontsize=9, fontweight="bold")
-            axes[row_idx, 1].axis("off")
+            .squeeze()
+            .cpu()
+            .numpy()
+        )
+        axes[row_idx, 1].imshow(upsampled_cam, cmap="jet")
+        axes[row_idx, 1].set_title(f"Mapa Grad-CAM (Atención)\nPred: {pred_label} ({pred_conf*100:.1f}%)", fontsize=9, fontweight="bold")
+        axes[row_idx, 1].axis("off")
 
-            # Columna 3: Superposición (Overlay)
-            axes[row_idx, 2].imshow(overlay)
-            status = "CORRECTO" if true_label == pred_label else "ERROR"
-            axes[row_idx, 2].set_title(f"Superposición [{status}]\nFoco en Lesión Foliar", fontsize=9, fontweight="bold", color="green" if status == "CORRECTO" else "red")
-            axes[row_idx, 2].axis("off")
+        # Columna 3: Superposición (Overlay)
+        axes[row_idx, 2].imshow(overlay)
+        status = "CORRECTO" if true_label == pred_label else "ERROR"
+        axes[row_idx, 2].set_title(f"Superposición [{status}]\nFoco en Lesión Foliar", fontsize=9, fontweight="bold", color="green" if status == "CORRECTO" else "red")
+        axes[row_idx, 2].axis("off")
 
     plt.suptitle(f"Auditoría Visual Grad-CAM: Explicabilidad y Atajos Visuales ({model_name})", fontsize=13, fontweight="bold", y=1.00)
     plt.tight_layout()
@@ -275,9 +283,15 @@ def main() -> None:
     logger.info("Clases a auditar (%d): %s", len(class_names), class_names)
     logger.info("Total muestras en Test Set: %d (Lab: %d, Real: %d)", len(test_df), (test_df['environment'] == 'lab').sum(), (test_df['environment'] == 'real').sum())
 
+    config_path = Path(args.config)
+    with open(config_path, "r", encoding="utf-8") as f:
+        cfg = yaml.safe_load(f)
+    base_target_size = tuple(cfg["dataset"]["target_size"])
+
     device = select_device()
-    input_size = resolve_input_size(args.model)
-    eval_transform = CornTransformFactory.build_eval_transform(input_size=input_size)
+    input_size = resolve_input_size(args.model, fallback=base_target_size)
+    factory = CornTransformFactory(config_path=str(config_path), target_size=input_size)
+    eval_transform = factory.get_pipeline("test")
 
     # Instanciar y cargar modelo
     model = build_model(args.model, num_classes=len(class_names), pretrained=True)
@@ -295,8 +309,8 @@ def main() -> None:
 
     # DataLoader de prueba
     test_dataset = CornDataset(
-        data_frame=test_df,
-        dataset_root=get_dataset_root(),
+        csv_path=str(test_csv_path),
+        config_path=str(config_path),
         transform=eval_transform,
         class_to_idx=class_to_idx,
     )
@@ -374,6 +388,8 @@ def main() -> None:
             idx_to_class=idx_to_class,
             device=device,
             output_path=output_dir / "gradcam_samples.png",
+            input_size=input_size,
+            factory=factory,
         )
 
     # 5. Exportar CSV y JSON
